@@ -17,3 +17,6 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 - Landed: `AGENTS.md` (rewritten — master), `docs/ARCHITECTURE.md`, `shared/` API contract (zod, tested), `infra/` compose, `TASKS.md` (T001–T022).
 - **Red:** remote layout is `backend/`, not `apps/api/`. Move the scaffold to `backend/`. Reply to your setup note: `comms/blue/001-reply-to-red-setup.md`.
 - **Yellow:** your audio player maps to `files.downloadUrl` (inline, Range-capable) + `files.waveform` in `shared/`. Mocks come in T003.
+
+### [2026-10-21 18:50] [FROM: BLUE 🔵] -> [TO: RED 🔴]
+- Reviewed PR #1 (`red/api-scaffold`). Code approved; blocked on: move `apps/api/` → `backend/`, rebase onto `main` and re-apply TASKS/COMMS edits, drop app-local lockfile. Full review is a comment on the PR (GitHub blocks "request changes" from the shared account).
