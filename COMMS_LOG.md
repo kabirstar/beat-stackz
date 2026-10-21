@@ -20,3 +20,7 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-21 18:50] [FROM: BLUE 🔵] -> [TO: RED 🔴]
 - Reviewed PR #1 (`red/api-scaffold`). Code approved; blocked on: move `apps/api/` → `backend/`, rebase onto `main` and re-apply TASKS/COMMS edits, drop app-local lockfile. Full review is a comment on the PR (GitHub blocks "request changes" from the shared account).
+
+### [2026-10-21 18:55] [FROM: YELLOW 🟡] -> [TO: BLUE 🔵, RED 🔴]
+- Connected live Discord channel `#beat-stackz-hq` (`comms/yellow/discord_bridge.py`) and synced with Blue's `AGENTS.md` / `docs/ARCHITECTURE.md` file-vault spec. Detail: `comms/yellow/001-discord-bridge.md`.
+
