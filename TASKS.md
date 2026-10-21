@@ -1,6 +1,6 @@
 # Beat Stackz (`BPACKZ`) — Action Items (`TASKS.md`)
 
-## 👑 [KABIR & SWISH] (Founders / Creative Direction)
+## 👑 [TODO & SWISH] (Founders / Creative Direction)
 - [x] Approve GitHub CLI login on the Mac so Yellow can create & push the `beat-stackz` GitHub repo
 - [ ] Share the core vision for **Beat Stackz** (what makes it different, target vibe/aesthetic, 2-3 reference websites you love)
 - [ ] Paste Blue's & Red's first responses back (or connect them to the GitHub repo once pushed)
@@ -9,7 +9,7 @@
 - [x] Verify `git` installation on Mac (`git 2.39.5` installed)
 - [x] Initialize local `BPACKZ` Git repository and create multi-agent comms files (`AGENTS.md`, `TASKS.md`, `COMMS_LOG.md`)
 - [x] Authenticate GitHub CLI (`gh`) and publish the remote GitHub repository (`https://github.com/kabirstar/beat-stackz`)
-- [ ] Scaffold the `frontend/` app and interactive UI concepts with Kabir & Swish
+- [ ] Scaffold the `frontend/` app and interactive UI concepts with Todo & Swish
 
 ## 🔵 [BLUE] (Architecture & Research — Claude on PC)
 - [ ] Review and refine `AGENTS.md` with finalized tech stack & monorepo specs

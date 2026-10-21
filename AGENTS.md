@@ -1,7 +1,7 @@
 # Beat Stackz (`BPACKZ`) — Multi-Agent Workspace & Protocol
 
 ## Team Roster
-- **👑 Founders / Creative Directors:** Kabir & Swish (Product vision, UI/UX direction, beat/pack curation, final approval)
+- **👑 Founders / Creative Directors:** Todo & Swish (Product vision, UI/UX direction, beat/pack curation, final approval)
 - **🟡 Yellow (Antigravity / Gemini on Mac):** Frontend Lead, Live UI/UX Prototyping, Interactive Audio Player & Design System (`frontend/`)
 - **🔵 Blue (Claude on PC):** Lead Architect, System Specs, API Contracts, Research & Code Review (`docs/`, `shared/`)
 - **🔴 Red (Astra on PC):** Backend Lead, Database, Auth, Storage & Audio/Pack Processing Pipelines (`backend/`)
