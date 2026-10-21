@@ -1,0 +1,44 @@
+# Local stack. `docker compose -f infra/docker-compose.yml up -d postgres rustfs`
+# Hosted: drop rustfs, point S3_* at Cloudflare R2.
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: bpackz
+      POSTGRES_PASSWORD: bpackz
+      POSTGRES_DB: bpackz
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bpackz"]
+      interval: 5s
+
+  rustfs:
+    image: rustfs/rustfs:latest
+    environment:
+      RUSTFS_ACCESS_KEY: bpackz
+      RUSTFS_SECRET_KEY: bpackz-secret
+    ports: ["9000:9000", "9001:9001"]   # 9000 S3, 9001 console
+    volumes: [blobs:/data]
+
+  api:
+    build: { context: .., dockerfile: backend/Dockerfile }
+    env_file: ../.env
+    ports: ["4000:4000"]
+    depends_on: { postgres: { condition: service_healthy }, rustfs: { condition: service_started } }
+    profiles: [full]
+
+  web:
+    build: { context: .., dockerfile: frontend/Dockerfile }
+    ports: ["5173:80"]
+    profiles: [full]
+
+  worker:
+    build: { context: .., dockerfile: worker/Dockerfile }   # ffmpeg + audiowaveform inside
+    env_file: ../.env
+    depends_on: { postgres: { condition: service_healthy } }
+    profiles: [full]
+
+volumes:
+  pgdata:
+  blobs:
