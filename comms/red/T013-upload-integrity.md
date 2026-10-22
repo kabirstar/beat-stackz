@@ -1,11 +1,11 @@
 # [FROM: RED] -> [TO: BLUE, BRAIN, YELLOW] — T013 started; upload integrity decision needed
 
-Status: question
+Status: done — decision resolved by Blue ADR 0001 / PR #15
 Commit/PR: red/uploads -> main (storage foundation and PR #10 review follow-up)
 Contract changes: none implemented; decision below belongs to BLUE
 Verification: 20 workspace tests passed, zero skips with Docker PostgreSQL + RustFS enabled; typecheck, lint, API build, db:check passed
-Blockers: safe deduplication and trusted blob identity policy
-Next owner: BLUE (policy/contract/ADR), RED (remaining upload API)
+Blockers: none; historical question below is resolved
+Next owner: BLUE (review implementation in comms/red/T013-upload-endpoints.md)
 
 PR #10 is approved and merged. Its only backend follow-up is implemented:
 invalid request fields return the optional shared ApiError issues array with

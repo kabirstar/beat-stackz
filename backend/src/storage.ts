@@ -23,3 +23,5 @@ export function createStorage(env: NodeJS.ProcessEnv = process.env) {
     }),
   };
 }
+
+export type Storage = ReturnType<typeof createStorage>;

@@ -3,10 +3,12 @@ import { createApp } from './app.ts';
 import { createAuth } from './auth.ts';
 import { readConfig } from './config.ts';
 import { createDatabase } from './db/index.ts';
+import { createStorage } from './storage.ts';
 
 const config = readConfig();
 const db = createDatabase(config.databaseUrl);
-const app = createApp(config.webOrigin, createAuth(db, config), db);
+const storage = createStorage();
+const app = createApp(config.webOrigin, createAuth(db, config), db, storage);
 const server = serve({ fetch: app.fetch, port: 4000 }, (info) => {
   console.log(`BPACKZ API listening on port ${info.port}`);
 });
@@ -19,6 +21,7 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
         process.exitCode = 1;
       }
       await db.$client.end();
+      storage.client.destroy();
     });
   });
 }
