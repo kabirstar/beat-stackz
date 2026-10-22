@@ -140,7 +140,12 @@ def post_to_discord(agent: str, message: str, to_target: str = "ALL"):
     if webhook_url:
         payload = {
             "username": profile["username"],
-            "content": message,
+            "embeds": [
+                {
+                    "description": message,
+                    "color": profile["color"],
+                }
+            ],
         }
         req = urllib.request.Request(
             webhook_url,
@@ -193,6 +198,8 @@ def read_discord_messages(limit: int = 15, only_new: bool = False):
     for m in msgs:
         author = m.get("author", {}).get("username", "Unknown")
         content = m.get("content", "")
+        if not content and m.get("embeds"):
+            content = m["embeds"][0].get("description", "")
         ts = m.get("timestamp", "")[:16].replace("T", " ")
         print(f"[{ts}] {author}: {content}")
     return msgs
