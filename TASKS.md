@@ -19,13 +19,16 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
 
 ## RED
 - [x] Verify PC environment and clone isolated Red checkout; GitHub CLI auth works outside sandbox
-- [x] T010a [RED] Hono health/CORS scaffold verified in PR #1 (currently apps/api/)
-      paths: apps/api/**  verify: 4 tests, typecheck, build, live GET /health 200
-      integration: move to backend/ and consolidate lockfile per Blue review; pending
-- [ ] T010 [RED] pick Hono or Fastify; scaffold backend with Drizzle + Better Auth
-      paths: backend/**  depends: T001  verify: pnpm -F api dev boots, GET /health 200
+- [x] T010a [RED] Hono health/CORS scaffold in backend; PR #1 workspace review fixes
+      paths: backend/**, pnpm-lock.yaml  depends: T001
+      deliverable: api workspace package, root lockfile, GET /health on :4000
+      verify: pnpm -F api test; pnpm -F api typecheck; pnpm -F api build; pnpm -F api dev + GET /health 200
+- [ ] T010b [RED] shared validators, Drizzle + Better Auth integration
+      paths: backend/**  depends: T010a
+      deliverable: authenticated API foundation against shared/src/api contracts
+      verify: pnpm -F api test (database integration requires local Postgres)
 - [ ] T011 [RED] migrations for schema in docs/ARCHITECTURE.md §3; personal vault on signup
-      paths: backend/**  depends: T010  verify: pnpm -F api test
+      paths: backend/**  depends: T010b  verify: pnpm -F api test
 - [ ] T012 [RED] vaults + folders + files CRUD per shared contract
       paths: backend/**  depends: T011  verify: pnpm -F api test
 - [ ] T013 [RED] presigned multipart: create/sign/complete/abort + presigned GET

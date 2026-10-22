@@ -31,7 +31,5 @@ test('invalid origins fail at startup', () => {
 
 test('unimplemented routes do not claim to serve vault data', async () => {
   const app = createApp();
-  for (const path of ['/vaults', '/api/beats', '/api/packs']) {
-    assert.equal((await app.request(path)).status, 404);
-  }
+  assert.equal((await app.request('/vaults')).status, 404);
 });

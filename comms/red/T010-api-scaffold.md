@@ -1,58 +1,47 @@
-# [FROM: RED] -> [TO: YELLOW, BLUE] — T010 API scaffold
+# [FROM: RED] -> [TO: BLUE, YELLOW] — T010a PR feedback addressed
 
-Status: scaffold verified; integration pending
-Commit/PR: red/api-scaffold
-Contract changes: none; /health is a process-liveness endpoint
+Status: done for T010a; T010b remains pending
+Commit/PR: red/api-scaffold — https://github.com/kabirstar/beat-stackz/pull/1
+Contract changes: none; /health is process liveness
+Next owner: BLUE (review), KABIR (merge)
 
 ## Delivered
 
-- `apps/api/`: Hono 4.13.13, @hono/node-server 2.1.5, Node 24 native TypeScript
-  execution for development, TypeScript 5.9.3 compilation for production.
-- GET `/health` on port 4000 returns HTTP 200 with `{"status":"ok"}`.
-- CORS permits the configured `WEB_ORIGIN`; default `http://localhost:5173`.
-- No secrets, database or storage required to run the scaffold.
-- Standalone lockfile and run instructions in `apps/api/README.md`.
+- Hono scaffold now lives in `backend/`, package name `api`, matching main's
+  pnpm workspace. `pnpm -F api dev` resolves and starts the correct package.
+- Rebased onto main (03626c6, including T002 CI and T003 mocks); retained Blue/Yellow sections in TASKS and the
+  existing COMMS log. T010 is split into completed T010a and pending T010b.
+- Removed app-local lockfile and duplicate .gitignore; regenerated the root
+  lockfile without changing existing dependency versions.
+- README uses root workspace commands. Handoff describes the current layout.
+- Unknown-route test covers /vaults only. Port remains 4000 as Blue accepted.
 
 ## Verification
 
-- `pnpm --dir apps/api test`: 4 passed (liveness, browser origin/preflight,
-  invalid origin configuration, unimplemented routes).
-- `pnpm --dir apps/api typecheck`: passed.
-- `pnpm --dir apps/api build`: passed.
-- `pnpm --dir apps/api dev`: booted and announced port 4000; stopped after check.
-- Compiled server: actual HTTP GET /health returned 200 and the configured
-  Access-Control-Allow-Origin header; stopped after check.
-- GitHub CLI authentication is valid outside the restricted network sandbox.
+From the repository root with Node 24.21.0 and pnpm 10.34.7:
 
-## Integration boundaries
+- `pnpm install --frozen-lockfile`: passed, all 3 workspace projects.
+- `pnpm typecheck`: api and @bpackz/shared passed.
+- `pnpm test`: 4 API tests + 5 shared contract/mock tests passed.
+- `pnpm lint`: oxlint passed after T002 landed.
+- `pnpm openapi` + `git diff --exit-code contracts/openapi.json`: passed.
+- `pnpm build`: api and @bpackz/shared built successfully.
+- `pnpm -F api exec node -p 'process.cwd()'`: resolves to backend/.
+- `pnpm -F api dev`: booted backend/src/server.ts on port 4000.
+- Compiled backend: actual HTTP GET /health -> 200, {"status":"ok"}, and
+  Access-Control-Allow-Origin: http://localhost:5173. Test server stopped.
+- `git diff --check`: passed.
 
-Kabir explicitly chose Blue's private-vault scope and `apps/api/` layout.
-No `/api/beats`, `/api/packs`, marketplace, payments or public catalog.
-Blue's local draft uses Postgres 17, Drizzle, Better Auth, S3 and a worker.
-Those are subsequent integrations, not working features of this scaffold.
-T010's full Drizzle/Better Auth acceptance is not marked complete.
+Verification limits: no Drizzle config/migrations
+exist in this health-only scaffold, so drizzle-kit check is not available;
+that gate belongs to T010b/T011. No database, auth, storage, Docker, worker,
+frontend or hosted behavior is claimed tested. pnpm reported the existing
+shared dependency esbuild/MSW build scripts were ignored; shared tests still passed.
 
-The remote base is d818cc4, which still has the old root instructions and
-layout. Blue's new workspace/contracts exist in his local working tree but
-were not published when this scaffold was prepared. No uncommitted Blue
-files were copied into this branch. Root scripts/CI, shared-schema mocks,
-OpenAPI generation and DB migration/drift checks have not run here.
+## Next work
 
-## Next actions
-
-1. BLUE publishes the canonical workspace and shared contracts, reconciles
-   root instructions/tasks, and reviews this branch. Hono is Red's choice.
-2. BLUE consolidates `apps/api/pnpm-lock.yaml` into the root pnpm lockfile
-   during workspace integration and removes the app lockfile then.
-3. YELLOW can verify API reachability using /health; use Blue's T003 mocks for
-   vault UI until the authenticated API slice lands.
-4. RED integrates the shared validators, auth and Drizzle on the agreed schema.
-   Local Postgres is required for meaningful auth/migration integration tests.
-5. KABIR merges after review.
-
-PC workspace note: Red cloned inside `beat stacks/red-checkout/`. An initial
-pnpm add discovered the parent workspace and wrote its lockfile with a
-`red-checkout/apps/api` importer. Blue was notified locally in
-`comms/red/T010-scaffold-status.md`; regenerate the parent lockfile from its
-actual workspace and exclude the nested clone from staging. Subsequent Red
-installation used `--ignore-workspace` and created an app-local lockfile.
+T010b implements shared validators, Drizzle and Better Auth against
+`shared/src/api/*`; T011 adds migrations/personal vault provisioning. Those
+features are not included in this PR. /health does not check dependencies.
+Blue reviews this updated scaffold; Kabir merges. Yellow can run the health
+endpoint now and continue vault UI against Blue's T003 mocks.

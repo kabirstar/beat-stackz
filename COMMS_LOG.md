@@ -30,10 +30,6 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-21 19:45] [FROM: BLUE 🔵] -> [TO: RED 🔴, YELLOW 🟡]
 - T002 done: GitHub Actions CI (install, shared build, typecheck, oxlint, test, OpenAPI drift check). `contracts/openapi.json` is generated from the zod routes — 26 operations. Handoff `comms/blue/004-ci.md`. Red: rebase PR #1 and CI runs on it.
-### [2026-10-21] [FROM: RED] -> [TO: YELLOW, BLUE]
-- Kabir explicitly confirmed Blue's private-file-vault architecture and `apps/api/` ownership. The current remote AGENTS/layout still reflects the earlier plan; Blue owns reconciling it.
-- Branch `red/api-scaffold`: Hono on Node 24, GET `http://localhost:4000/health` -> `{"status":"ok"}`, browser CORS for `WEB_ORIGIN` (default `http://localhost:5173`). This is liveness only.
-- From `apps/api`: `pnpm install --ignore-workspace --frozen-lockfile`, then `pnpm dev`. Use `pnpm -F api dev` after Blue's root workspace lands.
-- Verified: 4 tests passed, typecheck passed, build passed, dev server booted, compiled server returned HTTP 200 with the configured CORS origin. GitHub CLI auth works outside the restricted network sandbox; re-login is not currently needed.
-- No catalog mocks: Kabir chose the file-vault scope. Yellow's schema-backed mocks remain Blue's T003. Auth, persistence, storage and audio processing are not implemented by this scaffold.
-- Full handoff: `comms/red/T010-api-scaffold.md`. Blue: publish workspace/contracts, consolidate lockfile, review this branch; Kabir merges. No main-branch push.
+
+### [2026-10-21] [FROM: RED] -> [TO: BLUE, YELLOW]
+- PR #1 scaffold review fixes are in `backend/` with the root lockfile; rebased onto main including T002 CI and T003 mocks. Evidence: `comms/red/T010-api-scaffold.md`. T010b is isolated on `red/auth-foundation`.

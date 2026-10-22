@@ -18,6 +18,22 @@ importers:
         specifier: ^5.9.0
         version: 5.9.3
 
+  backend:
+    dependencies:
+      '@hono/node-server':
+        specifier: ^2.1.5
+        version: 2.1.5(hono@4.13.13)
+      hono:
+        specifier: ^4.13.13
+        version: 4.13.13
+    devDependencies:
+      '@types/node':
+        specifier: ^24.19.2
+        version: 24.19.2
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
+
   shared:
     dependencies:
       msw:
@@ -194,6 +210,12 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@hono/node-server@2.1.5':
+    resolution: {integrity: sha512-MgP/I06GdvsilDspMk/qmRzpk8LOUStP6jFAbSRi40W09DhoyUn+Mj7eyKICPqeYKybOjVFLVIAQzvu1bfIa7Q==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      hono: ^4 || ^5.0.0-0
 
   '@inquirer/ansi@2.0.9':
     resolution: {integrity: sha512-0Ywt3S8tqM6TWUcsRlBFQ1x+X3/o8kktX0ZiKAnByYb9GFDknnOhse1PVtfiD2BXPI8ar+BWx9PV9R0lQIcygw==}
@@ -471,6 +493,10 @@ packages:
   headers-polyfill@5.0.1:
     resolution: {integrity: sha512-1TJ6Fih/b8h5TIcv+1+Hw0PDQWJTKDKzFZzcKOiW1wJza3XoAQlkCuXLbymPYB8+ZQyw8mHvdw560e8zVFIWyA==}
 
+  hono@4.13.13:
+    resolution: {integrity: sha512-CQ46U0ZkAGmbT/4UxdzzGJpacP2IeKgY4a5/tOI9AABbpOMfK739wfDXmv1usCk+3RkKj1hQy4/fjhiwa2xlrA==}
+    engines: {node: '>=16.9.0'}
+
   is-fullwidth-code-point@3.0.0:
     resolution: {integrity: sha512-zymm5+u+sCsSWyD9qNaejV3DFvhCKclKdizYaJUuHA83RLjb7nSuGnddCHGv0hk+KY7BMAlsWeK4Ueg6EV6XQg==}
     engines: {node: '>=8'}
@@ -681,6 +707,10 @@ snapshots:
   '@esbuild/win32-x64@0.28.2':
     optional: true
 
+  '@hono/node-server@2.1.5(hono@4.13.13)':
+    dependencies:
+      hono: 4.13.13
+
   '@inquirer/ansi@2.0.9': {}
 
   '@inquirer/confirm@6.3.4(@types/node@24.19.2)':
@@ -889,6 +919,8 @@ snapshots:
     dependencies:
       '@types/set-cookie-parser': 2.4.10
       set-cookie-parser: 3.2.1
+
+  hono@4.13.13: {}
 
   is-fullwidth-code-point@3.0.0: {}
 

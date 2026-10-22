@@ -1,13 +1,13 @@
 # BPACKZ API scaffold
 
-Node 24 + Hono, listening on port 4000. Kabir confirmed Blue's private-vault
-architecture and `apps/api/` layout on 2026-10-21.
+Node 24 + Hono, listening on port 4000. This is the `api` package in the
+private-vault workspace, located in `backend/`.
 
-From this directory, before Blue's workspace configuration lands:
+From the repository root (Node 24, pnpm 10.34.7):
 
 ```sh
-pnpm install --ignore-workspace --frozen-lockfile
-pnpm dev
+pnpm install --frozen-lockfile
+pnpm -F api dev
 ```
 
 From a second terminal:
@@ -23,15 +23,13 @@ single HTTP(S) origin (no trailing slash) before starting for another frontend.
 For example, PowerShell: `$env:WEB_ORIGIN = 'http://localhost:5174'`.
 
 ```sh
-pnpm typecheck
-pnpm test
-pnpm build
-pnpm start
+pnpm -F api typecheck
+pnpm -F api test
+pnpm -F api build
+pnpm -F api start
 ```
 
-Once Blue's pnpm workspace lands, use `pnpm -F api dev` from the repository
-root. Blue should consolidate this app's temporary lockfile into the root
-workspace lockfile during integration.
+Dependencies are recorded in the root `pnpm-lock.yaml`.
 
 Pending: shared-contract routes and generated OpenAPI, Drizzle migrations,
 Better Auth, storage and worker integration. The production server exposes
