@@ -62,16 +62,16 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       paths: frontend/**  depends: T021  verify: manual against mocks, then T013
 
 ## BRAIN
-- [ ] T090 [BRAIN] first live run on #beat-stackz-hq
+- [x] T090 [BRAIN] first live run on #beat-stackz-hq (live since 2026-10-22)
       paths: comms/brain/**  depends: Kabir runs `py brain/brain.py` on the PC
       deliverable: BRAIN answers a status question in Discord from TASKS/COMMS/PRs
       verify: reply appears as BRAIN within a minute of the question
-- [ ] T006 [BLUE] review PR #8: T011 personal vault + T014 Docker switch
+- [x] T006 [BLUE] review PR #8: T011 personal vault + T014 Docker switch (approved, merged)
       paths: review only  depends: PR #7 merged  assigned-by: BRAIN
       deliverable: GitHub review on PR #8 (focus: Better Auth tx extension in backend/src/auth.ts, 0003 backfill)
       verify: gh pr view 8 --repo kabirstar/beat-stackz --json reviews shows BLUE's review
       handoff: comms/brain/T006-review-pr8.md
-- [ ] T007 [BLUE] decide dedup authorization + trusted-hash policy for T013 uploads; review PR #14
+- [x] T007 [BLUE] decide dedup authorization + trusted-hash policy for T013 uploads; review PR #14 (ADR 0001, #15)
       paths: shared/src/api/uploads.ts, docs/adr/**, docs/ARCHITECTURE.md; review on PR #14  depends: PR #14 (draft)  assigned-by: BRAIN
       deliverable: ADR + shared contract change (or explicit none) + GitHub review on PR #14; Red resumes T013 after
       verify: docs/adr/NNNN-*.md exists; pnpm -F @bpackz/shared test; gh pr view 14 --repo kabirstar/beat-stackz --json reviews shows BLUE

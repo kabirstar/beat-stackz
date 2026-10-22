@@ -23,10 +23,25 @@ jobs:
         ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U bpackz" --health-interval 5s --health-timeout 5s --health-retries 10
+      rustfs: # lets backend's storage test run real presigned multipart against a bucket
+        image: rustfs/rustfs:latest
+        env:
+          RUSTFS_ACCESS_KEY: bpackz
+          RUSTFS_SECRET_KEY: bpackz-secret
+        ports: ["9000:9000"]
     env:
       TEST_DATABASE_URL: postgres://bpackz:bpackz@localhost:5432/bpackz_test
+      RUN_STORAGE_INTEGRATION: "1"
+      S3_ENDPOINT: http://localhost:9000
+      S3_REGION: us-east-1
+      S3_BUCKET: bpackz
+      S3_ACCESS_KEY: bpackz
+      S3_SECRET_KEY: bpackz-secret
+      S3_FORCE_PATH_STYLE: "true"
     steps:
       - uses: actions/checkout@v4
+      - name: Wait for RustFS
+        run: for i in $(seq 1 30); do curl -sf http://localhost:9000/health && exit 0; sleep 1; done; echo "RustFS not ready" && exit 1
       - uses: pnpm/action-setup@v4 # version comes from package.json "packageManager"
       - uses: actions/setup-node@v4
         with:
