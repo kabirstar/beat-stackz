@@ -76,3 +76,8 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: ADR + shared contract change (or explicit none) + GitHub review on PR #14; Red resumes T013 after
       verify: docs/adr/NNNN-*.md exists; pnpm -F @bpackz/shared test; gh pr view 14 --repo kabirstar/beat-stackz --json reviews shows BLUE
       handoff: comms/brain/T007-upload-integrity-policy.md
+- [ ] T008 [BLUE] review + merge PR #14 (T013 upload API, red/uploads @ bc1162d)
+      paths: review only (one-line fixes per AGENTS.md)  depends: T007  assigned-by: BRAIN
+      deliverable: GitHub review on PR #14; squash-merge if clear (focus: dedup auth vs ADR 0001, S3/DB recovery, migration 0005, job receipt retention)
+      verify: gh pr view 14 --repo kabirstar/beat-stackz --json reviews,state shows BLUE + MERGED
+      handoff: comms/brain/T008-review-pr14.md
