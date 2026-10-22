@@ -120,6 +120,11 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: vaults.members/invite/removeMember; shares.*; ?token= on download/waveform; 30-day purge job
       verify: pnpm -F api test; CI Docker integration green
       handoff: comms/brain/T017-members-shares-purge.md
+- [ ] T018 [BLUE] CI: install ffmpeg/ffprobe on the runner; review + merge PR #26 (T016 waveforms)
+      paths: .github/workflows/ci.yml; review only on PR #26  depends: none  assigned-by: BRAIN
+      deliverable: #26 check job green, GitHub review on #26, merged on green or changes requested
+      verify: gh pr checks 26 --repo kabirstar/beat-stackz; gh pr view 26 --json reviews shows BLUE
+      handoff: comms/brain/T018-ci-ffmpeg-review-pr26.md
 - [x] T009 [BLUE] gap-check Yellow's T023 list vs shared/src/api; contract change or "no" per NEW item (none needed; comms/blue/T009-feature-gap-check.md)
       paths: shared/**, docs/**  depends: T023 (after T008)  assigned-by: BRAIN
       deliverable: comms/blue/T009-*.md with item → route; shared + mocks updated for accepted items
