@@ -221,10 +221,15 @@ The root .env supplies S3 settings. The migration-upgrade test requires CREATEDB
 on the disposable PostgreSQL instance and removes its temporary test database.
 Current handoff: `comms/red/T013-upload-endpoints.md`.
 
-## Verification worker (T015)
+## Verification and waveform worker (T015/T016)
 
-Run `pnpm -F worker dev` alongside the API to verify uploads and promote them from
+Run the worker container (or `pnpm -F worker dev` with ffmpeg, ffprobe and
+audiowaveform on PATH) alongside the API to verify uploads and promote them from
 `processing` to `ready` or `failed`. Setup and retry/cleanup behavior are documented
 in [worker/README.md](../worker/README.md). `pnpm -F api storage:setup` now also
 preserves existing lifecycle rules while installing a one-day incomplete-multipart
-abort rule for `blobs/`. No database migration is required for T015.
+abort rule for `blobs/`. T016 adds duration/peaks on verified audio using the same
+S3 read; the existing waveform endpoint serves these to vault members. Non-audio
+or unsuccessful waveform processing does not block verified downloads. No
+database migration is required for T015/T016. See worker/README.md for Docker
+commands, processing limits and retry behavior.

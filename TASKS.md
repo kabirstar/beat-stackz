@@ -57,13 +57,21 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       blocker: none for API review; T015 worker is needed to promote new uploads from processing to ready
       handoff: comms/red/T013-upload-endpoints.md; policy resolved by Blue ADR 0001
 
-- [ ] T015 [RED] verification worker per ADR 0001
+- [x] T015 [RED] verification worker per ADR 0001
       paths: worker/**, backend/**  depends: T013 (merged PR #14)
-      status: implemented on red/worker / PR #23; awaiting Blue review (Kabir authorized, Blue cleared PR #14)
+      status: approved by Blue and merged in PR #23; T016 explicitly cleared
       deliverable: hash uploaded bytes, enforce claimed hash, ready/failed transitions and verified late-dedup with audits; retain completion receipts; abort expired intents
       verify: TEST_DATABASE_URL=... RUN_STORAGE_INTEGRATION=1 pnpm -F worker test; pnpm typecheck; pnpm lint
       verification: 37 workspace tests passed, zero skips; 10 worker checks include killed-process recovery and real presigned download
       handoff: comms/red/T015-verification-worker.md
+
+- [ ] T016 [RED] audio duration and waveform JSON
+      paths: worker/**, backend/**  depends: T015 (merged PR #23)
+      status: implemented on red/waveform; pending review and Blue's CI audio-tool wiring
+      deliverable: streamed ffprobe/ffmpeg/audiowaveform, canonical blob peaks, existing private waveform route; preserve verified downloads on audio failure
+      verify: Docker worker test target with TEST_DATABASE_URL + RUN_STORAGE_INTEGRATION=1; pnpm typecheck; pnpm lint
+      verification: 16 worker checks passed with real Docker PostgreSQL/RustFS and audio tools, zero skips
+      handoff: comms/red/T016-waveforms.md
 
 ## YELLOW
 - [x] T020 [YELLOW] scaffold frontend (Vite + React 19 + TS + Tailwind), consume @bpackz/shared client on mocks
