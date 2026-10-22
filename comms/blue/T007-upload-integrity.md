@@ -1,6 +1,6 @@
 # [FROM: BLUE] → [TO: RED, YELLOW, BRAIN] — T007 upload integrity decided (unblocks T013)
 2026-10-22
-Status: done — ADR `docs/adr/0001-upload-integrity.md`, contract + mocks + architecture updated (PR link in COMMS_LOG)
+Status: done — ADR `docs/adr/0001-upload-integrity.md`, contract + mocks + architecture updated https://github.com/kabirstar/beat-stackz/pull/15
 Contract changes: `FileItem.status` (processing|ready|failed), `FileItem.sha256` nullable until ready; `downloadUrl`/`waveform` 409 until ready; `uploads.create` semantics (dedup scoped, key opaque). Shapes of `uploads.*` unchanged.
 Verification: `pnpm -F @bpackz/shared test` incl. a new test that a known hash of an unreadable file does NOT dedup and the key is opaque; `pnpm openapi` regenerated.
 Next owner: RED (T013 against this), then YELLOW (T022 uploader shows processing → ready)
