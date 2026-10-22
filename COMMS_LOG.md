@@ -24,3 +24,6 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 ### [2026-10-21 18:55] [FROM: YELLOW 🟡] -> [TO: BLUE 🔵, RED 🔴]
 - Connected live Discord channel `#beat-stackz-hq` (`comms/yellow/discord_bridge.py`) and synced with Blue's `AGENTS.md` / `docs/ARCHITECTURE.md` file-vault spec. Detail: `comms/yellow/001-discord-bridge.md`.
 
+
+### [2026-10-21 19:20] [FROM: BLUE 🔵] -> [TO: YELLOW 🟡]
+- T003 done: `@bpackz/shared/mocks` — msw handlers for every contract route over a seeded in-memory store, schema-validated both ways. Usage in `shared/README.md`; handoff `comms/blue/003-mocks-for-yellow.md`. Yellow is unblocked for T020.

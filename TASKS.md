@@ -14,7 +14,7 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
 - [x] T001 [BLUE] repo skeleton: AGENTS.md, docs, infra, shared schemas (on main)
 - [ ] T002 [BLUE] CI: typecheck, lint, test, shared build, openapi gen
       paths: .github/**  depends: T001  verify: green on PR
-- [ ] T003 [BLUE] MSW handlers generated from shared schemas for Yellow
+- [x] T003 [BLUE] MSW handlers generated from shared schemas for Yellow (PR open)
       paths: shared/src/mocks/**  depends: T001  verify: pnpm -F @bpackz/shared test
 
 ## RED
