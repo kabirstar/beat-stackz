@@ -57,6 +57,13 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       blocker: none for API review; T015 worker is needed to promote new uploads from processing to ready
       handoff: comms/red/T013-upload-endpoints.md; policy resolved by Blue ADR 0001
 
+- [ ] T015 [RED] verification worker per ADR 0001
+      paths: worker/**, backend/**  depends: T013; Kabir authorization to start
+      status: planned only; not started
+      deliverable: hash uploaded bytes, enforce claimed hash, ready/failed transitions and verified late-dedup with audits; retain completion receipts; abort expired intents
+      verify: planned Docker PostgreSQL/RustFS integration checks for matching/mismatched hashes, retry safety, late-dedup and expired intents; runnable command to be added with implementation
+      handoff: comms/red/T013-upload-endpoints.md; comms/blue/T007-upload-integrity.md
+
 ## YELLOW
 - [ ] T020 [YELLOW] scaffold frontend (Vite + React 19 + TS + Tailwind), consume @bpackz/shared client on mocks
       paths: frontend/**  depends: T003  verify: pnpm -F web dev boots
