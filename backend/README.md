@@ -1,8 +1,8 @@
 # BPACKZ API
 
 The `api` workspace package uses Node 24, Hono, Drizzle and Better Auth.
-The API listens on port 4000. T010b is in progress: database-backed flows
-must pass integration testing before this auth foundation is accepted.
+The API listens on port 4000. T010b is in progress: database-backed auth flows
+pass local integration testing; Blue's review and `/me`/personal vaults remain pending.
 
 ## Local setup
 
@@ -36,8 +36,9 @@ pnpm -F api db:migrate
 pnpm -F api dev
 ```
 
-Docker/Postgres were absent on Red's PC. These DB commands are intended next
-steps, not a claim that migrations or login have been verified locally.
+The Docker path remains the shared setup. Red's PC currently uses native
+PostgreSQL 17.11 for local verification because Docker/WSL are not installed;
+see the PC-specific commands below. Do not run both on port 5432.
 
 ## Endpoints
 
@@ -86,8 +87,44 @@ pnpm -F api test:integration
 ```
 
 Without `TEST_DATABASE_URL`, this test reports a skip, not an integration pass.
-Unit checks exercise the real Better Auth handler for anonymous sessions,
+The integration test starts a real HTTP server on a temporary loopback port.
+It verifies credentialed CORS, signup and login session cookies, logout/revocation
+and audit rollback against PostgreSQL. Unit checks exercise anonymous sessions,
 malformed input and origin rejection without opening a database connection.
 
-Pending: live PostgreSQL checks, audit-scope review, `/me`/personal vaults,
-remaining shared validators/routes, storage and worker integration.
+## Red's current Windows database
+
+PostgreSQL 17.11 is installed at `%LOCALAPPDATA%\BPACKZ\postgres-17.11\pgsql`.
+The adjacent `data` directory holds the cluster; `postgres.log` holds server
+logs. It listens only on `127.0.0.1:5432`, uses SCRAM password authentication,
+and has `bpackz` and `bpackz_test` databases. Generated credentials and the auth
+secret are in the gitignored root `.env`; Discord settings were preserved.
+This is a development instance, not a Windows service or automatic startup.
+
+From PowerShell in the repository root, after a reboot:
+
+```powershell
+$pgRoot = Join-Path $env:LOCALAPPDATA 'BPACKZ\postgres-17.11'
+& "$pgRoot\pgsql\bin\pg_ctl.exe" -D "$pgRoot\data" -l "$pgRoot\postgres.log" -w start
+pnpm -F api db:migrate
+pnpm -F api test:integration
+pnpm -F api dev
+```
+
+To stop this database before starting the Docker Postgres service:
+
+```powershell
+& "$pgRoot\pgsql\bin\pg_ctl.exe" -D "$pgRoot\data" -m fast -w stop
+```
+
+The native database uses its own generated password. When switching to Docker,
+update only the relevant database settings to match Compose; preserve other
+`.env` keys. Native data is not automatically moved into Docker.
+
+Verified locally: migrations, real HTTP auth integration, compiled server
+startup (`/health` and anonymous `/auth/get-session`), 12 tests with no skips,
+typecheck, lint, API build and `db:check`. See
+`comms/red/T010b-postgres-verification.md` for the checkpoint and limitations.
+
+Pending: Blue's audit-scope review, `/me`/personal vaults, remaining shared
+validators/routes, storage and worker integration. Docker is not verified.
