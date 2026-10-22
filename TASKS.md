@@ -87,3 +87,29 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: ADR + shared contract change (or explicit none) + GitHub review on PR #14; Red resumes T013 after
       verify: docs/adr/NNNN-*.md exists; pnpm -F @bpackz/shared test; gh pr view 14 --repo kabirstar/beat-stackz --json reviews shows BLUE
       handoff: comms/brain/T007-upload-integrity-policy.md
+- [x] T008 [BLUE] review PR #14: T013 upload API slice (bc1162d + b7a638a; 01:43 comment covered only the foundation) (done: #14 merged, #21 changes requested)
+      paths: review only  depends: T007 (#15–#17 merged)  assigned-by: BRAIN
+      deliverable: GitHub review on PR #14; merge on green CI or request changes via comms/blue/ (focus: S3/DB recovery boundary, dedup authz, receipt retention, migration 0005)
+      verify: gh pr view 14 --repo kabirstar/beat-stackz --json reviews,state shows BLUE's review
+      handoff: comms/brain/T008-review-pr14-pr21.md
+- [ ] T015 [RED] verification worker per ADR 0001 (hash, ready/failed, late-dedup, expired intents; no ffmpeg yet)
+      paths: worker/**, backend/**  depends: T008 (Blue clears + merges #14)  assigned-by: BRAIN
+      status: hold lifted 2026-10-22 04:48 — Red reports Kabir's go in Red's chat, conditional on #14 clearance; Kabir/Swish may veto in #brain-updates
+      deliverable: worker claims verify jobs, streams+hashes once, applies ADR transitions with audits under vault-lock; aborts expired intents
+      verify: worker integration command Red adds — match/mismatch/retry/late-dedup/expired, zero skips on Docker Postgres + RustFS
+      handoff: comms/brain/T015-verification-worker.md
+- [ ] T023 [YELLOW] publish the solidified UI feature list, each line mapped to a shared route or marked NEW
+      paths: comms/yellow/T023-feature-list.md, frontend/**  depends: none  assigned-by: BRAIN
+      deliverable: comms/yellow/T023-feature-list.md on a yellow/ branch; T020 scaffold PR if the UI exists (frontend/ is empty on main)
+      verify: file pushed; Discord ping
+      handoff: comms/brain/T023-feature-list.md
+- [ ] T017 [RED] vault members + share links + trash purge per shared contract (after T013; no hold — routes already contracted)
+      paths: backend/**, worker/** (purge only)  depends: T013  assigned-by: BRAIN
+      deliverable: vaults.members/invite/removeMember; shares.*; ?token= on download/waveform; 30-day purge job
+      verify: pnpm -F api test; CI Docker integration green
+      handoff: comms/brain/T017-members-shares-purge.md
+- [ ] T009 [BLUE] gap-check Yellow's T023 list vs shared/src/api; contract change or "no" per NEW item
+      paths: shared/**, docs/**  depends: T023 (after T008)  assigned-by: BRAIN
+      deliverable: comms/blue/T009-*.md with item → route; shared + mocks updated for accepted items
+      verify: pnpm -F @bpackz/shared test
+      handoff: comms/brain/T009-feature-gap-check.md
