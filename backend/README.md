@@ -54,6 +54,12 @@ Docker Compose is the shared local setup. Database credentials must match
 - `GET/PATCH/DELETE /vaults/:vaultId/folders/:folderId`: breadcrumbs, rename/move, recursive soft trash.
 - `GET /vaults/:vaultId/children`: folders and paginated file metadata (`folderId`, `limit`, `cursor`).
 - `GET/PATCH/DELETE /vaults/:vaultId/files/:fileId`: metadata, rename/move, soft trash.
+- `POST /vaults/:vaultId/uploads`: scoped verified dedup or begin an opaque multipart intent.
+- `POST /vaults/:vaultId/uploads/:uploadId/sign`: presign selected part PUTs.
+- `POST /vaults/:vaultId/uploads/:uploadId/complete`: validate parts, complete once, enqueue verification.
+- `DELETE /vaults/:vaultId/uploads/:uploadId?key=...`: abort the caller's intent.
+- `GET /vaults/:vaultId/files/:fileId/download`: five-minute URL for a verified ready file.
+- `GET /vaults/:vaultId/files/:fileId/waveform`: stored waveform for a verified ready file, or 404 if absent.
 
 Browser requests use `credentials: 'include'` from `WEB_ORIGIN`. Better Auth
 owns validation and formats under `/auth/*`, per `shared/src/api/auth.ts`.
@@ -61,6 +67,8 @@ Unknown API routes and `/me` authorization errors use the shared `ApiError`
 schema. `/me` validates its response with `authRoutes.me.response` and disables caching.
 
 Vault routes validate params, query, bodies and responses with shared schemas.
+Invalid fields include `issues: [{path, message}]` for form feedback, without
+echoing submitted values.
 Active members can read; owners/editors can change folders/files; only owners
 can rename vaults. Cross-vault file moves require write access in both vaults.
 Mutation requests reject untrusted browser origins. Responses disable caching.
@@ -142,6 +150,73 @@ The existing root TEST_DATABASE_URL may still refer to the retired native
 instance. The PowerShell test command above overrides it for this process only;
 it does not change any other .env key.
 
-Remaining scope: member invitations/removal, upload/file creation, download URLs,
-sharing, restore/purge and worker integration. There is no vault-delete contract.
+Remaining scope: member invitations/removal, share-token access, restore/purge
+and worker integration. There is no vault-delete contract.
 Docker service verification and current test evidence are in Red's handoffs.
+
+## Uploads and storage (ADR 0001)
+
+`src/storage.ts` builds an AWS SDK v3 S3 client from the six `S3_*` keys in
+`infra/.env.example`. Missing credentials fail explicitly; production requires
+HTTPS. The server now passes this client to the upload/download routes.
+Copy missing S3 settings from infra/.env.example into the gitignored root .env
+without replacing existing auth/Discord/database settings, then run:
+
+```powershell
+pnpm -F api storage:setup
+pnpm -F api db:migrate
+pnpm -F api dev
+```
+
+storage:setup creates the bucket if missing and sets a named browser CORS rule
+for WEB_ORIGIN, preserving other named rules. The local bucket and CORS were
+configured during T013; no application file data was deleted.
+
+Create validates destination/write membership and dedups only against verified
+ready blobs referenced by a readable active file. Otherwise it persists a
+24-hour intent binding caller, vault, folder, name, size, mime and claimed hash
+to a random key. Sign checks ownership/key, expiry and part bounds, with a
+five-minute maximum URL lifetime. Complete binds metadata back to the intent,
+checks server ListParts sizes/count/ETags, and persists the manifest before S3
+completion. It creates a processing file, unverified blob, verify job and audits
+atomically. Retrying after S3 success but DB failure recovers from HeadObject;
+replaying completion produces the same file rather than another reference/job.
+
+The worker is a separate T015 slice. Until it verifies bytes, new uploads stay
+processing and download/waveform return 409. The API never treats the claimed
+hash as verified. Worker job payload contains claimedSha256 and the completion
+request hash; keep that payload and completed job as the idempotency receipt.
+Worker expiry cleanup must abort stale intents and remove their rows. Orphan
+S3 multipart uploads after a failed compensating abort also require lifecycle
+cleanup. Jobs and expiry cleanup are not running yet.
+
+Download/waveform currently require vault-member sessions. Share-token access
+will arrive with the sharing slice. Metadata/list responses expose status and
+nullable sha256 from the updated shared contract.
+
+Run the disposable local RustFS check from the repository root (PowerShell):
+
+```powershell
+$env:RUN_STORAGE_INTEGRATION = '1'
+node --env-file=infra/.env.example --test backend/test/storage.integration.test.ts
+Remove-Item Env:RUN_STORAGE_INTEGRATION
+```
+
+This creates its own uniquely named test bucket, uploads a 64 MiB part and a
+final part via presigned URLs, completes, checks byte integrity and Range GET,
+verifies anonymous access is denied, checks CORS/ETag exposure, and aborts a
+second upload. It cleans up its objects and bucket. It neither modifies the root
+`.env` nor modifies the application bucket. Existing environment
+variables override `--env-file`; use local RustFS credentials for this check.
+`pnpm -F api test:storage` is also available when S3 settings are already present.
+
+Without RUN_STORAGE_INTEGRATION=1, the storage integration test skips. CI enables both PostgreSQL and RustFS integration tests via its service containers. The SDK is set to
+calculate request checksums only when required because presigning has no body;
+otherwise its default checksum describes an empty payload and RustFS rejects
+the browser PUT. This setting does not verify the claimed whole-file SHA-256.
+
+For the full endpoint suite, set TEST_DATABASE_URL to the Docker bpackz_test
+database and RUN_STORAGE_INTEGRATION=1, then run `pnpm -F api test:integration`.
+The root .env supplies S3 settings. The migration-upgrade test requires CREATEDB
+on the disposable PostgreSQL instance and removes its temporary test database.
+Current handoff: `comms/red/T013-upload-endpoints.md`.

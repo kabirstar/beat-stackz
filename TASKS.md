@@ -47,11 +47,22 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       verification: passed on Docker PostgreSQL 17.11; see comms/red/T014-docker-local-db.md
 - [ ] T012 [RED] vaults + folders + files CRUD per shared contract
       paths: backend/**  depends: T011  verify: pnpm -F api test
-      status: implemented on red/vault-crud; awaiting Blue review and Kabir merge
+      status: approved by Blue and merged in PR #10; validation issues follow-up on red/uploads
       deliverable: vault list/create/get/rename, folder CRUD/breadcrumbs, children/file metadata/moves/trash, migration 0004
       verification: 18 workspace tests passed, zero skipped on Docker PostgreSQL; see comms/red/T012-vault-crud.md
 - [ ] T013 [RED] presigned multipart: create/sign/complete/abort + presigned GET
       paths: backend/**  depends: T012  verify: pnpm -F api test
+      status: upload endpoints implemented on red/uploads / PR #14; awaiting Blue review
+      verification: 27 local tests passed with PostgreSQL + RustFS enabled, zero skips; upgrade/retry recovery included
+      blocker: none for API review; T015 worker is needed to promote new uploads from processing to ready
+      handoff: comms/red/T013-upload-endpoints.md; policy resolved by Blue ADR 0001
+
+- [ ] T015 [RED] verification worker per ADR 0001
+      paths: worker/**, backend/**  depends: T013; Kabir authorization to start
+      status: planned only; not started
+      deliverable: hash uploaded bytes, enforce claimed hash, ready/failed transitions and verified late-dedup with audits; retain completion receipts; abort expired intents
+      verify: planned Docker PostgreSQL/RustFS integration checks for matching/mismatched hashes, retry safety, late-dedup and expired intents; runnable command to be added with implementation
+      handoff: comms/red/T013-upload-endpoints.md; comms/blue/T007-upload-integrity.md
 
 ## YELLOW
 - [ ] T020 [YELLOW] scaffold frontend (Vite + React 19 + TS + Tailwind), consume @bpackz/shared client on mocks

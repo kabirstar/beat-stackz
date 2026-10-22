@@ -29,6 +29,7 @@ test('HTTP vault/folder/file permissions, concurrency, pagination, trash and aud
   assert.ok(address && typeof address === 'object');
   const origin = `http://127.0.0.1:${address.port}`;
   const userIds: string[] = [];
+  const blobId = randomUUID();
   const sha = randomUUID().replaceAll('-', '') + randomUUID().replaceAll('-', '');
   const request = (path: string, cookie = '', method = 'GET', input?: unknown) => fetch(origin + path, {
     method, headers: { Cookie: cookie, Origin: config.webOrigin, 'Content-Type': 'application/json' },
@@ -66,13 +67,13 @@ test('HTTP vault/folder/file permissions, concurrency, pagination, trash and aud
       { vaultId: shared.id, userId: editor.id, role: 'editor' },
       { vaultId: shared.id, userId: viewer.id, role: 'viewer' },
     ]);
-    await db.insert(blobs).values({ sha256: sha, s3Key: `test/${sha}`, size: 12345, mime: 'audio/wav', refCount: 0 });
+    await db.insert(blobs).values({ id: blobId, verifiedAt: new Date(), sha256: sha, s3Key: `test/${sha}`, size: 12345, mime: 'audio/wav', refCount: 0 });
     const createFolder = async (name: string, parentId: string | null = null, cookie = owner.cookie) =>
       Folder.parse(await expect(await request(`${root}/folders`, cookie, 'POST', { name, parentId }), 201));
     const seedFile = async (name: string, folderId: string | null = null, vaultId = shared.id) => {
       const id = randomUUID();
       await db.transaction(async (tx) => {
-        await tx.insert(files).values({ id, name, folderId, vaultId, blobSha256: sha, createdBy: owner.id });
+        await tx.insert(files).values({ id, name, folderId, vaultId, blobId, status: 'ready', createdBy: owner.id });
         await tx.update(blobs).set({ refCount: sql`${blobs.refCount} + 1` }).where(eq(blobs.sha256, sha));
       });
       return FileItem.parse(await expect(await request(`/vaults/${vaultId}/files/${id}`, owner.cookie), 200));
@@ -87,7 +88,9 @@ test('HTTP vault/folder/file permissions, concurrency, pagination, trash and aud
       await expect(await request(root, editor.cookie, 'PATCH', { name: 'Denied' }), 403);
       assert.equal(Vault.parse(await expect(await request(root, owner.cookie, 'PATCH', { name: 'Renamed vault' }), 200)).name, 'Renamed vault');
       await expect(await request(`${root}/folders`, viewer.cookie, 'POST', { name: 'Denied', parentId: null }), 403);
-      await expect(await request(`${root}/folders`, owner.cookie, 'POST', { name: 'bad/name', parentId: null }), 400);
+      const invalid = await expect(await request(`${root}/folders`, owner.cookie, 'POST', { name: 'private-value/not-for-errors', parentId: null }), 400);
+      assert.deepEqual(invalid.issues, [{ path: 'name', message: 'no slashes' }]);
+      assert.ok(!JSON.stringify(invalid).includes('private-value'));
       await expect(await request(`${root}/children?limit=201`, owner.cookie), 400);
       await expect(await request(`${root}/children?cursor=`, owner.cookie), 400);
       const badOrigin = await fetch(origin + '/vaults', { method: 'POST', headers: {

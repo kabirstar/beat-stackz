@@ -101,7 +101,9 @@ export const folders = pgTable('folders', {
 ]);
 
 export const blobs = pgTable('blobs', {
-  sha256: text('sha256').primaryKey(),
+  id: text('id').primaryKey(),
+  sha256: text('sha256').unique(),
+  verifiedAt: timestamp('verified_at', { withTimezone: true }),
   s3Key: text('s3_key').notNull(),
   size: bigint('size', { mode: 'number' }).notNull(),
   mime: text('mime'),
@@ -115,7 +117,8 @@ export const files = pgTable('files', {
   vaultId: text('vault_id').notNull().references(() => vaults.id, { onDelete: 'cascade' }),
   folderId: text('folder_id').references(() => folders.id, { onDelete: 'set null' }),
   name: text('name').notNull(),
-  blobSha256: text('blob_sha256').notNull().references(() => blobs.sha256),
+  blobId: text('blob_id').notNull().references(() => blobs.id),
+  status: text('status').notNull().default('processing'),
   createdBy: text('created_by').references(() => users.id),
   createdAt: timestamp('created_at', { withTimezone: true, precision: 3 }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true, precision: 3 }).notNull().defaultNow(),
@@ -123,4 +126,36 @@ export const files = pgTable('files', {
 }, (table) => [
   uniqueIndex('files_active_name_idx').on(table.vaultId, sql`coalesce(${table.folderId}, '')`, table.name).where(sql`${table.deletedAt} is null`),
   index('files_folder_idx').on(table.vaultId, table.folderId, table.id),
+  check('files_status_check', sql`${table.status} in ('processing', 'ready', 'failed')`),
+]);
+
+export const uploads = pgTable('uploads', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id),
+  vaultId: text('vault_id').notNull().references(() => vaults.id, { onDelete: 'cascade' }),
+  folderId: text('folder_id').references(() => folders.id, { onDelete: 'set null' }),
+  name: text('name').notNull(),
+  size: bigint('size', { mode: 'number' }).notNull(),
+  mime: text('mime'),
+  claimedSha256: text('claimed_sha256').notNull(),
+  key: text('key').notNull(),
+  multipartId: text('multipart_id').notNull(),
+  parts: jsonb('parts').$type<{ PartNumber: number; ETag: string }[]>(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+}, (table) => [index('uploads_expiry_idx').on(table.expiresAt)]);
+
+export const jobs = pgTable('jobs', {
+  id: bigint('id', { mode: 'bigint' }).primaryKey().generatedAlwaysAsIdentity(),
+  kind: text('kind').notNull(),
+  fileId: text('file_id').notNull().references(() => files.id, { onDelete: 'cascade' }),
+  state: text('state').notNull().default('queued'),
+  attempts: integer('attempts').notNull().default(0),
+  runAfter: timestamp('run_after', { withTimezone: true }).notNull().defaultNow(),
+  lastError: text('last_error'),
+  payload: jsonb('payload').$type<{ claimedSha256: string; uploadRequestHash: string }>().notNull(),
+}, (table) => [
+  check('jobs_state_check', sql`${table.state} in ('queued', 'running', 'done', 'failed')`),
+  uniqueIndex('jobs_file_kind_idx').on(table.fileId, table.kind),
+  index('jobs_pending_idx').on(table.state, table.runAfter),
 ]);
