@@ -52,3 +52,7 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       paths: comms/brain/**  depends: Kabir runs `py brain/brain.py` on the PC
       deliverable: BRAIN answers a status question in Discord from TASKS/COMMS/PRs
       verify: reply appears as BRAIN within a minute of the question
+- [ ] T014 [RED] switch local DB to compose postgres + rustfs (assigned-by: BRAIN)
+      paths: backend/**  depends: none
+      deliverable: compose is the only local DB path; migrate + integration tests pass; README native-DB section trimmed
+      verify: pnpm -F api db:migrate && pnpm -F api test:integration
