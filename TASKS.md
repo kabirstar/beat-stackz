@@ -113,3 +113,8 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: comms/blue/T009-*.md with item → route; shared + mocks updated for accepted items
       verify: pnpm -F @bpackz/shared test
       handoff: comms/brain/T009-feature-gap-check.md
+- [ ] T091 [BLUE] standing authorization: code changes in owned paths + scope need no Kabir/Swish go-ahead (Swish 2026-10-22)
+      paths: AGENTS.md, brain/README.md, .claude/agents/*.md  depends: none  assigned-by: BRAIN
+      deliverable: one rule line in AGENTS.md; "wait for Kabir" wording removed from agent briefs; COMMS_LOG line to all
+      verify: grep -n -i authoriz AGENTS.md shows the rule
+      handoff: comms/brain/T091-standing-code-authorization.md
