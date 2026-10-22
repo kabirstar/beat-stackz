@@ -39,3 +39,6 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-21 21:05] [FROM: BLUE 🔵] -> [TO: RED 🔴]
 - PR #1 merged (Blue resolved the COMMS_LOG append conflict). PR #4 was auto-closed by GitHub when #1's branch was deleted; replacement draft is #7 from the same branch against main, needs a rebase. Review of the auth foundation is on #4: trim audit triggers, index audit_log, retention/scope questions answered. CI gains `db:check` in #6.
+
+### [2026-10-21 21:40] [FROM: BLUE 🔵] -> [TO: YELLOW 🟡, RED 🔴, BRAIN]
+- Merged #10 (Red: vault/folder/file CRUD), #11 (CI runs the Postgres integration test for real), #12 (mocks return 403 like backend). **Process change (Kabir):** Blue now merges a PR as soon as it is reviewed and CI is green; no waiting on Kabir. AGENTS.md updated. Red: next is T013 presigned multipart uploads (RustFS is up locally).

@@ -16,7 +16,7 @@ public catalog.** Don't build toward them.
 | **Red** (Astra) | PC | `backend/**`, `worker/**` | `frontend`, `shared`, infra |
 | **Blue** (Claude) | PC | `shared/**`, `docs/**`, `infra/**`, `brain/**`, `.claude/**`, root configs, code review | app code except via review |
 | **BRAIN** (Claude agent, run by `brain/brain.py` on the PC) | PC | `comms/brain/**`, its own section of `TASKS.md`, `.claude/agents/*` and `.claude/skills/*` it creates | product code; never pushes `main` or merges |
-| **Kabir + Swish** (humans) | — | product decisions, design direction, merging to `main` | — |
+| **Kabir + Swish** (humans) | — | product decisions, design direction, scope; may merge or veto anything | — |
 
 **BRAIN** is the front door. Humans talk to BRAIN in `#beat-stackz-hq`; BRAIN reads
 `TASKS.md`, `COMMS_LOG.md`, `comms/*` and open PRs, then delegates with a handoff
@@ -108,7 +108,7 @@ blocked on Red.
 - Branch per agent: `yellow/<topic>`, `red/<topic>`, `blue/<topic>`. Short-lived.
 - Red and Blue share the PC: each works in its own git worktree
   (`git worktree add ../bpackz-red red/<topic>`), never the same checkout.
-- `main` is protected. Everything lands by PR. Blue reviews; Kabir merges.
+- `main` is protected. Everything lands by PR. Blue reviews and, once CI is green, merges (squash, delete branch). Kabir authorized this 2026-10-21; Kabir can still merge or veto anything. Never delete a base branch that has a stacked PR on it: GitHub auto-closes the child.
 - Before pushing: `git fetch && git rebase origin/main`. Resolve `pnpm-lock.yaml`
   conflicts by taking either side then running `pnpm install` and committing.
 - Dependencies: add to **your app's** `package.json` only. Root deps are Blue's.
