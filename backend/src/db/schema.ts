@@ -153,7 +153,11 @@ export const jobs = pgTable('jobs', {
   attempts: integer('attempts').notNull().default(0),
   runAfter: timestamp('run_after', { withTimezone: true }).notNull().defaultNow(),
   lastError: text('last_error'),
-  payload: jsonb('payload').$type<{ claimedSha256: string; uploadRequestHash: string }>().notNull(),
+  payload: jsonb('payload').$type<{
+    claimedSha256: string;
+    uploadRequestHash: string;
+    cleanup?: { key: string; outcome: 'done' | 'failed'; error: string | null };
+  }>().notNull(),
 }, (table) => [
   check('jobs_state_check', sql`${table.state} in ('queued', 'running', 'done', 'failed')`),
   uniqueIndex('jobs_file_kind_idx').on(table.fileId, table.kind),
