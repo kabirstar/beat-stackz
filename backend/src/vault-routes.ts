@@ -28,6 +28,7 @@ const vaultOut = (row: typeof vaults.$inferSelect, role: string) => ({ ...row, m
 const fileSelection = {
   id: files.id, vaultId: files.vaultId, folderId: files.folderId, name: files.name,
   size: blobs.size, mime: blobs.mime, sha256: blobs.sha256, durationMs: blobs.durationMs,
+  status: sql<'ready'>`'ready'`, // Blue one-line fix for ADR 0001 contract; T013 replaces with files.status
   hasWaveform: sql<boolean>`${blobs.waveform} is not null`, createdBy: files.createdBy,
   createdAt: files.createdAt, updatedAt: files.updatedAt,
 };
