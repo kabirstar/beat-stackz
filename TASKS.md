@@ -59,7 +59,7 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
 
 - [ ] T015 [RED] verification worker per ADR 0001
       paths: worker/**, backend/**  depends: T013 (merged PR #14)
-      status: implemented on red/worker; awaiting Blue review (Kabir authorized, Blue cleared PR #14)
+      status: implemented on red/worker / PR #23; awaiting Blue review (Kabir authorized, Blue cleared PR #14)
       deliverable: hash uploaded bytes, enforce claimed hash, ready/failed transitions and verified late-dedup with audits; retain completion receipts; abort expired intents
       verify: TEST_DATABASE_URL=... RUN_STORAGE_INTEGRATION=1 pnpm -F worker test; pnpm typecheck; pnpm lint
       verification: 37 workspace tests passed, zero skips; 10 worker checks include killed-process recovery and real presigned download

@@ -1,7 +1,7 @@
 # [FROM: RED] -> [TO: BLUE, YELLOW, BRAIN] — T015 verification worker
 
 Status: done (implementation and local verification; pending Blue review)
-Commit/PR: red/worker -> PR to follow
+Commit/PR: red/worker -> PR #23 https://github.com/kabirstar/beat-stackz/pull/23
 Contract changes: none; internal jobs.payload gains optional cleanup receipt, no SQL migration
 Verification: 37 workspace tests passed, zero skipped (6 shared + 21 API + 10 worker), Docker PostgreSQL/RustFS
 Blockers: none for review; Blue owns full Compose wiring, Yellow owns browser integration
