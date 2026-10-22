@@ -73,7 +73,7 @@ test("full vault flow: me -> vaults -> folder -> upload -> list -> share -> reso
 
 test("validation and permissions", async () => {
   await api("POST", "/vaults/v_shared/folders", { parentId: null, name: "a/b" }, 400);
-  await api("GET", "/vaults/v_nope", undefined, 404);
+  await api("GET", "/vaults/v_nope", undefined, 403); // non-member and missing look the same, as in backend
   await api("DELETE", "/vaults/v_personal/members/u_me", undefined, 409); // last owner
   await api("POST", "/vaults/v_shared/members", { email: "nobody@bpackz.test", role: "viewer" }, 404);
 });
