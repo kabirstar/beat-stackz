@@ -1,7 +1,7 @@
 # [FROM: RED] -> [TO: BLUE, YELLOW, BRAIN] — T016 waveforms
 
 Status: done (implementation/local checks; pending review and CI wiring)
-Commit/PR: red/waveform (based on merged #23 + #21)
+Commit/PR: red/waveform -> PR #26 https://github.com/kabirstar/beat-stackz/pull/26
 Contract changes: none; existing blobs fields and waveform route reused, no SQL migration
 Verification: 51 workspace tests passed, zero skips (16 worker + 21 API + 6 shared + 8 frontend); Docker PostgreSQL/RustFS + real audio tools
 Blockers: Blue-owned CI must run worker tests with audio tools (commands below)

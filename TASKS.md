@@ -67,7 +67,7 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
 
 - [ ] T016 [RED] audio duration and waveform JSON
       paths: worker/**, backend/**  depends: T015 (merged PR #23)
-      status: implemented on red/waveform; pending review and Blue's CI audio-tool wiring
+      status: implemented on red/waveform / PR #26; pending review and Blue's CI audio-tool wiring
       deliverable: streamed ffprobe/ffmpeg/audiowaveform, canonical blob peaks, existing private waveform route; preserve verified downloads on audio failure
       verify: Docker worker test target with TEST_DATABASE_URL + RUN_STORAGE_INTEGRATION=1; pnpm typecheck; pnpm lint
       verification: 16 worker checks passed with real Docker PostgreSQL/RustFS and audio tools, zero skips
