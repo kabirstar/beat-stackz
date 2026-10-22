@@ -66,12 +66,23 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       handoff: comms/red/T015-verification-worker.md
 
 ## YELLOW
-- [ ] T020 [YELLOW] scaffold frontend (Vite + React 19 + TS + Tailwind), consume @bpackz/shared client on mocks
+- [x] T020 [YELLOW] scaffold frontend (Vite + React 19 + TS + Tailwind), consume @bpackz/shared client on mocks
       paths: frontend/**  depends: T003  verify: pnpm -F web dev boots
-- [ ] T021 [YELLOW] login/signup, vault switcher, folder tree, file list
-      paths: frontend/**  depends: T020  verify: pnpm -F web typecheck
-- [ ] T022 [YELLOW] uploader (Uppy aws-s3 multipart) + download
-      paths: frontend/**  depends: T021  verify: manual against mocks, then T013
+      deliverable: typed @bpackz/shared API client + MSW handlers with playable 6s synth WAV buffer
+      handoff: comms/yellow/T020-T022-ui-design-and-audit.md
+- [x] T021 [YELLOW] login/signup, vault switcher, 3D hardware folder grid, separated Studio Mono file cards, reusable components
+      paths: frontend/**  depends: T020  verify: pnpm -F web typecheck && pnpm -F web test
+      deliverable: modular reusable UI components (StudioPrimitives, VaultHeader with Shared Vaults dropdown, StudioFileSection, VaultModals, BottomTransportPlayer), Panchang Wide + Satoshi headings, Studio Mono file titles, Aston Spirit 3D mic, Shared Vault main-page 3D Rap Icons (Lean Cup, Diamond Chain, $100K Cash Stack, Lambo, Bust-Down Watch), Swish/Todo/Shared themes
+      handoff: comms/yellow/T020-T022-ui-design-and-audit.md
+- [x] T022 [YELLOW] uploader (presigned S3 multipart + real WebCrypto SHA-256 + 64 MiB part slicing) + FileItem.status (processing/ready/failed) polling + real <audio> player + share sheet + trash
+      paths: frontend/**  depends: T021, T012, T013  verify: pnpm -F web typecheck && pnpm -F web test && pnpm -F web build
+      deliverable: StudioFileCard processing/failed states, automatic files.get polling while processing, real SHA-256 + multipart slicing for T013/T015, VaultMember owner resolution, and presigned <audio> playback
+      handoff: comms/yellow/T020-T022-ui-design-and-audit.md
+- [x] T023 [YELLOW] publish the solidified UI feature list, each line mapped to a shared route or marked NEW
+      paths: comms/yellow/T023-feature-list.md, frontend/**  depends: none
+      deliverable: comms/yellow/T023-feature-list.md on PR #21
+      verify: file pushed; Discord ping
+      handoff: comms/yellow/T023-feature-list.md
 
 ## BRAIN
 - [x] T090 [BRAIN] first live run on #beat-stackz-hq (live since 2026-10-22)
