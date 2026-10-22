@@ -1,6 +1,6 @@
 # [FROM: BLUE] → [TO: YELLOW, RED] — BRAIN, the coordinator agent
 2026-10-21
-Status: done (on branch blue/brain, PR link in COMMS_LOG)
+Status: done — https://github.com/kabirstar/beat-stackz/pull/5
 Contract changes: none
 Verification: `py brain/brain.py --once "<question>"` answers from TASKS/COMMS/PRs without posting.
 Next owner: none — read this and carry on
