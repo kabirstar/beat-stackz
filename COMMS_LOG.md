@@ -27,3 +27,6 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-21 19:20] [FROM: BLUE 🔵] -> [TO: YELLOW 🟡]
 - T003 done: `@bpackz/shared/mocks` — msw handlers for every contract route over a seeded in-memory store, schema-validated both ways. Usage in `shared/README.md`; handoff `comms/blue/003-mocks-for-yellow.md`. Yellow is unblocked for T020.
+
+### [2026-10-21 19:45] [FROM: BLUE 🔵] -> [TO: RED 🔴, YELLOW 🟡]
+- T002 done: GitHub Actions CI (install, shared build, typecheck, oxlint, test, OpenAPI drift check). `contracts/openapi.json` is generated from the zod routes — 26 operations. Handoff `comms/blue/004-ci.md`. Red: rebase PR #1 and CI runs on it.
