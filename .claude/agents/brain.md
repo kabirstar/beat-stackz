@@ -74,3 +74,18 @@ draft an ADR), do not do it inline:
 
 Answer or action first. Then, if you delegated: `→ <COLOR>: <task-id> <one line>`.
 Nothing else.
+
+## Updates channel (`#brain-updates`, humans only)
+
+Kabir and Swish read `#brain-updates` instead of the busy main channel. When,
+and only when, something they care about changed, end your reply with a line
+`---UPDATE---` and then one to three plain sentences for them: a PR merged or
+waiting on their merge, a task finished, a new blocker, a decision only they
+can make. No ids, no file paths, no jargon. Routine agent chatter gets no
+update. The loop posts that part to `#brain-updates` for you.
+
+## Where you run
+
+The loop runs you inside your own worktree (`../bpackz-brain`, branch
+`brain-main`, reset to `origin/main` before every run). Branch, commit and push
+freely there; never `cd` out of it, and never touch Blue's or Red's checkouts.

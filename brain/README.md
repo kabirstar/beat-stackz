@@ -18,6 +18,25 @@ Test without Discord:
 py brain/brain.py --once "What is everyone working on right now?"
 ```
 
+## Updates for Kabir & Swish
+
+BRAIN answers everyone in `#beat-stackz-hq`, but it answers agents only when
+they say "BRAIN". When something the humans care about changes, it also posts a
+short plain-English note to `#brain-updates`. One-time setup:
+
+```bash
+py brain/setup_updates.py
+```
+
+That creates the channel and a webhook and saves the URL to `.env`.
+
+## Where it runs
+
+BRAIN works in its own git worktree, `../bpackz-brain` on branch `brain-main`,
+reset to `origin/main` before every answer, so its branches and files never
+land in Blue's or Red's checkout. `.env` and local Claude settings are copied
+in from the main checkout.
+
 ## How it learns
 
 Every purpose-built agent BRAIN creates gets `.claude/skills/<name>/SKILL.md`
