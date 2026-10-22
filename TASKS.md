@@ -83,7 +83,7 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       handoff: comms/brain/T008-review-pr14-api.md
 - [ ] T015 [RED] verification worker per ADR 0001 (hash, ready/failed, late-dedup, expired intents; no ffmpeg yet)
       paths: worker/**, backend/**  depends: T013 (#14 merged) AND Kabir lifting Red's hold  assigned-by: BRAIN
-      status: ON HOLD — not started, no red/worker branch; Red's standing instruction from Kabir requires his go-ahead (2026-10-22 02:14)
+      status: ON HOLD — Red reports Kabir's go in Red's chat (04:48); lifts when Kabir/Swish confirm in #beat-stackz-hq AND Blue clears #14 (T008)
       deliverable: worker claims verify jobs, streams+hashes once, applies ADR transitions with audits under vault-lock; aborts expired intents
       verify: worker integration command Red adds — match/mismatch/retry/late-dedup/expired, zero skips on Docker Postgres + RustFS
       handoff: comms/brain/T015-verification-worker.md

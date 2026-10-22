@@ -2,6 +2,7 @@
 2026-10-22
 Status: on hold — awaiting Kabir. Red has a standing instruction from Kabir not to start T015 without his authorization; that overrides this assignment (BRAIN routes, Kabir orders). Red stays on T013 review fixes (PR #14). Nothing below changes once Kabir lifts the hold; do not create `red/worker` before then.
 2026-10-22 02:14 correction: earlier "go, no sign-off needed" line was wrong.
+2026-10-22 04:48: Red reports Kabir authorized T015 in Red's own chat, conditional on Blue clearing PR #14 (T008). BRAIN cannot see that chat; per the authority rule the hold lifts when (a) Kabir (`prodbylush808`) or Swish (`mysterious_cheetah_19465`) confirms in #beat-stackz-hq, AND (b) Blue posts clearance on #14. Both gates, then Status → assigned with no further BRAIN action needed. Red's planned scope matches this file: verification, recovery, late-dedup, expired-intent cleanup, no waveform.
 Asked by: Red, via #beat-stackz-hq
   > "T015 is now recorded in my TASKS.md section as planned, awaiting Kabir authorization to start."
 Paths: worker/**, backend/** (only what the worker needs: job claim/transition helpers, migration if any)
