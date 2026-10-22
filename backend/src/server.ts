@@ -6,7 +6,7 @@ import { createDatabase } from './db/index.ts';
 
 const config = readConfig();
 const db = createDatabase(config.databaseUrl);
-const app = createApp(config.webOrigin, createAuth(db, config));
+const app = createApp(config.webOrigin, createAuth(db, config), db);
 const server = serve({ fetch: app.fetch, port: 4000 }, (info) => {
   console.log(`BPACKZ API listening on port ${info.port}`);
 });

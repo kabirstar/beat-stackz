@@ -1,8 +1,8 @@
 # BPACKZ API
 
 The `api` workspace package uses Node 24, Hono, Drizzle and Better Auth.
-The API listens on port 4000. T010b is in progress: database-backed auth flows
-pass local integration testing; `/me`/personal vaults remain pending.
+The API listens on port 4000. Signup provisions a personal vault and owner
+membership atomically; authenticated `GET /me` returns the shared user/vault contract.
 
 ## Local setup
 
@@ -31,14 +31,13 @@ and `db:migrate` load the root `.env`.
 With Docker Desktop running:
 
 ```sh
-docker compose -f infra/docker-compose.yml up -d postgres
+docker compose -f infra/docker-compose.yml up -d postgres rustfs
 pnpm -F api db:migrate
 pnpm -F api dev
 ```
 
-The Docker path remains the shared setup. Red's PC currently uses native
-PostgreSQL 17.11 for local verification because Docker/WSL are not installed;
-see the PC-specific commands below. Do not run both on port 5432.
+Docker Compose is the shared local setup. Database credentials must match
+`infra/.env.example`; preserve existing auth and Discord keys when editing `.env`.
 
 ## Endpoints
 
@@ -47,11 +46,13 @@ see the PC-specific commands below. Do not run both on port 5432.
 - `POST /auth/sign-in/email`: Better Auth JSON `{email, password}`.
 - `GET /auth/get-session`: session/user, or `null` when anonymous.
 - `POST /auth/sign-out`: logout; send the session cookie.
+- `GET /me`: `{user, personalVaultId}` for the signed-in active owner;
+  401 without a valid session, 403 if their personal vault is unavailable.
 
 Browser requests use `credentials: 'include'` from `WEB_ORIGIN`. Better Auth
 owns validation and formats under `/auth/*`, per `shared/src/api/auth.ts`.
-Unknown API routes use the shared `ApiError` schema. `/me` awaits personal-vault
-provisioning in T011; no placeholder vault ID is returned.
+Unknown API routes and `/me` authorization errors use the shared `ApiError`
+schema. `/me` validates its response with `authRoutes.me.response` and disables caching.
 
 ## Checks and migrations
 
@@ -79,7 +80,7 @@ are excluded. Domain mutations use application transactions and include vault_id
 
 Use a separate database ending in `_test`. The test applies migrations, creates
 uniquely named test users, checks signup/login/logout, HttpOnly cookies and
-audit rollback, then removes its user. Audit rows and migrations remain in
+audit rollback, personal-vault isolation and idempotent backfill, then removes its users. Audit rows and migrations remain in
 the disposable test database. Example in PowerShell after starting Postgres:
 
 ```powershell
@@ -94,39 +95,24 @@ It verifies credentialed CORS, signup and login session cookies, logout/revocati
 and audit rollback against PostgreSQL. Unit checks exercise anonymous sessions,
 malformed input and origin rejection without opening a database connection.
 
-## Red's current Windows database
+## Signup transaction
 
-PostgreSQL 17.11 is installed at `%LOCALAPPDATA%\BPACKZ\postgres-17.11\pgsql`.
-The adjacent `data` directory holds the cluster; `postgres.log` holds server
-logs. It listens only on `127.0.0.1:5432`, uses SCRAM password authentication,
-and has `bpackz` and `bpackz_test` databases. Generated credentials and the auth
-secret are in the gitignored root `.env`; Discord settings were preserved.
-This is a development instance, not a Windows service or automatic startup.
+Better Auth's after-create hooks run after commit. A small extension to its
+Drizzle transaction adapter provisions the personal vault, owner membership and
+domain audit rows before signup commits. Session creation failure rolls all of
+these back together. A partial unique index on vaults.created_by for personal
+vaults enforces one per user. Migration 0003 backfills active existing users and
+can repeat the backfill without adding duplicate vaults or audit rows.
 
-From PowerShell in the repository root, after a reboot:
+## Retired native database
 
-```powershell
-$pgRoot = Join-Path $env:LOCALAPPDATA 'BPACKZ\postgres-17.11'
-& "$pgRoot\pgsql\bin\pg_ctl.exe" -D "$pgRoot\data" -l "$pgRoot\postgres.log" -w start
-pnpm -F api db:migrate
-pnpm -F api test:integration
-pnpm -F api dev
-```
+Red's native PostgreSQL 17.11 installation is stopped and retired from the local
+workflow. Its files remain under `%LOCALAPPDATA%\BPACKZ\postgres-17.11`; no native
+data was deleted or copied into Docker. Use the Compose commands above.
 
-To stop this database before starting the Docker Postgres service:
+The existing root TEST_DATABASE_URL may still refer to the retired native
+instance. The PowerShell test command above overrides it for this process only;
+it does not change any other .env key.
 
-```powershell
-& "$pgRoot\pgsql\bin\pg_ctl.exe" -D "$pgRoot\data" -m fast -w stop
-```
-
-The native database uses its own generated password. When switching to Docker,
-update only the relevant database settings to match Compose; preserve other
-`.env` keys. Native data is not automatically moved into Docker.
-
-Verified locally: migrations, real HTTP auth integration, compiled server
-startup (`/health` and anonymous `/auth/get-session`), 12 tests with no skips,
-typecheck, lint, API build and `db:check`. See
-`comms/red/T010b-postgres-verification.md` for the checkpoint and limitations.
-
-Pending: `/me`/personal vaults, remaining shared
-validators/routes, storage and worker integration. Docker is not verified.
+Remaining scope: other domain tables/routes, storage and worker integration.
+Docker service verification and current test evidence are in Red's handoffs.
