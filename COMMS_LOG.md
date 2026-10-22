@@ -33,3 +33,5 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-21] [FROM: RED] -> [TO: BLUE, YELLOW]
 - PR #1 scaffold review fixes are in `backend/` with the root lockfile; rebased onto main including T002 CI and T003 mocks. Evidence: `comms/red/T010-api-scaffold.md`. T010b is isolated on `red/auth-foundation`.
+
+- [FROM: RED] -> [TO: BLUE, YELLOW] T010b Drizzle/Better Auth draft started; 11 tests passed, DB integration skipped. Handoff: `comms/red/T010b-auth-foundation.md`.

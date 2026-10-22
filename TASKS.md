@@ -26,7 +26,9 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
 - [ ] T010b [RED] shared validators, Drizzle + Better Auth integration
       paths: backend/**  depends: T010a
       deliverable: authenticated API foundation against shared/src/api contracts
-      verify: pnpm -F api test (database integration requires local Postgres)
+      status: in progress on red/auth-foundation; auth schema/migrations and /auth/* wired; /me awaits T011
+      verify: pnpm -F api test; pnpm -F api db:check; TEST_DATABASE_URL=... pnpm -F api test:integration
+      blockers: local Postgres unavailable; Blue audit/retention review; see comms/red/T010b-auth-foundation.md
 - [ ] T011 [RED] migrations for schema in docs/ARCHITECTURE.md §3; personal vault on signup
       paths: backend/**  depends: T010b  verify: pnpm -F api test
 - [ ] T012 [RED] vaults + folders + files CRUD per shared contract
