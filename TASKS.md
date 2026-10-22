@@ -34,7 +34,7 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       blockers: none; see comms/red/T005-review-fixes.md
 - [ ] T011 [RED] migrations for schema in docs/ARCHITECTURE.md §3; personal vault on signup
       paths: backend/**  depends: T010b  verify: pnpm -F api test
-      status: personal-vault slice implemented on red/personal-vault; review pending
+      status: personal-vault slice approved by Blue and merged in PR #8
       deliverable: vaults/members migration + active-user backfill; atomic signup provisioning and GET /me
       verification: Docker HTTP integration covers ownership, duplicate prevention, rollback and session revocation
       remaining: other domain tables land with their dependent route slices; see comms/red/T011-personal-vault.md
@@ -45,6 +45,9 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       verification: passed on Docker PostgreSQL 17.11; see comms/red/T014-docker-local-db.md
 - [ ] T012 [RED] vaults + folders + files CRUD per shared contract
       paths: backend/**  depends: T011  verify: pnpm -F api test
+      status: implemented on red/vault-crud; awaiting Blue review and Kabir merge
+      deliverable: vault list/create/get/rename, folder CRUD/breadcrumbs, children/file metadata/moves/trash, migration 0004
+      verification: 18 workspace tests passed, zero skipped on Docker PostgreSQL; see comms/red/T012-vault-crud.md
 - [ ] T013 [RED] presigned multipart: create/sign/complete/abort + presigned GET
       paths: backend/**  depends: T012  verify: pnpm -F api test
 

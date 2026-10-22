@@ -5,6 +5,7 @@ import { and, eq, isNull } from 'drizzle-orm';
 import type { Auth } from './auth.ts';
 import type { Database } from './db/index.ts';
 import { users, vaultMembers, vaults } from './db/schema.ts';
+import { createVaultRoutes } from './vault-routes.ts';
 
 export function createApp(webOrigin = 'http://localhost:5173', auth?: Auth, db?: Database) {
   const origin = new URL(webOrigin);
@@ -31,6 +32,7 @@ export function createApp(webOrigin = 'http://localhost:5173', auth?: Auth, db?:
       personalVaultId: personal.vaultId,
     }));
   });
+  if (auth && db) app.route('/vaults', createVaultRoutes(auth, db, webOrigin));
   app.notFound((context) => context.json(ApiError.parse({
     error: 'not_found', message: 'Route not found',
   }), 404));

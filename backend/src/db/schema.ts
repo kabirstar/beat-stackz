@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { bigint, boolean, check, index, jsonb, pgTable, primaryKey, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { bigint, boolean, check, index, integer, jsonb, pgTable, primaryKey, text, timestamp, uniqueIndex, type AnyPgColumn } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: text('id').primaryKey(),
@@ -85,4 +85,42 @@ export const vaultMembers = pgTable('vault_members', {
   primaryKey({ columns: [table.vaultId, table.userId] }),
   index('vault_members_user_idx').on(table.userId),
   check('vault_members_role_check', sql`${table.role} in ('owner', 'editor', 'viewer')`),
+]);
+
+export const folders = pgTable('folders', {
+  id: text('id').primaryKey(),
+  vaultId: text('vault_id').notNull().references(() => vaults.id, { onDelete: 'cascade' }),
+  parentId: text('parent_id').references((): AnyPgColumn => folders.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  createdBy: text('created_by').references(() => users.id),
+  updatedAt: timestamp('updated_at', { withTimezone: true, precision: 3 }).notNull().defaultNow(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+}, (table) => [
+  uniqueIndex('folders_active_name_idx').on(table.vaultId, sql`coalesce(${table.parentId}, '')`, table.name).where(sql`${table.deletedAt} is null`),
+  index('folders_parent_idx').on(table.vaultId, table.parentId),
+]);
+
+export const blobs = pgTable('blobs', {
+  sha256: text('sha256').primaryKey(),
+  s3Key: text('s3_key').notNull(),
+  size: bigint('size', { mode: 'number' }).notNull(),
+  mime: text('mime'),
+  durationMs: integer('duration_ms'),
+  waveform: jsonb('waveform'),
+  refCount: integer('ref_count').notNull().default(0),
+});
+
+export const files = pgTable('files', {
+  id: text('id').primaryKey(),
+  vaultId: text('vault_id').notNull().references(() => vaults.id, { onDelete: 'cascade' }),
+  folderId: text('folder_id').references(() => folders.id, { onDelete: 'set null' }),
+  name: text('name').notNull(),
+  blobSha256: text('blob_sha256').notNull().references(() => blobs.sha256),
+  createdBy: text('created_by').references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true, precision: 3 }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true, precision: 3 }).notNull().defaultNow(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+}, (table) => [
+  uniqueIndex('files_active_name_idx').on(table.vaultId, sql`coalesce(${table.folderId}, '')`, table.name).where(sql`${table.deletedAt} is null`),
+  index('files_folder_idx').on(table.vaultId, table.folderId, table.id),
 ]);
