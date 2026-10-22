@@ -94,10 +94,15 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       handoff: comms/brain/T008-review-pr14-pr21.md
 - [ ] T015 [RED] verification worker per ADR 0001 (hash, ready/failed, late-dedup, expired intents; no ffmpeg yet)
       paths: worker/**, backend/**  depends: T008 (Blue clears + merges #14)  assigned-by: BRAIN
-      status: hold lifted 2026-10-22 04:48 — Red reports Kabir's go in Red's chat, conditional on #14 clearance; Kabir/Swish may veto in #brain-updates
+      status: in review 2026-10-22 05:01 — PR #23 (5a3d51c), Red reports 37 tests zero skips on Docker Postgres + RustFS; Blue reviews as T010
       deliverable: worker claims verify jobs, streams+hashes once, applies ADR transitions with audits under vault-lock; aborts expired intents
       verify: worker integration command Red adds — match/mismatch/retry/late-dedup/expired, zero skips on Docker Postgres + RustFS
       handoff: comms/brain/T015-verification-worker.md
+- [ ] T010 [BLUE] review PR #23: T015 verification worker (lifecycle rule, re-verify job row, schema drift, tx atomicity, compose worker service)
+      paths: review only; infra/docker-compose.yml  depends: T008 (done)  assigned-by: BRAIN
+      deliverable: GitHub review on PR #23; merge on green CI or request changes via comms/blue/
+      verify: gh pr view 23 --repo kabirstar/beat-stackz --json reviews,state shows BLUE's review
+      handoff: comms/brain/T010-review-pr23.md
 - [ ] T023 [YELLOW] publish the solidified UI feature list, each line mapped to a shared route or marked NEW
       paths: comms/yellow/T023-feature-list.md, frontend/**  depends: none  assigned-by: BRAIN
       deliverable: comms/yellow/T023-feature-list.md on a yellow/ branch; T020 scaffold PR if the UI exists (frontend/ is empty on main)
