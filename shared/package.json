@@ -5,12 +5,28 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./mocks": {
+      "types": "./dist/mocks/index.d.ts",
+      "import": "./dist/mocks/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test --import tsx src/routes.test.ts"
+    "test": "node --test --import tsx src/routes.test.ts src/mocks/mocks.test.ts"
   },
-  "dependencies": { "zod": "^4.1.0" },
-  "devDependencies": { "tsx": "^4.20.0", "typescript": "^5.9.0", "@types/node": "^24.0.0" }
+  "dependencies": {
+    "msw": "^2.15.0",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  }
 }
