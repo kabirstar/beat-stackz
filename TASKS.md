@@ -82,7 +82,8 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       verify: gh pr view 14 --repo kabirstar/beat-stackz --json reviews,state shows BLUE's review
       handoff: comms/brain/T008-review-pr14-api.md
 - [ ] T015 [RED] verification worker per ADR 0001 (hash, ready/failed, late-dedup, expired intents; no ffmpeg yet)
-      paths: worker/**, backend/**  depends: T013 (stack on red/uploads, rebase when #14 merges)  assigned-by: BRAIN
+      paths: worker/**, backend/**  depends: T013 (#14 merged) AND Kabir lifting Red's hold  assigned-by: BRAIN
+      status: ON HOLD — not started, no red/worker branch; Red's standing instruction from Kabir requires his go-ahead (2026-10-22 02:14)
       deliverable: worker claims verify jobs, streams+hashes once, applies ADR transitions with audits under vault-lock; aborts expired intents
       verify: worker integration command Red adds — match/mismatch/retry/late-dedup/expired, zero skips on Docker Postgres + RustFS
       handoff: comms/brain/T015-verification-worker.md
