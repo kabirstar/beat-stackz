@@ -30,7 +30,7 @@ export function seed(): Store {
   const me: User = { id: "u_me", email: "artist@bpackz.test", name: "Test Artist", createdAt: t };
   const prod: User = { id: "u_prod", email: "producer@bpackz.test", name: "Test Producer", createdAt: t };
 
-  const personal: VaultRow = { id: "v_personal", kind: "personal", name: "My Files", createdAt: t };
+  const personal: VaultRow = { id: "v_personal", kind: "personal", name: "My vault", createdAt: t };
   const shared: VaultRow = { id: "v_shared", kind: "shared", name: "Artist x Producer", createdAt: t };
 
   const f = (id: string, vaultId: string, parentId: string | null, name: string): Folder => ({
