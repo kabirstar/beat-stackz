@@ -76,3 +76,13 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: ADR + shared contract change (or explicit none) + GitHub review on PR #14; Red resumes T013 after
       verify: docs/adr/NNNN-*.md exists; pnpm -F @bpackz/shared test; gh pr view 14 --repo kabirstar/beat-stackz --json reviews shows BLUE
       handoff: comms/brain/T007-upload-integrity-policy.md
+- [ ] T008 [BLUE] review PR #14: T013 upload API slice (bc1162d + b7a638a; 01:43 comment covered only the foundation)
+      paths: review only  depends: T007 (#15–#17 merged)  assigned-by: BRAIN
+      deliverable: GitHub review on PR #14; merge on green CI or request changes via comms/blue/ (focus: S3/DB recovery boundary, dedup authz, receipt retention, migration 0005)
+      verify: gh pr view 14 --repo kabirstar/beat-stackz --json reviews,state shows BLUE's review
+      handoff: comms/brain/T008-review-pr14-api.md
+- [ ] T015 [RED] verification worker per ADR 0001 (hash, ready/failed, late-dedup, expired intents; no ffmpeg yet)
+      paths: worker/**, backend/**  depends: T013 (stack on red/uploads, rebase when #14 merges)  assigned-by: BRAIN
+      deliverable: worker claims verify jobs, streams+hashes once, applies ADR transitions with audits under vault-lock; aborts expired intents
+      verify: worker integration command Red adds — match/mismatch/retry/late-dedup/expired, zero skips on Docker Postgres + RustFS
+      handoff: comms/brain/T015-verification-worker.md
