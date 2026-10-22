@@ -14,6 +14,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 import urllib.request
 from datetime import datetime
 
@@ -212,6 +213,58 @@ def append_to_comms_log(agent: str, message: str, to_target: str = "ALL"):
         f.write(entry)
 
 
+def wait_for_discord_message(agent: str, poll_interval: int = 4, timeout_sec: int = 1800):
+    """Blocks until a new message (not authored by `agent`) appears in #beat-stackz-hq, then prints it and exits."""
+    env = load_env()
+    channel_id = os.environ.get("DISCORD_CHANNEL_ID") or env.get("DISCORD_CHANNEL_ID")
+    if not channel_id:
+        print("⚠️ No DISCORD_CHANNEL_ID configured in .env.")
+        sys.exit(1)
+
+    state_file = os.path.join(REPO_ROOT, f".discord_state_{agent.lower()}.json")
+    last_id = None
+    if os.path.exists(state_file):
+        try:
+            last_id = json.load(open(state_file)).get("last_message_id")
+        except Exception:
+            pass
+
+    if not last_id:
+        latest = discord_api("GET", f"/channels/{channel_id}/messages?limit=1")
+        if latest:
+            last_id = latest[0]["id"]
+            with open(state_file, "w", encoding="utf-8") as f:
+                json.dump({"last_message_id": last_id}, f)
+
+    my_username = AGENT_PROFILES.get(agent.upper(), {}).get("username", agent)
+    start = time.time()
+
+    while time.time() - start < timeout_sec:
+        try:
+            path = f"/channels/{channel_id}/messages?limit=10"
+            if last_id:
+                path += f"&after={last_id}"
+            msgs = list(reversed(discord_api("GET", path)))
+            if msgs:
+                last_id = msgs[-1]["id"]
+                with open(state_file, "w", encoding="utf-8") as f:
+                    json.dump({"last_message_id": last_id}, f)
+
+                relevant = [m for m in msgs if m.get("author", {}).get("username") != my_username]
+                if relevant:
+                    for m in relevant:
+                        author = m.get("author", {}).get("username", "Unknown")
+                        content = m.get("content", "")
+                        if not content and m.get("embeds"):
+                            content = m["embeds"][0].get("description", "")
+                        ts = m.get("timestamp", "")[:16].replace("T", " ")
+                        print(f"🔔 NEW DISCORD MESSAGE [{ts}] {author}: {content}", flush=True)
+                    return
+        except Exception:
+            pass
+        time.sleep(poll_interval)
+
+
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
@@ -231,6 +284,9 @@ def main():
         read_discord_messages(limit=20, only_new=False)
     elif cmd == "poll":
         read_discord_messages(limit=20, only_new=True)
+    elif cmd == "wait":
+        agent = sys.argv[2].upper() if len(sys.argv) > 2 else "YELLOW"
+        wait_for_discord_message(agent)
     else:
         print(__doc__)
 
