@@ -2,15 +2,19 @@
   "name": "bpackz",
   "private": true,
   "packageManager": "pnpm@10.34.7",
-  "engines": { "node": ">=24" },
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "typecheck": "turbo run typecheck",
-    "lint": "turbo run lint",
-    "test": "turbo run test"
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "lint": "oxlint .",
+    "test": "pnpm -r --if-present run test",
+    "openapi": "pnpm -F @bpackz/shared openapi"
   },
   "devDependencies": {
+    "oxlint": "^1.89.0",
     "turbo": "^2.5.0",
     "typescript": "^5.9.0"
   }

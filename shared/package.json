@@ -18,7 +18,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test --import tsx src/routes.test.ts src/mocks/mocks.test.ts"
+    "test": "node --test --import tsx src/routes.test.ts src/mocks/mocks.test.ts",
+    "openapi": "tsx scripts/openapi.ts"
   },
   "dependencies": {
     "msw": "^2.15.0",
