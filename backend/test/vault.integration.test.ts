@@ -87,7 +87,9 @@ test('HTTP vault/folder/file permissions, concurrency, pagination, trash and aud
       await expect(await request(root, editor.cookie, 'PATCH', { name: 'Denied' }), 403);
       assert.equal(Vault.parse(await expect(await request(root, owner.cookie, 'PATCH', { name: 'Renamed vault' }), 200)).name, 'Renamed vault');
       await expect(await request(`${root}/folders`, viewer.cookie, 'POST', { name: 'Denied', parentId: null }), 403);
-      await expect(await request(`${root}/folders`, owner.cookie, 'POST', { name: 'bad/name', parentId: null }), 400);
+      const invalid = await expect(await request(`${root}/folders`, owner.cookie, 'POST', { name: 'private-value/not-for-errors', parentId: null }), 400);
+      assert.deepEqual(invalid.issues, [{ path: 'name', message: 'no slashes' }]);
+      assert.ok(!JSON.stringify(invalid).includes('private-value'));
       await expect(await request(`${root}/children?limit=201`, owner.cookie), 400);
       await expect(await request(`${root}/children?cursor=`, owner.cookie), 400);
       const badOrigin = await fetch(origin + '/vaults', { method: 'POST', headers: {

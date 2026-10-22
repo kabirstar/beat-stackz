@@ -61,6 +61,8 @@ Unknown API routes and `/me` authorization errors use the shared `ApiError`
 schema. `/me` validates its response with `authRoutes.me.response` and disables caching.
 
 Vault routes validate params, query, bodies and responses with shared schemas.
+Invalid fields include `issues: [{path, message}]` for form feedback, without
+echoing submitted values.
 Active members can read; owners/editors can change folders/files; only owners
 can rename vaults. Cross-vault file moves require write access in both vaults.
 Mutation requests reject untrusted browser origins. Responses disable caching.
@@ -145,3 +147,35 @@ it does not change any other .env key.
 Remaining scope: member invitations/removal, upload/file creation, download URLs,
 sharing, restore/purge and worker integration. There is no vault-delete contract.
 Docker service verification and current test evidence are in Red's handoffs.
+
+## T013 storage foundation (upload routes pending)
+
+`src/storage.ts` builds an AWS SDK v3 S3 client from the six `S3_*` keys in
+`infra/.env.example`. Missing credentials fail explicitly; production requires
+HTTPS. This factory is not yet connected to API upload/download routes.
+
+Run the disposable local RustFS check from the repository root (PowerShell):
+
+```powershell
+$env:RUN_STORAGE_INTEGRATION = '1'
+node --env-file=infra/.env.example --test backend/test/storage.integration.test.ts
+Remove-Item Env:RUN_STORAGE_INTEGRATION
+```
+
+This creates its own uniquely named test bucket, uploads a 64 MiB part and a
+final part via presigned URLs, completes, checks byte integrity and Range GET,
+verifies anonymous access is denied, checks CORS/ETag exposure, and aborts a
+second upload. It cleans up its objects and bucket. It neither modifies the root
+`.env` nor configures the eventual application bucket. Existing environment
+variables override `--env-file`; use local RustFS credentials for this check.
+`pnpm -F api test:storage` is also available when S3 settings are already present.
+
+Without RUN_STORAGE_INTEGRATION=1, the storage integration test skips. Hosted CI
+now exercises PostgreSQL tests, but RustFS is still local-only. The SDK is set to
+calculate request checksums only when required because presigning has no body;
+otherwise its default checksum describes an empty payload and RustFS rejects
+the browser PUT. This setting does not verify the claimed whole-file SHA-256.
+
+The remaining upload API is waiting on Blue's deduplication/hash-trust decision:
+see `comms/red/T013-upload-integrity.md`. No client-claimed hash is currently
+accepted by a production upload endpoint.

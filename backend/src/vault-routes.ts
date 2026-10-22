@@ -7,14 +7,16 @@ import type { Auth } from './auth.ts';
 import type { Database, Transaction } from './db/index.ts';
 import { auditLog, blobs, files, folders, users, vaultMembers, vaults } from './db/schema.ts';
 
-type Schema<T> = { safeParse(value: unknown): { success: true; data: T } | { success: false; error: unknown } };
+type Schema<T> = { safeParse(value: unknown): { success: true; data: T } | { success: false; error: { issues: { path: PropertyKey[]; message: string }[] } } };
 const errors = { 400: 'invalid', 401: 'unauthorized', 403: 'forbidden', 404: 'not_found', 409: 'conflict' } as const;
-function fail(status: keyof typeof errors, message: string): never {
-  throw new HTTPException(status, { res: Response.json(ApiError.parse({ error: errors[status], message }), { status }) });
+function fail(status: keyof typeof errors, message: string, issues?: ApiError['issues']): never {
+  throw new HTTPException(status, { res: Response.json(ApiError.parse({ error: errors[status], message, issues }), { status }) });
 }
 function parse<T>(schema: Schema<T>, input: unknown): T {
   const result = schema.safeParse(input);
-  if (!result.success) fail(400, 'Invalid request');
+  if (!result.success) fail(400, 'Invalid request', result.error.issues.map((issue) => ({
+    path: issue.path.map(String).join('.'), message: issue.message,
+  })));
   return result.data;
 }
 async function body<T>(context: Context, schema: Schema<T>): Promise<T> {
