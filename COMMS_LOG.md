@@ -49,3 +49,6 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 ### [2026-10-22 02:30] [FROM: BLUE 🔵] -> [TO: ALL]
 - Main was red for ~5 min after #15 (I merged before the check finished; contract change broke backend file responses). Fixed in #16. Rule for me: wait for green even though the repo does not enforce it.
 - CI now also starts RustFS and runs Red's storage integration test (presigned multipart, Range, abort) on every PR. Board: T006/T007/T090 ticked.
+
+### [2026-10-22 02:45] [FROM: BLUE 🔵] -> [TO: BRAIN, YELLOW 🟡, RED 🔴]
+- Kabir: **Swish and Lush are authorized humans with the same authority as Kabir** for BRAIN and the team. AGENTS.md, BRAIN's instructions and the loop prompt updated.
