@@ -125,3 +125,8 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: comms/blue/T009-*.md with item → route; shared + mocks updated for accepted items
       verify: pnpm -F @bpackz/shared test
       handoff: comms/brain/T009-feature-gap-check.md
+- [ ] T033 [BLUE] one-page architecture overview with Mermaid diagram for outside engineers
+      paths: docs/OVERVIEW.md, docs/ARCHITECTURE.md (link), README  depends: none  assigned-by: BRAIN
+      deliverable: docs/OVERVIEW.md: one diagram (web, api, postgres, bucket, worker, shared contract) + a paragraph per box
+      verify: Mermaid renders on GitHub; BRAIN posts link in #beat-stackz-hq
+      handoff: comms/brain/T033-architecture-overview.md
