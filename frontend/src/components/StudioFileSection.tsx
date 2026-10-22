@@ -98,6 +98,17 @@ export function StudioFileCard({
           >
             {ext}
           </span>
+          {file.status && file.status !== "ready" && (
+            <span
+              className={`mono-meta text-[9px] uppercase px-1.5 py-0.5 rounded-md border shrink-0 font-semibold ${
+                file.status === "failed"
+                  ? "bg-red-500/15 text-red-700 border-red-500/40"
+                  : "bg-amber-500/15 text-amber-800 border-amber-500/40"
+              }`}
+            >
+              {file.status}
+            </span>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5 mt-1.5">

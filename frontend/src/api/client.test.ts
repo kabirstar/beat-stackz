@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
+import { setMockVerifyMs } from "@bpackz/shared/mocks";
 import { setupServer } from "msw/node";
 import { createFrontendMockHandlers } from "../mocks/handlers.ts";
 import { api } from "./client.ts";
@@ -9,6 +10,7 @@ describe("Typed API Client + MSW Mock Handlers (T020 & T021)", () => {
   const server = setupServer(...handlers);
 
   before(() => {
+    setMockVerifyMs(0);
     server.listen({ onUnhandledRequest: "error" });
   });
 
@@ -82,6 +84,7 @@ describe("Typed API Client + MSW Mock Handlers (T020 & T021)", () => {
         parts: [{ partNumber: 1, etag }],
       });
       assert.equal(completed.name, "swish_808_test_stem.wav");
+      await new Promise((r) => setTimeout(r, 10));
 
       const dl = await api.files.downloadUrl(personal.id, completed.id, {
         disposition: "attachment",

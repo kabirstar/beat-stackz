@@ -232,6 +232,7 @@ function seedSwishAndTodoVaults(store: Store) {
         vaultId,
         folderId,
         name,
+        status: "ready",
         size,
         mime,
         sha256: fakeSha(id),

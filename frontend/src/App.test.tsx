@@ -95,6 +95,7 @@ describe("The Vault UI & Theme Specification (T020 & T021)", () => {
         vaultId: "v_personal",
         folderId: "f_root_beats",
         name: "swish_142bpm_dark_loop.wav",
+        status: "ready",
         size: 48_400_000,
         mime: "audio/wav",
         sha256: "a".repeat(64),
