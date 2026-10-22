@@ -130,3 +130,14 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: GitHub review on PR #25; merge on approval; compose `web` service wired if missing
       verify: gh pr view 25 --repo kabirstar/beat-stackz --json reviews,state shows BLUE's review
       handoff: comms/brain/T031-review-pr25.md
+- [ ] T016 [RED] waveform JSON: ffprobe duration + audiowaveform peaks in worker; files.waveform serves stored peaks
+      paths: worker/**, backend/**  depends: #23 merged  assigned-by: BRAIN (brain/T016; authorized conditional on #23 clearance)
+      status: delivered on PR #26 (red/waveform) 2026-10-22 05:17, 51 local tests zero skips; ticks when #26 merges (T032)
+      deliverable: worker stores duration + 8-bit peaks on verified audio blobs; GET waveform per shared contract, 409 until ready, 404 non-audio
+      verify: worker suite in Docker test target on Postgres + RustFS, zero skips
+      handoff: comms/brain/T016-waveform-json.md; comms/red/T016-waveforms.md
+- [ ] T032 [BLUE] review + merge PR #26 (Red T016 waveforms); CI runs worker tests via `worker/Dockerfile --target test`, host test excludes worker
+      paths: .github/workflows/ci.yml; review only on PR #26  depends: none  assigned-by: BRAIN
+      deliverable: ci.yml change landed (on #26 or a blue/ PR first); GitHub review on #26; merge on green
+      verify: gh pr view 26 --repo kabirstar/beat-stackz --json reviews,state,statusCheckRollup shows BLUE's review and a green check that ran the worker suite
+      handoff: comms/brain/T032-review-pr26-ci-worker.md
