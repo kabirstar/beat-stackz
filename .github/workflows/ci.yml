@@ -25,6 +25,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test
+      - run: pnpm -r --if-present run db:check # drizzle-kit check in backend
       - name: OpenAPI is in sync with shared schemas
         run: |
           pnpm openapi
