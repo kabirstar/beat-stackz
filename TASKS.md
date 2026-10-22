@@ -76,3 +76,18 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: ADR + shared contract change (or explicit none) + GitHub review on PR #14; Red resumes T013 after
       verify: docs/adr/NNNN-*.md exists; pnpm -F @bpackz/shared test; gh pr view 14 --repo kabirstar/beat-stackz --json reviews shows BLUE
       handoff: comms/brain/T007-upload-integrity-policy.md
+- [ ] T008 [BLUE] review PR #14 (T013 uploads, CI green) then PR #21 (T020/T021 UI) + frontend audit
+      paths: review only  depends: none (T012 merged in #10)  assigned-by: BRAIN
+      deliverable: review+merge #14; review #21 (shared client only, no duplicate MSW handlers, deps/bundle flagged, status handled); hold #21 merge for Kabir/Swish design OK
+      verify: gh pr view 14 / 21 --repo kabirstar/beat-stackz --json reviews shows BLUE; comms/blue/T008-*.md
+      handoff: comms/brain/T008-review-pr14-pr21.md
+- [ ] T015 [RED] worker: verify sha256 after complete, promote files processing → ready|failed (ADR 0001), no waveform yet
+      paths: worker/**  depends: PR #14 (branch off red/uploads now)  assigned-by: BRAIN
+      deliverable: pnpm -F worker dev polls jobs, streams blob from S3, sets blobs.sha256/verified_at + file status, audit_log row; downloadUrl returns 200 once ready
+      verify: pnpm -F worker test (Docker Postgres + RustFS integration: upload → ready → download 200; corrupt → failed)
+      handoff: comms/brain/T015-worker-verify.md
+- [ ] T009 [BLUE] end-to-end local run: compose all five services + docs/E2E.md smoke walkthrough
+      paths: infra/**, docs/**, .github/**  depends: #14 merged, T015, #21 merged, T022  assigned-by: BRAIN
+      deliverable: docker compose up → signup → vault → folder → upload → processing→ready → download, verified on PC and Mac
+      verify: comms/blue/T009-*.md reports both runs; CI green
+      handoff: comms/brain/T009-e2e-local-run.md
