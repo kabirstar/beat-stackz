@@ -87,3 +87,19 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: worker claims verify jobs, streams+hashes once, applies ADR transitions with audits under vault-lock; aborts expired intents
       verify: worker integration command Red adds — match/mismatch/retry/late-dedup/expired, zero skips on Docker Postgres + RustFS
       handoff: comms/brain/T015-verification-worker.md
+      note (02:55): #beat-stackz-hq asked BRAIN to start the backend build-out; hold lifts only on Kabir's explicit "go T015"
+- [ ] T023 [YELLOW] publish solidified UI feature list, each line tagged with its shared route or NO CONTRACT
+      paths: comms/yellow/T023-feature-list.md  depends: none  assigned-by: BRAIN
+      deliverable: one file; gaps named precisely enough for Blue to write the route
+      verify: file on a yellow/ branch
+      handoff: comms/brain/T023-feature-list.md
+- [ ] T017 [RED] vault members (list/invite/remove) + share links (list/create/revoke/resolve) per existing contract
+      paths: backend/**  depends: T008 (#14 merged); queue behind whatever Red PR is in flight  assigned-by: BRAIN
+      deliverable: shared/src/api/vaults.ts members routes + shares.ts routes, audit + T012 lock discipline
+      verify: pnpm -F api test; TEST_DATABASE_URL=... pnpm -F api test:integration
+      handoff: comms/brain/T017-members-shares.md
+- [ ] T009 [BLUE] diff Yellow's T023 list against shared/src/api; publish missing routes/fields (known gap: trash list + restore)
+      paths: shared/**, docs/**  depends: T023  assigned-by: BRAIN
+      deliverable: routes + mocks + OpenAPI regen, or written "no, because"; scope guard on payments/marketplace
+      verify: pnpm -F @bpackz/shared test; pnpm openapi
+      handoff: comms/brain/T009-contract-gap.md
