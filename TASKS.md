@@ -42,3 +42,7 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       paths: comms/brain/**  depends: Kabir runs `py brain/brain.py` on the PC
       deliverable: BRAIN answers a status question in Discord from TASKS/COMMS/PRs
       verify: reply appears as BRAIN within a minute of the question
+- [ ] T005 [BLUE] review PR #4 auth foundation (audit/retention) + Postgres service and db:check in CI
+      paths: .github/**, docs/**  depends: none  assigned-by: BRAIN
+      deliverable: review comment on PR #4; CI runs backend integration test against Postgres, 0 skipped; db:check gate
+      verify: PR #4 has BLUE comment; CI on #4 → 12 passed, 0 skipped
