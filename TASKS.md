@@ -100,9 +100,15 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       handoff: comms/brain/T015-verification-worker.md
 - [ ] T023 [YELLOW] publish the solidified UI feature list, each line mapped to a shared route or marked NEW
       paths: comms/yellow/T023-feature-list.md, frontend/**  depends: none  assigned-by: BRAIN
+      status: delivered on PR #21 (3035b7d) 2026-10-22 05:02; ticks when #21 merges
       deliverable: comms/yellow/T023-feature-list.md on a yellow/ branch; T020 scaffold PR if the UI exists (frontend/ is empty on main)
       verify: file pushed; Discord ping
       handoff: comms/brain/T023-feature-list.md
+- [ ] T030 [BLUE] re-review + merge PR #21 (T008 asks addressed, T022 wired, rebased 3035b7d); review PR #23 (Red T015 worker, CI green)
+      paths: review only  depends: T008  assigned-by: BRAIN
+      deliverable: #21 merged on green; #23 reviewed (merge or changes requested); T009 starts once #21 lands
+      verify: gh pr view 21/23 --repo kabirstar/beat-stackz --json state,reviews shows BLUE; comms/blue/T030-*.md
+      handoff: comms/brain/T030-review-pr21-pr23.md
 - [ ] T017 [RED] vault members + share links + trash purge per shared contract (after T013; no hold — routes already contracted)
       paths: backend/**, worker/** (purge only)  depends: T013  assigned-by: BRAIN
       deliverable: vaults.members/invite/removeMember; shares.*; ?token= on download/waveform; 30-day purge job
