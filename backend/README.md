@@ -48,11 +48,33 @@ Docker Compose is the shared local setup. Database credentials must match
 - `POST /auth/sign-out`: logout; send the session cookie.
 - `GET /me`: `{user, personalVaultId}` for the signed-in active owner;
   401 without a valid session, 403 if their personal vault is unavailable.
+- `GET/POST /vaults`: list memberships or create a shared vault with the caller as owner.
+- `GET/PATCH /vaults/:vaultId`: read a vault or rename it (owner only).
+- `POST /vaults/:vaultId/folders`: create a folder at a parent or the vault root.
+- `GET/PATCH/DELETE /vaults/:vaultId/folders/:folderId`: breadcrumbs, rename/move, recursive soft trash.
+- `GET /vaults/:vaultId/children`: folders and paginated file metadata (`folderId`, `limit`, `cursor`).
+- `GET/PATCH/DELETE /vaults/:vaultId/files/:fileId`: metadata, rename/move, soft trash.
 
 Browser requests use `credentials: 'include'` from `WEB_ORIGIN`. Better Auth
 owns validation and formats under `/auth/*`, per `shared/src/api/auth.ts`.
 Unknown API routes and `/me` authorization errors use the shared `ApiError`
 schema. `/me` validates its response with `authRoutes.me.response` and disables caching.
+
+Vault routes validate params, query, bodies and responses with shared schemas.
+Active members can read; owners/editors can change folders/files; only owners
+can rename vaults. Cross-vault file moves require write access in both vaults.
+Mutation requests reject untrusted browser origins. Responses disable caching.
+
+Folder/file updates require the returned `updatedAt` as `ifUpdatedAt`; stale
+edits and active name collisions return 409. Root names are unique too, and
+files/folders share a namespace. Trashed names may be reused. File pages sort
+by id; pass the returned `nextCursor` unchanged. All folders are returned on
+each page, as the shared contract specifies.
+
+Tree mutations lock the vault row inside their audit transaction. Cross-vault
+moves acquire both locks in id order. This serializes cycle checks, name checks,
+and trash/create races. Future uploads and membership changes must follow this
+same lock discipline. Soft trash keeps blob references until the later purge job.
 
 ## Checks and migrations
 
@@ -90,10 +112,16 @@ pnpm -F api test:integration
 ```
 
 Without `TEST_DATABASE_URL`, this test reports a skip, not an integration pass.
-The integration test starts a real HTTP server on a temporary loopback port.
+The integration tests start real HTTP servers on temporary loopback ports.
 It verifies credentialed CORS, signup and login session cookies, logout/revocation
 and audit rollback against PostgreSQL. Unit checks exercise anonymous sessions,
 malformed input and origin rejection without opening a database connection.
+The CRUD test also checks permissions, concurrent edits/cycles/collisions,
+cross-vault moves, keyset pagination, recursive trash and audit-failure rollback.
+Test files run serially because the auth rollback check compares database-wide
+counts. Do not run multiple integration commands concurrently against one test DB.
+The CRUD test seeds membership/blob/file fixtures directly; it does not claim
+that invite, upload or storage APIs are implemented.
 
 ## Signup transaction
 
@@ -114,5 +142,6 @@ The existing root TEST_DATABASE_URL may still refer to the retired native
 instance. The PowerShell test command above overrides it for this process only;
 it does not change any other .env key.
 
-Remaining scope: other domain tables/routes, storage and worker integration.
+Remaining scope: member invitations/removal, upload/file creation, download URLs,
+sharing, restore/purge and worker integration. There is no vault-delete contract.
 Docker service verification and current test evidence are in Red's handoffs.

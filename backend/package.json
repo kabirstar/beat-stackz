@@ -12,11 +12,11 @@
     "build": "tsc -p tsconfig.json",
     "start": "node --env-file-if-exists=../.env dist/server.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test test/*.test.ts",
+    "test": "node --test --test-concurrency=1 test/*.test.ts",
     "db:generate": "drizzle-kit generate",
     "db:check": "drizzle-kit check",
     "db:migrate": "node --env-file-if-exists=../.env src/db/migrate.ts",
-    "test:integration": "node --env-file-if-exists=../.env --test test/auth.integration.test.ts"
+    "test:integration": "node --env-file-if-exists=../.env --test --test-concurrency=1 test/*.integration.test.ts"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "1.7.12",
