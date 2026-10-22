@@ -1310,6 +1310,14 @@
                             "minLength": 1,
                             "maxLength": 255
                           },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "processing",
+                              "ready",
+                              "failed"
+                            ]
+                          },
                           "size": {
                             "type": "integer",
                             "minimum": 0,
@@ -1320,6 +1328,7 @@
                             "type": "string"
                           },
                           "sha256": {
+                            "nullable": true,
                             "type": "string",
                             "minLength": 64,
                             "maxLength": 64
@@ -1355,6 +1364,7 @@
                           "vaultId",
                           "folderId",
                           "name",
+                          "status",
                           "size",
                           "mime",
                           "sha256",
@@ -1454,6 +1464,14 @@
                       "minLength": 1,
                       "maxLength": 255
                     },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "processing",
+                        "ready",
+                        "failed"
+                      ]
+                    },
                     "size": {
                       "type": "integer",
                       "minimum": 0,
@@ -1464,6 +1482,7 @@
                       "type": "string"
                     },
                     "sha256": {
+                      "nullable": true,
                       "type": "string",
                       "minLength": 64,
                       "maxLength": 64
@@ -1499,6 +1518,7 @@
                     "vaultId",
                     "folderId",
                     "name",
+                    "status",
                     "size",
                     "mime",
                     "sha256",
@@ -1619,6 +1639,14 @@
                       "minLength": 1,
                       "maxLength": 255
                     },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "processing",
+                        "ready",
+                        "failed"
+                      ]
+                    },
                     "size": {
                       "type": "integer",
                       "minimum": 0,
@@ -1629,6 +1657,7 @@
                       "type": "string"
                     },
                     "sha256": {
+                      "nullable": true,
                       "type": "string",
                       "minLength": 64,
                       "maxLength": 64
@@ -1664,6 +1693,7 @@
                     "vaultId",
                     "folderId",
                     "name",
+                    "status",
                     "size",
                     "mime",
                     "sha256",
@@ -1739,7 +1769,7 @@
     "/vaults/{vaultId}/files/{fileId}/download": {
       "get": {
         "operationId": "files.downloadUrl",
-        "summary": "Presigned GET URL, 5 min",
+        "summary": "Presigned GET URL, 5 min. 409 conflict until status is ready.",
         "tags": [
           "files"
         ],
@@ -1831,7 +1861,7 @@
     "/vaults/{vaultId}/files/{fileId}/waveform": {
       "get": {
         "operationId": "files.waveform",
-        "summary": "Precomputed peaks (404 until worker has run)",
+        "summary": "Precomputed peaks. 409 conflict until status is ready; 404 if not audio.",
         "tags": [
           "files"
         ],
@@ -2037,6 +2067,14 @@
                               "minLength": 1,
                               "maxLength": 255
                             },
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "processing",
+                                "ready",
+                                "failed"
+                              ]
+                            },
                             "size": {
                               "type": "integer",
                               "minimum": 0,
@@ -2047,6 +2085,7 @@
                               "type": "string"
                             },
                             "sha256": {
+                              "nullable": true,
                               "type": "string",
                               "minLength": 64,
                               "maxLength": 64
@@ -2082,6 +2121,7 @@
                             "vaultId",
                             "folderId",
                             "name",
+                            "status",
                             "size",
                             "mime",
                             "sha256",
@@ -2395,6 +2435,14 @@
                       "minLength": 1,
                       "maxLength": 255
                     },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "processing",
+                        "ready",
+                        "failed"
+                      ]
+                    },
                     "size": {
                       "type": "integer",
                       "minimum": 0,
@@ -2405,6 +2453,7 @@
                       "type": "string"
                     },
                     "sha256": {
+                      "nullable": true,
                       "type": "string",
                       "minLength": 64,
                       "maxLength": 64
@@ -2440,6 +2489,7 @@
                     "vaultId",
                     "folderId",
                     "name",
+                    "status",
                     "size",
                     "mime",
                     "sha256",
@@ -2886,6 +2936,14 @@
                           "minLength": 1,
                           "maxLength": 255
                         },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "processing",
+                            "ready",
+                            "failed"
+                          ]
+                        },
                         "size": {
                           "type": "integer",
                           "minimum": 0,
@@ -2896,6 +2954,7 @@
                           "type": "string"
                         },
                         "sha256": {
+                          "nullable": true,
                           "type": "string",
                           "minLength": 64,
                           "maxLength": 64
@@ -2931,6 +2990,7 @@
                         "vaultId",
                         "folderId",
                         "name",
+                        "status",
                         "size",
                         "mime",
                         "sha256",

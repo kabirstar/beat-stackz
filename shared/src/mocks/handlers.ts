@@ -6,6 +6,9 @@ import { seed, newId, now, type Store } from "./store.js";
 
 export const MOCK_API = "http://localhost:4000";
 export const MOCK_BUCKET = "http://localhost:9000/bpackz";
+/** How long a completed upload stays "processing" before the fake worker marks it ready. */
+export let MOCK_VERIFY_MS = 1500;
+export const setMockVerifyMs = (ms: number) => { MOCK_VERIFY_MS = ms; };
 
 type Ctx = { params: Record<string, string>; query: URLSearchParams; body: any; store: Store };
 type Result = { status?: number; body?: unknown } | HttpResponse<any>;
@@ -185,12 +188,14 @@ export function createHandlers(store: Store = seed()): HttpHandler[] {
     mock(routes.files.downloadUrl, store, ({ params, query }) => {
       const f = store.files.find((x) => x.id === params.fileId && x.vaultId === params.vaultId);
       if (!f || !canRead(f, query.get("token"))) return err(404, "not_found");
+      if (f.status !== "ready") return err(409, "conflict", `file is ${f.status}`);
       return { body: { url: `${MOCK_BUCKET}/${f.sha256}?disposition=${query.get("disposition") ?? "attachment"}&sig=mock`, expiresAt: new Date(Date.now() + 300_000).toISOString() } };
     }),
     mock(routes.files.waveform, store, ({ params, query }) => {
       const f = store.files.find((x) => x.id === params.fileId && x.vaultId === params.vaultId);
       if (!f || !canRead(f, query.get("token"))) return err(404, "not_found");
-      if (!f.hasWaveform) return err(404, "not_found", "waveform not ready");
+      if (f.status !== "ready") return err(409, "conflict", `file is ${f.status}`);
+      if (!f.hasWaveform) return err(404, "not_found", "not audio");
       const length = Math.max(64, Math.round((f.durationMs ?? 0) / 100));
       return { body: { sampleRate: 44100, samplesPerPixel: 4410, bits: 8, length, data: peaks(length) } };
     }),
@@ -198,14 +203,16 @@ export function createHandlers(store: Store = seed()): HttpHandler[] {
     mock(routes.uploads.create, store, ({ params, body }) => {
       const denied = editor(params.vaultId!);
       if (denied) return denied;
-      const existing = store.files.find((f) => f.sha256 === body.sha256);
+      // ADR 0001: dedup only against a verified blob behind a file the caller can already read
+      const existing = store.files.find((f) => f.sha256 === body.sha256 && f.status === "ready" && myRole(f.vaultId));
       if (existing) {
+        if (collides(params.vaultId!, body.folderId, body.name)) return err(409, "conflict");
         const file = { ...existing, id: newId("fi"), vaultId: params.vaultId!, folderId: body.folderId, name: body.name, createdAt: now(), updatedAt: now() };
         store.files.push(file);
         return { body: { dedup: true as const, file } };
       }
       if (collides(params.vaultId!, body.folderId, body.name)) return err(409, "conflict");
-      const up = { uploadId: newId("up"), vaultId: params.vaultId!, key: `blobs/${body.sha256}`, size: body.size };
+      const up = { uploadId: newId("up"), vaultId: params.vaultId!, key: `blobs/${newId("blob")}`, size: body.size }; // opaque key
       store.uploads.push(up);
       return { body: { dedup: false as const, uploadId: up.uploadId, key: up.key, partSize: PART_SIZE, partCount: Math.max(1, Math.ceil(body.size / PART_SIZE)) } };
     }),
@@ -219,9 +226,11 @@ export function createHandlers(store: Store = seed()): HttpHandler[] {
       if (!up) return err(404, "not_found");
       if (collides(params.vaultId!, body.folderId, body.name)) return err(409, "conflict");
       const isAudio = (body.mime ?? "").startsWith("audio/");
-      const file = { id: newId("fi"), vaultId: params.vaultId!, folderId: body.folderId, name: body.name, size: up.size, mime: body.mime, sha256: body.sha256, durationMs: isAudio ? 180_000 : null, hasWaveform: isAudio, createdBy: store.me.id, createdAt: now(), updatedAt: now() };
+      // processing until the "worker" verifies; flips to ready shortly after so UIs can show the state
+      const file: typeof store.files[number] = { id: newId("fi"), vaultId: params.vaultId!, folderId: body.folderId, name: body.name, status: "processing", size: up.size, mime: body.mime, sha256: null, durationMs: null, hasWaveform: false, createdBy: store.me.id, createdAt: now(), updatedAt: now() };
       store.files.push(file);
       store.uploads = store.uploads.filter((u) => u !== up);
+      setTimeout(() => Object.assign(file, { status: "ready", sha256: body.sha256, durationMs: isAudio ? 180_000 : null, hasWaveform: isAudio, updatedAt: now() }), MOCK_VERIFY_MS);
       return { body: file };
     }),
     mock(routes.uploads.abort, store, ({ params }) => {

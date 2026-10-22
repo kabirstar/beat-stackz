@@ -1,12 +1,12 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { setupServer } from "msw/node";
-import { createHandlers, MOCK_API } from "./handlers.js";
+import { createHandlers, MOCK_API, setMockVerifyMs } from "./handlers.js";
 import { seed } from "./store.js";
 import { PART_SIZE } from "../index.js";
 
 const server = setupServer(...createHandlers(seed()));
-before(() => server.listen({ onUnhandledRequest: "error" }));
+before(() => { setMockVerifyMs(50); server.listen({ onUnhandledRequest: "error" }); });
 after(() => server.close());
 
 const api = async (method: string, path: string, body?: unknown, expect = 200) => {
@@ -39,11 +39,21 @@ test("full vault flow: me -> vaults -> folder -> upload -> list -> share -> reso
     key: up.key, folderId: folder.id, name: "bounce_v1.wav", mime: "audio/wav", sha256: sha,
     parts: signed.urls.map((u: { partNumber: number }) => ({ partNumber: u.partNumber, etag: `"e${u.partNumber}"` })),
   }, 201);
-  assert.equal(file.hasWaveform, true);
+  assert.equal(file.status, "processing"); // ADR 0001: not trusted until the worker verifies
+  assert.equal(file.sha256, null);
+  await api("GET", `/vaults/v_shared/files/${file.id}/download`, undefined, 409);
+  // claimed hash of a processing (unverified) file must NOT dedup
+  const early = await api("POST", "/vaults/v_personal/uploads", { folderId: null, name: "early.wav", size: 1, mime: "audio/wav", sha256: sha }, 201);
+  assert.equal(early.dedup, false);
+  await new Promise((r) => setTimeout(r, 120));
+  const verified = await api("GET", `/vaults/v_shared/files/${file.id}`);
+  assert.equal(verified.status, "ready");
+  assert.equal(verified.hasWaveform, true);
 
-  // dedup path: same sha in personal vault = no upload needed
+  // dedup path: verified sha behind a file I can read = no upload needed
   const dup = await api("POST", "/vaults/v_personal/uploads", { folderId: null, name: "copy.wav", size: 1, mime: "audio/wav", sha256: sha }, 201);
   assert.equal(dup.dedup, true);
+  assert.equal(dup.file.status, "ready");
 
   const kids = await api("GET", `/vaults/v_shared/children?folderId=${folder.id}`);
   assert.deepEqual(kids.files.map((f: { name: string }) => f.name), ["bounce_v1.wav"]);
@@ -69,6 +79,20 @@ test("full vault flow: me -> vaults -> folder -> upload -> list -> share -> reso
   await api("DELETE", `/vaults/v_shared/folders/${folder.id}`, undefined, 204);
   const after = await api("GET", "/vaults/v_shared/children?folderId=fo_proj");
   assert.equal(after.folders.some((f: { id: string }) => f.id === folder.id), false);
+});
+
+test("knowing a hash is not authorization (ADR 0001)", async () => {
+  // fi_bass lives in v_shared; a second store where the caller is NOT a member of v_shared must not dedup it
+  const s = seed();
+  s.members = s.members.filter((m) => !(m.vaultId === "v_shared" && m.userId === s.me.id));
+  const srv = setupServer(...createHandlers(s));
+  server.close(); srv.listen({ onUnhandledRequest: "error" });
+  try {
+    const bass = s.files.find((f) => f.id === "fi_bass")!;
+    const r = await api("POST", "/vaults/v_personal/uploads", { folderId: null, name: "stolen.wav", size: bass.size, mime: bass.mime, sha256: bass.sha256! }, 201);
+    assert.equal(r.dedup, false, "must require a real upload");
+    assert.doesNotMatch(r.key, new RegExp(bass.sha256!), "key must be opaque");
+  } finally { srv.close(); server.listen({ onUnhandledRequest: "error" }); }
 });
 
 test("validation and permissions", async () => {

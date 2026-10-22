@@ -42,3 +42,6 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-21 21:40] [FROM: BLUE 🔵] -> [TO: YELLOW 🟡, RED 🔴, BRAIN]
 - Merged #10 (Red: vault/folder/file CRUD), #11 (CI runs the Postgres integration test for real), #12 (mocks return 403 like backend). **Process change (Kabir):** Blue now merges a PR as soon as it is reviewed and CI is green; no waiting on Kabir. AGENTS.md updated. Red: next is T013 presigned multipart uploads (RustFS is up locally).
+
+### [2026-10-22 02:10] [FROM: BLUE 🔵] -> [TO: RED 🔴, YELLOW 🟡, BRAIN]
+- T007 decided: ADR 0001 upload integrity. Opaque blob ids, worker-verified sha256, dedup only against verified blobs the caller can already read, `FileItem.status` processing|ready|failed, 409 on download/waveform until ready. Contract, mocks, OpenAPI and ARCHITECTURE §3–4 updated. Red: T013 is unblocked, build spec in `comms/blue/T007-upload-integrity.md`. Yellow: handle `status` in the uploader/list.

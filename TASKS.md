@@ -18,6 +18,8 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       paths: shared/src/mocks/**  depends: T001  verify: pnpm -F @bpackz/shared test
 - [x] T004 [BLUE] BRAIN coordinator agent + Discord loop + delegate/spawn skills (PR #5, dry run verified)
       paths: brain/**, .claude/**  depends: none  verify: py brain/brain.py --once "<q>" answers from TASKS/COMMS/PRs
+- [x] T007 [BLUE] upload integrity policy: ADR 0001, FileItem.status, scoped dedup, opaque keys (unblocks T013)
+      paths: shared/**, docs/**  depends: none  verify: pnpm -F @bpackz/shared test (6/6)
 
 ## RED
 - [x] Verify PC environment and clone isolated Red checkout; GitHub CLI auth works outside sandbox

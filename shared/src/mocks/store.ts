@@ -45,7 +45,7 @@ export function seed(): Store {
   ];
 
   const file = (id: string, vaultId: string, folderId: string | null, name: string, size: number, mime: string, dur: number | null): FileItem => ({
-    id, vaultId, folderId, name, size, mime, sha256: fakeSha(id), durationMs: dur, hasWaveform: dur !== null,
+    id, vaultId, folderId, name, status: "ready", size, mime, sha256: fakeSha(id), durationMs: dur, hasWaveform: dur !== null,
     createdBy: me.id, createdAt: t, updatedAt: t,
   });
   const files: FileItem[] = [

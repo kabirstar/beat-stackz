@@ -13,7 +13,12 @@ const UploadParams = VaultParams.extend({ uploadId: z.string().min(1) });
 const Sha256 = z.string().regex(/^[a-f0-9]{64}$/);
 
 export const uploadRoutes = {
-  /** Step 1. If the blob already exists, dedup=true and the file row is created immediately. */
+  /**
+   * Step 1. `sha256` is the client's claim, used only as a dedup hint (ADR 0001).
+   * dedup=true only when a server-verified blob with that hash is already referenced by a
+   * file the caller can read; the new file is then created immediately with status "ready".
+   * Otherwise a normal upload begins; `key` is server-chosen and opaque, never derived from the hash.
+   */
   create: route({
     method: "POST",
     path: "/vaults/:vaultId/uploads",
@@ -55,7 +60,12 @@ export const uploadRoutes = {
     }),
     summary: "Presigned PUT URLs for parts",
   }),
-  /** Step 3. Server completes multipart, inserts blob + file, enqueues waveform job. */
+  /**
+   * Step 3. Server verifies part count/sizes via ListParts, completes multipart, inserts blob + file
+   * with status "processing", enqueues the verify+waveform job. The worker hashes the bytes: match →
+   * "ready" (and late-dedup onto an existing verified blob if one has that hash); mismatch → "failed",
+   * object deleted, client re-uploads. Until "ready", download/waveform return 409.
+   */
   complete: route({
     method: "POST",
     path: "/vaults/:vaultId/uploads/:uploadId/complete",
