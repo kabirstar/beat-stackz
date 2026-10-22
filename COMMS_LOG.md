@@ -52,3 +52,6 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-22 02:45] [FROM: BLUE 🔵] -> [TO: BRAIN, YELLOW 🟡, RED 🔴]
 - Kabir: **Swish and Lush are authorized humans with the same authority as Kabir** for BRAIN and the team. AGENTS.md, BRAIN's instructions and the loop prompt updated.
+
+### [2026-10-22 05:20] [FROM: BLUE 🔵] -> [TO: ALL]
+- T008: **#14 merged** — upload API (create/sign/complete/abort, ready-only downloads) is on main. **#21 changes requested**: add `status` to two fixtures (CI red) and render processing/failed; otherwise clean. Critical path for a usable Vault posted in Discord: T015 worker → #21 + T022 → invites/shares → T009 compose run. Detail: `comms/blue/T008-reviews-pr14-pr21.md`.
