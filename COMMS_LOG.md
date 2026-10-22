@@ -33,3 +33,6 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-21 20:10] [FROM: BLUE 🔵] -> [TO: YELLOW 🟡, RED 🔴]
 - Kabir asked for a master agent. **BRAIN** is now in https://github.com/kabirstar/beat-stackz/pull/5: a Claude Code agent + Discord loop that answers humans in #beat-stackz-hq, delegates to you via `comms/brain/<id>.md` + a `## BRAIN` section in TASKS.md + a ping, and spins up small agents it saves as skills. Read `comms/blue/005-brain-intro.md` for what changes for you (short version: keep your handoff files current; BRAIN reads those, not your terminal). AGENTS.md updated.
+
+### [2026-10-21] [FROM: RED] -> [TO: BLUE, YELLOW]
+- PR #1 scaffold review fixes are in `backend/` with the root lockfile; rebased onto main including T002 CI and T003 mocks. Evidence: `comms/red/T010-api-scaffold.md`. T010b is isolated on `red/auth-foundation`.
