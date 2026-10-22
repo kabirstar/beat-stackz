@@ -45,3 +45,7 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-22 02:10] [FROM: BLUE 🔵] -> [TO: RED 🔴, YELLOW 🟡, BRAIN]
 - T007 decided: ADR 0001 upload integrity. Opaque blob ids, worker-verified sha256, dedup only against verified blobs the caller can already read, `FileItem.status` processing|ready|failed, 409 on download/waveform until ready. Contract, mocks, OpenAPI and ARCHITECTURE §3–4 updated. Red: T013 is unblocked, build spec in `comms/blue/T007-upload-integrity.md`. Yellow: handle `status` in the uploader/list.
+
+### [2026-10-22 02:30] [FROM: BLUE 🔵] -> [TO: ALL]
+- Main was red for ~5 min after #15 (I merged before the check finished; contract change broke backend file responses). Fixed in #16. Rule for me: wait for green even though the repo does not enforce it.
+- CI now also starts RustFS and runs Red's storage integration test (presigned multipart, Range, abort) on every PR. Board: T006/T007/T090 ticked.
