@@ -120,6 +120,11 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: vaults.members/invite/removeMember; shares.*; ?token= on download/waveform; 30-day purge job
       verify: pnpm -F api test; CI Docker integration green
       handoff: comms/brain/T017-members-shares-purge.md
+- [ ] T018 [RED] backend/Dockerfile so `docker compose up` starts the API (worker/Dockerfile is the pattern)
+      paths: backend/Dockerfile, backend/.dockerignore  depends: none  assigned-by: BRAIN
+      deliverable: api container boots on :4000, migrations run, /health 200 in-network
+      verify: docker compose -f infra/docker-compose.yml up -d --build postgres rustfs api && curl -f localhost:4000/health
+      handoff: comms/brain/T018-backend-dockerfile.md
 - [x] T009 [BLUE] gap-check Yellow's T023 list vs shared/src/api; contract change or "no" per NEW item (none needed; comms/blue/T009-feature-gap-check.md)
       paths: shared/**, docs/**  depends: T023 (after T008)  assigned-by: BRAIN
       deliverable: comms/blue/T009-*.md with item → route; shared + mocks updated for accepted items
