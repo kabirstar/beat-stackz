@@ -18,6 +18,10 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       paths: shared/src/mocks/**  depends: T001  verify: pnpm -F @bpackz/shared test
 
 ## RED
+- [x] Verify PC environment and clone isolated Red checkout; GitHub CLI auth works outside sandbox
+- [x] T010a [RED] Hono health/CORS scaffold verified in PR #1 (currently apps/api/)
+      paths: apps/api/**  verify: 4 tests, typecheck, build, live GET /health 200
+      integration: move to backend/ and consolidate lockfile per Blue review; pending
 - [ ] T010 [RED] pick Hono or Fastify; scaffold backend with Drizzle + Better Auth
       paths: backend/**  depends: T001  verify: pnpm -F api dev boots, GET /health 200
 - [ ] T011 [RED] migrations for schema in docs/ARCHITECTURE.md §3; personal vault on signup
