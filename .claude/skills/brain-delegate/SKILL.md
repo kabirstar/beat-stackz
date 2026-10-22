@@ -38,4 +38,4 @@ description: BRAIN hands a task to Yellow, Red or Blue. Produces the handoff fil
 7. **Reply** to the human: one line with the id, owner and the deliverable.
 
 ## Lessons
-- 2026-10-21: initial version. No runs yet.
+- 2026-10-21: initial version. First dry run answered a status question accurately in ~2 min; it also posted the reply itself via the bridge, so the loop prompt now says the loop posts for it.

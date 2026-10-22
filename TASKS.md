@@ -16,8 +16,8 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       paths: .github/**  depends: T001  verify: green on PR
 - [x] T003 [BLUE] MSW handlers generated from shared schemas for Yellow
       paths: shared/src/mocks/**  depends: T001  verify: pnpm -F @bpackz/shared test
-- [x] T004 [BLUE] BRAIN coordinator agent + Discord loop + delegate/spawn skills (PR open)
-      paths: brain/**, .claude/**  depends: none  verify: py brain/brain.py --once "<q>" answers (needs `claude login` on the PC)
+- [x] T004 [BLUE] BRAIN coordinator agent + Discord loop + delegate/spawn skills (PR #5, dry run verified)
+      paths: brain/**, .claude/**  depends: none  verify: py brain/brain.py --once "<q>" answers from TASKS/COMMS/PRs
 
 ## RED
 - [ ] T010 [RED] pick Hono or Fastify; scaffold backend with Drizzle + Better Auth
