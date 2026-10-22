@@ -3,14 +3,18 @@ import { Id, Name, Page, Timestamp } from "../common.js";
 import { Folder } from "./folders.js";
 import { route } from "../route.js";
 
+/** processing = uploaded, worker has not verified the bytes yet; failed = hash mismatch, re-upload. See ADR 0001. */
+export const FileStatus = z.enum(["processing", "ready", "failed"]);
+
 export const FileItem = z.object({
   id: Id,
   vaultId: Id,
   folderId: Id.nullable(),
   name: Name,
+  status: FileStatus,
   size: z.number().int().nonnegative(),
   mime: z.string().nullable(),
-  sha256: z.string().length(64),
+  sha256: z.string().length(64).nullable(), // server-verified; null until status is ready
   durationMs: z.number().int().nullable(),
   hasWaveform: z.boolean(),
   createdBy: Id.nullable(),
@@ -77,7 +81,7 @@ export const fileRoutes = {
     params: FileParams,
     query: TokenQuery.extend({ disposition: z.enum(["inline", "attachment"]).default("attachment") }),
     response: z.object({ url: z.string().url(), expiresAt: Timestamp }),
-    summary: "Presigned GET URL, 5 min",
+    summary: "Presigned GET URL, 5 min. 409 conflict until status is ready.",
   }),
   waveform: route({
     method: "GET",
@@ -92,6 +96,6 @@ export const fileRoutes = {
       length: z.number().int(),
       data: z.array(z.number().int()), // audiowaveform JSON v2 data array
     }),
-    summary: "Precomputed peaks (404 until worker has run)",
+    summary: "Precomputed peaks. 409 conflict until status is ready; 404 if not audio.",
   }),
 };

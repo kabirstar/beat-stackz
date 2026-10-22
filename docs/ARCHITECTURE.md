@@ -97,11 +97,30 @@ CREATE TABLE folders (
   UNIQUE (vault_id, parent_id, name)
 );
 
-CREATE TABLE blobs (                 -- content-addressed, shared across vaults
-  sha256 TEXT PRIMARY KEY,
-  s3_key TEXT NOT NULL, size BIGINT NOT NULL, mime TEXT,
+CREATE TABLE blobs (                 -- opaque identity; sha256 is set by the worker after verifying bytes (ADR 0001)
+  id TEXT PRIMARY KEY,
+  s3_key TEXT NOT NULL,              -- blobs/<id>, never derived from a client hash
+  size BIGINT NOT NULL, mime TEXT,
+  sha256 TEXT UNIQUE,                -- NULL until verified
+  verified_at TIMESTAMPTZ,
   duration_ms INTEGER, waveform JSONB,
   ref_count INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE uploads (               -- intent, created at uploads.create; deleted at complete/abort/expiry
+  id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id),
+  vault_id TEXT NOT NULL REFERENCES vaults(id) ON DELETE CASCADE,
+  folder_id TEXT REFERENCES folders(id) ON DELETE SET NULL,
+  name TEXT NOT NULL, size BIGINT NOT NULL, mime TEXT,
+  claimed_sha256 TEXT NOT NULL,      -- hint only
+  key TEXT NOT NULL,                 -- opaque S3 key; multipart upload id lives in S3
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(), expires_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE TABLE jobs (                  -- worker queue; no broker
+  id BIGSERIAL PRIMARY KEY, kind TEXT NOT NULL, file_id TEXT NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+  state TEXT NOT NULL DEFAULT 'queued' CHECK (state IN ('queued','running','done','failed')),
+  attempts INTEGER NOT NULL DEFAULT 0, run_after TIMESTAMPTZ NOT NULL DEFAULT now(), last_error TEXT
 );
 
 CREATE TABLE files (
@@ -109,7 +128,8 @@ CREATE TABLE files (
   vault_id TEXT NOT NULL REFERENCES vaults(id) ON DELETE CASCADE,
   folder_id TEXT REFERENCES folders(id) ON DELETE SET NULL,
   name TEXT NOT NULL,
-  blob_sha256 TEXT NOT NULL REFERENCES blobs(sha256),
+  blob_id TEXT NOT NULL REFERENCES blobs(id),
+  status TEXT NOT NULL DEFAULT 'processing' CHECK (status IN ('processing','ready','failed')),
   created_by TEXT REFERENCES users(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -169,23 +189,35 @@ descendant. Folder-level share links need a recursive CTE; skip in v1.
   → 409.
 - Share links: DB tokens, not HMAC URLs, so they can be listed and revoked.
   Default view, 7-day expiry. Edit links require login.
-- Dedup: SHA-256 in-browser (Web Crypto, streaming) during upload; if blob
-  exists, just insert the `files` row. Same stem in two vaults is free.
+- Dedup (ADR 0001): the browser's SHA-256 is a hint, not a key. `uploads.create`
+  short-circuits only when a *verified* blob with that hash is behind a file the
+  caller can already read. Otherwise the bytes are uploaded to an opaque key and
+  the worker verifies the hash; a verified match onto an existing blob is deduped
+  late (object deleted, file re-pointed). Same stem in two vaults is still free.
 
 ## 4. Upload flow (multi-GB safe)
 
 All four routes are defined in `shared` and implemented in `backend`.
+Integrity rules: ADR 0001 (`docs/adr/0001-upload-integrity.md`).
 
 1. Web hashes the file while reading (Web Crypto, streaming), calls
-   `POST /uploads` → API checks vault membership, returns `{uploadId, key}`
-   from `CreateMultipartUpload`. If the blob sha256 already exists, API
-   returns `{dedup: true}` and web skips to step 3.
+   `POST /uploads` → API checks vault membership. If a *verified* blob with
+   that hash is behind a file the caller can read, API creates the file
+   (`ready`) and returns `{dedup: true}`; web is done. Otherwise API writes an
+   `uploads` intent with an opaque key `blobs/<id>`, calls
+   `CreateMultipartUpload`, returns `{uploadId, key, partSize, partCount}`.
 2. Web PUTs each 64 MiB part to a presigned URL from `POST /uploads/sign`.
    Bucket CORS must allow `PUT` from `WEB_ORIGIN` and expose `ETag`.
-3. `POST /uploads/complete` → `CompleteMultipartUpload`, insert `blobs` +
-   `files`, insert a `jobs` row; `worker` polls — no queue service.
-4. `POST /uploads/abort` on cancel. R2 constraints baked in: fixed part size,
-   ≤10k parts → 640 GB ceiling.
+3. `POST /uploads/complete` → API checks the intent belongs to the caller,
+   `ListParts` matches expected count/sizes, `CompleteMultipartUpload`, insert
+   `blobs` (sha256 NULL) + `files` (`processing`) + `jobs` row, delete intent.
+4. `worker` streams the object once: SHA-256 + ffprobe + audiowaveform.
+   Match → `ready` (late-dedup if another verified blob has that hash: re-point
+   file, delete new object). Mismatch → delete object, `failed`, audit.
+   Download/waveform return 409 until ready.
+5. `DELETE /uploads/:id` on cancel → `AbortMultipartUpload`, delete intent.
+   Expired intents are aborted by the worker. R2 constraints baked in: fixed
+   part size, ≤10k parts → 640 GB ceiling.
 
 ## 5. Local vs hosted
 

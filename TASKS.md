@@ -18,6 +18,8 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       paths: shared/src/mocks/**  depends: T001  verify: pnpm -F @bpackz/shared test
 - [x] T004 [BLUE] BRAIN coordinator agent + Discord loop + delegate/spawn skills (PR #5, dry run verified)
       paths: brain/**, .claude/**  depends: none  verify: py brain/brain.py --once "<q>" answers from TASKS/COMMS/PRs
+- [x] T007 [BLUE] upload integrity policy: ADR 0001, FileItem.status, scoped dedup, opaque keys (unblocks T013)
+      paths: shared/**, docs/**  depends: none  verify: pnpm -F @bpackz/shared test (6/6)
 
 ## RED
 - [x] Verify PC environment and clone isolated Red checkout; GitHub CLI auth works outside sandbox
@@ -69,3 +71,8 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: GitHub review on PR #8 (focus: Better Auth tx extension in backend/src/auth.ts, 0003 backfill)
       verify: gh pr view 8 --repo kabirstar/beat-stackz --json reviews shows BLUE's review
       handoff: comms/brain/T006-review-pr8.md
+- [ ] T007 [BLUE] decide dedup authorization + trusted-hash policy for T013 uploads; review PR #14
+      paths: shared/src/api/uploads.ts, docs/adr/**, docs/ARCHITECTURE.md; review on PR #14  depends: PR #14 (draft)  assigned-by: BRAIN
+      deliverable: ADR + shared contract change (or explicit none) + GitHub review on PR #14; Red resumes T013 after
+      verify: docs/adr/NNNN-*.md exists; pnpm -F @bpackz/shared test; gh pr view 14 --repo kabirstar/beat-stackz --json reviews shows BLUE
+      handoff: comms/brain/T007-upload-integrity-policy.md
