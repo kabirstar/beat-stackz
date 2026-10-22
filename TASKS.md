@@ -125,3 +125,8 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: comms/blue/T009-*.md with item → route; shared + mocks updated for accepted items
       verify: pnpm -F @bpackz/shared test
       handoff: comms/brain/T009-feature-gap-check.md
+- [ ] T031 [BLUE] review + merge PR #25 (Yellow T024: /s/:token share view, removeMember, rename, frontend/Dockerfile + nginx.conf)
+      paths: review only; infra/docker-compose.yml if the web service needs wiring  depends: none (CI green on e1f96f1)  assigned-by: BRAIN
+      deliverable: GitHub review on PR #25; merge on approval; compose `web` service wired if missing
+      verify: gh pr view 25 --repo kabirstar/beat-stackz --json reviews,state shows BLUE's review
+      handoff: comms/brain/T031-review-pr25.md
