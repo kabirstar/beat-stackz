@@ -94,7 +94,7 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       handoff: comms/brain/T008-review-pr14-pr21.md
 - [ ] T015 [RED] verification worker per ADR 0001 (hash, ready/failed, late-dedup, expired intents; no ffmpeg yet)
       paths: worker/**, backend/**  depends: T008 (Blue clears + merges #14)  assigned-by: BRAIN
-      status: hold lifted 2026-10-22 04:48 — Red reports Kabir's go in Red's chat, conditional on #14 clearance; Kabir/Swish may veto in #brain-updates
+      status: PR #23 open (red/worker, 5a3d51c, CI green) — awaiting Blue review (T030)
       deliverable: worker claims verify jobs, streams+hashes once, applies ADR transitions with audits under vault-lock; aborts expired intents
       verify: worker integration command Red adds — match/mismatch/retry/late-dedup/expired, zero skips on Docker Postgres + RustFS
       handoff: comms/brain/T015-verification-worker.md
@@ -109,6 +109,12 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: #21 merged on green; #23 reviewed (merge or changes requested); T009 starts once #21 lands
       verify: gh pr view 21/23 --repo kabirstar/beat-stackz --json state,reviews shows BLUE; comms/blue/T030-*.md
       handoff: comms/brain/T030-review-pr21-pr23.md
+- [ ] T016 [RED] waveform JSON: ffprobe duration + audiowaveform peaks in worker; files.waveform serves stored peaks
+      paths: worker/**, backend/** (waveform route + blob columns only)  depends: T030 (#23 merged)  assigned-by: BRAIN
+      status: authorized 2026-10-22 05:05 — Red reports Kabir's go in Red's chat, conditional on #23 clearance; Kabir/Swish may veto in #brain-updates. Invites/shares not covered.
+      deliverable: worker stores duration_ms + 8-bit JSON v2 peaks on verified audio blobs; GET waveform matches shared contract, 409 until ready, 404 non-audio
+      verify: pnpm -F worker test on Docker Postgres + RustFS with a real audio fixture, zero skips
+      handoff: comms/brain/T016-waveform-json.md
 - [ ] T017 [RED] vault members + share links + trash purge per shared contract (after T013; no hold — routes already contracted)
       paths: backend/**, worker/** (purge only)  depends: T013  assigned-by: BRAIN
       deliverable: vaults.members/invite/removeMember; shares.*; ?token= on download/waveform; 30-day purge job

@@ -11,4 +11,5 @@ Deliverable, in this order:
   3. T009 unblocks the moment #21 lands (comms/yellow/T023-feature-list.md is on that branch): start the gap-check.
 Verify: `gh pr view 21 --repo kabirstar/beat-stackz --json state,reviews` and same for 23 show BLUE; comms/blue/T030-*.md saying what merged and any follow-ups per owner
 Context: comms/blue/T008-reviews-pr14-pr21.md (your asks), PR #21 comment 05:02 (Yellow's point-by-point), comms/red/T013-upload-endpoints.md (worker contract), docs/adr/0001-*.md
-Next owner after done: YELLOW (T022 against live worker-promoted files, invites/share UI); RED (T017 members/shares/purge)
+Addendum 05:05: Red asked for #23 clearance in-channel; merging #23 also gates RED T016 waveform JSON (comms/brain/T016-waveform-json.md, Kabir-authorized per Red). Extra #23 checks: stream-once hook left tappable for ffprobe/audiowaveform; storage-setup lifecycle change keeps existing rules; TASKS.md touches only RED.
+Next owner after done: RED (T016 waveform JSON, then T017 members/shares/purge); YELLOW (T022 against live worker-promoted files, invites/share UI)
