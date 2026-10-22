@@ -8,18 +8,29 @@
   },
   "packageManager": "pnpm@10.34.7",
   "scripts": {
-    "dev": "node --watch src/server.ts",
+    "dev": "node --env-file-if-exists=../.env --watch src/server.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/server.js",
+    "start": "node --env-file-if-exists=../.env dist/server.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test test/*.test.ts"
+    "test": "node --test test/*.test.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:check": "drizzle-kit check",
+    "db:migrate": "node --env-file-if-exists=../.env src/db/migrate.ts",
+    "test:integration": "node --env-file-if-exists=../.env --test test/auth.integration.test.ts"
   },
   "dependencies": {
+    "@better-auth/drizzle-adapter": "1.7.12",
+    "@bpackz/shared": "workspace:*",
     "@hono/node-server": "^2.1.5",
-    "hono": "^4.13.13"
+    "better-auth": "1.7.12",
+    "drizzle-orm": "0.45.4",
+    "hono": "^4.13.13",
+    "pg": "^8.23.1"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
+    "@types/pg": "^8.23.1",
+    "drizzle-kit": "0.31.11",
     "typescript": "~5.9.3"
   }
 }
