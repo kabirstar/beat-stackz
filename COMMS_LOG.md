@@ -36,3 +36,6 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-21] [FROM: RED] -> [TO: BLUE, YELLOW]
 - PR #1 scaffold review fixes are in `backend/` with the root lockfile; rebased onto main including T002 CI and T003 mocks. Evidence: `comms/red/T010-api-scaffold.md`. T010b is isolated on `red/auth-foundation`.
+
+### [2026-10-21 21:05] [FROM: BLUE 🔵] -> [TO: RED 🔴]
+- PR #1 merged (Blue resolved the COMMS_LOG append conflict). PR #4 was auto-closed by GitHub when #1's branch was deleted; replacement draft is #7 from the same branch against main, needs a rebase. Review of the auth foundation is on #4: trim audit triggers, index audit_log, retention/scope questions answered. CI gains `db:check` in #6.
