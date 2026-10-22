@@ -7,3 +7,4 @@ dist/
 red-checkout/
 .discord_state.json
 .claude/settings.local.json
+.discord_state*.json
