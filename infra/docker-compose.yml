@@ -33,10 +33,14 @@ services:
     ports: ["5173:80"]
     profiles: [full]
 
-  worker:
-    build: { context: .., dockerfile: worker/Dockerfile }   # ffmpeg + audiowaveform inside
+  worker: # verifies uploads (T015); ffmpeg/audiowaveform arrive with T016
+    build: { context: .., dockerfile: worker/Dockerfile }
     env_file: ../.env
-    depends_on: { postgres: { condition: service_healthy } }
+    environment: # inside the compose network the services are reachable by name, not localhost
+      DATABASE_URL: postgres://bpackz:bpackz@postgres:5432/bpackz
+      S3_ENDPOINT: http://rustfs:9000
+    depends_on: { postgres: { condition: service_healthy }, rustfs: { condition: service_started } }
+    restart: unless-stopped
     profiles: [full]
 
 volumes:
