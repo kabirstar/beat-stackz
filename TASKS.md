@@ -52,3 +52,8 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       paths: comms/brain/**  depends: Kabir runs `py brain/brain.py` on the PC
       deliverable: BRAIN answers a status question in Discord from TASKS/COMMS/PRs
       verify: reply appears as BRAIN within a minute of the question
+- [ ] T006 [BLUE] review PR #8: T011 personal vault + T014 Docker switch
+      paths: review only  depends: PR #7 merged  assigned-by: BRAIN
+      deliverable: GitHub review on PR #8 (focus: Better Auth tx extension in backend/src/auth.ts, 0003 backfill)
+      verify: gh pr view 8 --repo kabirstar/beat-stackz --json reviews shows BLUE's review
+      handoff: comms/brain/T006-review-pr8.md
