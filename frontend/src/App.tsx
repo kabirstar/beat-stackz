@@ -20,7 +20,8 @@ import {
 } from "./components/VaultModals.tsx";
 import { UserAvatarBadge } from "./HardwareIcons.tsx";
 import {
-  computeDeterministicSha256,
+  computeBlobSha256,
+  createSampleWavBlob,
   formatBytes,
   parseStudioFileDisplay,
 } from "./utils/format.ts";
@@ -94,6 +95,7 @@ export function App() {
 
   const [toast, setToast] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -184,9 +186,11 @@ export function App() {
         if (chosen) {
           setActiveVaultId(chosen.id);
           await loadVaultContents(chosen.id);
-          if (chosen.kind === "shared") {
+          try {
             const m = await api.vaults.members(chosen.id);
             setVaultMembers(m.items);
+          } catch {
+            setVaultMembers([]);
           }
         }
       } catch {
@@ -302,12 +306,62 @@ export function App() {
           !query ||
           f.name.toLowerCase().includes(query) ||
           describeFileMeta(f).toLowerCase().includes(query);
-        const owner = resolveFileOwnerName(f.createdBy).toLowerCase();
-        const matchesChip = trackFilter === "all" || owner === trackFilter;
+        const owner = resolveFileOwnerName(f.createdBy, vaultMembers, user).toLowerCase();
+        const matchesChip = trackFilter === "all" || owner.includes(trackFilter);
         return matchesQuery && matchesChip;
       }),
-    [activeFolderFiles, query, trackFilter],
+    [activeFolderFiles, query, trackFilter, vaultMembers, user],
   );
+
+  // Poll processing files until verification worker (or mock timer) flips them to ready/failed
+  useEffect(() => {
+    if (!activeVaultId) return;
+    const processingFiles: { folderKey: string; file: FileItem }[] = [];
+    for (const [folderKey, list] of Object.entries(filesByFolder)) {
+      for (const f of list) {
+        if (f.status === "processing") {
+          processingFiles.push({ folderKey, file: f });
+        }
+      }
+    }
+    if (processingFiles.length === 0) return;
+
+    const timer = window.setInterval(() => {
+      void (async () => {
+        let changed = false;
+        const updates = new Map<string, FileItem>();
+        for (const { file } of processingFiles) {
+          try {
+            const latest = await api.files.get(activeVaultId, file.id);
+            if (latest.status !== file.status) {
+              changed = true;
+              updates.set(file.id, latest);
+            }
+          } catch {
+            // ignore transient poll error
+          }
+        }
+        if (changed) {
+          setFilesByFolder((prev) => {
+            const next: Record<string, FileItem[]> = {};
+            for (const [k, list] of Object.entries(prev)) {
+              next[k] = list.map((item) => updates.get(item.id) ?? item);
+            }
+            return next;
+          });
+          for (const updated of updates.values()) {
+            if (updated.status === "ready") {
+              showToast(`Verified & ready · "${updated.name}"`);
+            } else if (updated.status === "failed") {
+              showToast(`Upload verification failed · "${updated.name}"`);
+            }
+          }
+        }
+      })();
+    }, 1200);
+
+    return () => window.clearInterval(timer);
+  }, [activeVaultId, filesByFolder, showToast]);
 
   const trashedList: TrashedFileEntry[] = useMemo(
     () => (activeVaultId ? uiMeta.trashedByVault[activeVaultId] ?? [] : []),
@@ -521,11 +575,13 @@ export function App() {
     mime: string | null,
     payload?: Blob,
   ) => {
-    const sha256 = computeDeterministicSha256(name, size);
+    const blobToUpload = payload ?? createSampleWavBlob();
+    const actualSize = payload ? Math.max(1, size) : Math.max(1, blobToUpload.size);
+    const sha256 = await computeBlobSha256(blobToUpload, name, actualSize);
     const init = await api.uploads.create(targetVaultId, {
       folderId: targetFolderId,
       name,
-      size: Math.max(1, size),
+      size: actualSize,
       mime: mime || "audio/wav",
       sha256,
     });
@@ -540,9 +596,13 @@ export function App() {
 
     const completedParts: { partNumber: number; etag: string }[] = [];
     for (const p of signed.urls) {
+      const start = (p.partNumber - 1) * init.partSize;
+      const end = Math.min(blobToUpload.size, start + init.partSize);
+      const partSlice =
+        blobToUpload.size > 0 ? blobToUpload.slice(start, end) : new Uint8Array([0]);
       const putRes = await fetch(p.url, {
         method: "PUT",
-        body: payload ?? new Uint8Array([0]),
+        body: partSlice,
       });
       const etag = putRes.headers.get("ETag") || `"etag-${p.partNumber}"`;
       completedParts.push({ partNumber: p.partNumber, etag });
@@ -564,8 +624,9 @@ export function App() {
 
     try {
       if (files && files.length > 0) {
+        let lastUploaded: FileItem | null = null;
         for (const f of Array.from(files)) {
-          await runMultipartUpload(
+          lastUploaded = await runMultipartUpload(
             activeVaultId,
             targetFolderId,
             f.name,
@@ -575,10 +636,14 @@ export function App() {
           );
         }
         await loadVaultContents(activeVaultId);
-        showToast(`Uploaded ${files.length} master file${files.length > 1 ? "s" : ""}`);
+        showToast(
+          lastUploaded?.status === "processing"
+            ? `Uploaded ${files.length} file${files.length > 1 ? "s" : ""} · verifying integrity...`
+            : `Uploaded ${files.length} master file${files.length > 1 ? "s" : ""}`,
+        );
       } else {
         const sampleName = `${currentUserKey}_take_${Math.floor(100 + Math.random() * 899)}.wav`;
-        await runMultipartUpload(
+        const uploaded = await runMultipartUpload(
           activeVaultId,
           targetFolderId,
           sampleName,
@@ -586,7 +651,11 @@ export function App() {
           "audio/wav",
         );
         await loadVaultContents(activeVaultId);
-        showToast(`Uploaded "${sampleName}"`);
+        showToast(
+          uploaded.status === "processing"
+            ? `Uploaded "${sampleName}" · verifying integrity...`
+            : `Uploaded "${sampleName}"`,
+        );
       }
       setPlusMenuOpen(false);
     } catch (err) {
@@ -596,12 +665,33 @@ export function App() {
 
   const handleTogglePlay = async (file: FileItem) => {
     if (!activeVaultId) return;
+    if (file.status && file.status !== "ready") {
+      showToast(
+        file.status === "failed"
+          ? "Upload failed — click Retry to upload again"
+          : "File is still verifying...",
+      );
+      return;
+    }
     if (playingFile?.id === file.id) {
+      audioRef.current?.pause();
       setPlayingFile(null);
       return;
     }
     setPlayingFile(file);
-    setPlayProgress(38);
+    setPlayProgress(0);
+    try {
+      const { url } = await api.files.downloadUrl(activeVaultId, file.id, {
+        disposition: "inline",
+      });
+      if (audioRef.current) {
+        audioRef.current.src = url;
+        audioRef.current.currentTime = 0;
+        void audioRef.current.play().catch(() => {});
+      }
+    } catch {
+      // ignore if audio stream is unavailable
+    }
     try {
       const wf = await api.files.waveform(activeVaultId, file.id);
       if (wf.data.length > 0) {
@@ -618,11 +708,28 @@ export function App() {
 
   const handleDownloadFile = async (file: FileItem) => {
     if (!activeVaultId) return;
+    if (file.status && file.status !== "ready") {
+      showToast(
+        file.status === "failed"
+          ? "Upload failed — click Retry to upload again"
+          : "File is still verifying...",
+      );
+      return;
+    }
     try {
       const { url } = await api.files.downloadUrl(activeVaultId, file.id, {
         disposition: "attachment",
       });
-      showToast(`Presigned download ready · ${file.name} (${url.slice(0, 28)}...)`);
+      if (typeof document !== "undefined") {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = file.name;
+        a.rel = "noopener";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }
+      showToast(`Presigned download ready · ${file.name}`);
     } catch (err) {
       if (err instanceof BpackzApiError) showToast(err.message);
     }
@@ -817,6 +924,20 @@ export function App() {
         multiple
         className="hidden"
         onChange={(e) => void handleUploadSelection(e.target.files)}
+      />
+      <audio
+        ref={audioRef}
+        loop={loopEnabled}
+        className="hidden"
+        onTimeUpdate={(e) => {
+          const el = e.currentTarget;
+          if (el.duration && Number.isFinite(el.duration) && el.duration > 0) {
+            setPlayProgress(Math.min(100, Math.round((el.currentTime / el.duration) * 100)));
+          }
+        }}
+        onEnded={() => {
+          if (!loopEnabled) setPlayingFile(null);
+        }}
       />
 
       <VaultHeader
@@ -1060,9 +1181,12 @@ export function App() {
                   playProgress={playProgress}
                   parentFolderTheme={parentFolderTheme}
                   otherUserName={otherUserName}
+                  vaultMembers={vaultMembers}
+                  currentUser={user}
                   onTogglePlay={(f) => void handleTogglePlay(f)}
                   onDownload={(f) => void handleDownloadFile(f)}
                   onOpenPopover={(f) => void handleOpenFilePopover(f)}
+                  onRetryUpload={() => fileInputRef.current?.click()}
                 />
               ))}
             </div>
@@ -1085,6 +1209,8 @@ export function App() {
             playProgress={playProgress}
             parentFolderTheme={parentFolderTheme}
             otherUserName={otherUserName}
+            vaultMembers={vaultMembers}
+            currentUser={user}
             onSelectAllInRoot={() => {
               setSubId(null);
               setForceFilesView(true);
@@ -1093,7 +1219,7 @@ export function App() {
             onOpenCreateSubfolder={() => setCreatingFolder(true)}
             onChangeTrackFilter={setTrackFilter}
             onChangeFileLayout={setFileLayout}
-            onUploadClick={() => void handleUploadSelection(null)}
+            onUploadClick={() => fileInputRef.current?.click()}
             onTogglePlay={(f) => void handleTogglePlay(f)}
             onDownload={(f) => void handleDownloadFile(f)}
             onOpenPopover={(f) => void handleOpenFilePopover(f)}
@@ -1188,11 +1314,25 @@ export function App() {
           waveformBars={waveformBars}
           playProgress={playProgress}
           loopEnabled={loopEnabled}
+          vaultMembers={vaultMembers}
+          currentUser={user}
           onToggleLoop={() => setLoopEnabled((v) => !v)}
-          onSeek={setPlayProgress}
+          onSeek={(pct) => {
+            setPlayProgress(pct);
+            if (
+              audioRef.current &&
+              audioRef.current.duration &&
+              Number.isFinite(audioRef.current.duration)
+            ) {
+              audioRef.current.currentTime = (pct / 100) * audioRef.current.duration;
+            }
+          }}
           onShare={(f) => void handleOpenFilePopover(f)}
           onDownload={(f) => void handleDownloadFile(f)}
-          onClose={() => setPlayingFile(null)}
+          onClose={() => {
+            audioRef.current?.pause();
+            setPlayingFile(null);
+          }}
         />
       )}
     </div>

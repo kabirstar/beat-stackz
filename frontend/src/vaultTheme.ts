@@ -1,4 +1,4 @@
-import type { FileItem, Folder } from "@bpackz/shared";
+import type { FileItem, Folder, User, VaultMember } from "@bpackz/shared";
 
 export interface HardwareThemeSlot {
   name: string;
@@ -331,8 +331,21 @@ export function describeFileMeta(file: FileItem): string {
   return file.mime?.split("/")[1]?.toUpperCase() || "STUDIO FILE";
 }
 
-export function resolveFileOwnerName(createdBy: string | null | undefined): "Swish" | "Todo" {
-  if (!createdBy) return "Swish";
+export function resolveFileOwnerName(
+  createdBy: string | null | undefined,
+  members?: VaultMember[],
+  currentUser?: User | null,
+): string {
+  if (!createdBy) return currentUser?.name || "Swish";
+  if (members && members.length > 0) {
+    const matched = members.find((m) => m.userId === createdBy);
+    if (matched) {
+      return matched.name || matched.email.split("@")[0] || "Member";
+    }
+  }
+  if (currentUser && currentUser.id === createdBy) {
+    return currentUser.name || currentUser.email.split("@")[0] || "Swish";
+  }
   if (createdBy === "u_prod" || createdBy.toLowerCase().includes("todo")) {
     return "Todo";
   }

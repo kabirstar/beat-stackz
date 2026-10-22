@@ -1,4 +1,4 @@
-import type { FileItem } from "@bpackz/shared";
+import type { FileItem, User, VaultMember } from "@bpackz/shared";
 import { UserAvatarBadge } from "../HardwareIcons.tsx";
 import { formatBytes } from "../utils/format.ts";
 import { describeFileMeta, resolveFileOwnerName } from "../vaultTheme.ts";
@@ -9,6 +9,8 @@ export function BottomTransportPlayer({
   waveformBars,
   playProgress,
   loopEnabled,
+  vaultMembers,
+  currentUser,
   onToggleLoop,
   onSeek,
   onShare,
@@ -19,6 +21,8 @@ export function BottomTransportPlayer({
   waveformBars: number[];
   playProgress: number;
   loopEnabled: boolean;
+  vaultMembers?: VaultMember[];
+  currentUser?: User | null;
   onToggleLoop: () => void;
   onSeek: (pct: number) => void;
   onShare: (file: FileItem) => void;
@@ -29,7 +33,7 @@ export function BottomTransportPlayer({
     <div className="fixed bottom-0 left-0 right-0 z-40 px-4 sm:px-8 py-2.5 bg-[#e4e0d8]/95 backdrop-blur-xl border-t border-[var(--hair)] flex items-center justify-between gap-3">
       <div className="flex items-center gap-3 min-w-0 flex-1 max-w-xs">
         <UserAvatarBadge
-          byName={resolveFileOwnerName(playingFile.createdBy)}
+          byName={resolveFileOwnerName(playingFile.createdBy, vaultMembers, currentUser)}
           sizeClass="w-8 h-8 text-xs"
         />
         <div className="min-w-0">

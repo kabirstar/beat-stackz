@@ -1,4 +1,4 @@
-import type { FileItem, Folder } from "@bpackz/shared";
+import type { FileItem, Folder, User, VaultMember } from "@bpackz/shared";
 import { UserAvatarBadge } from "../HardwareIcons.tsx";
 import { formatBytes, parseStudioFileDisplay } from "../utils/format.ts";
 import {
@@ -20,9 +20,12 @@ export function StudioFileCard({
   playProgress,
   parentFolderTheme,
   otherUserName,
+  vaultMembers,
+  currentUser,
   onTogglePlay,
   onDownload,
   onOpenPopover,
+  onRetryUpload,
 }: {
   file: FileItem;
   idx: number;
@@ -30,9 +33,12 @@ export function StudioFileCard({
   playProgress: number;
   parentFolderTheme: HardwareThemeSlot;
   otherUserName: string;
+  vaultMembers?: VaultMember[];
+  currentUser?: User | null;
   onTogglePlay: (file: FileItem) => void;
   onDownload: (file: FileItem) => void;
   onOpenPopover: (file: FileItem) => void;
+  onRetryUpload?: () => void;
 }) {
   const trackNum = String(idx + 1).padStart(2, "0");
   const { cleanTitle, ext, isAudio } = parseStudioFileDisplay(file.name);
@@ -40,50 +46,86 @@ export function StudioFileCard({
     .split("·")
     .map((p) => p.trim())
     .filter(Boolean);
-  const ownerName = resolveFileOwnerName(file.createdBy);
+  const ownerName = resolveFileOwnerName(file.createdBy, vaultMembers, currentUser);
+  const status = file.status ?? "ready";
+  const isProcessing = status === "processing";
+  const isFailed = status === "failed";
+  const isReady = status === "ready";
 
   return (
     <article
       className={`file-card ${
-        isPlaying ? "file-card-playing" : ""
+        isPlaying && isReady ? "file-card-playing" : ""
       } p-3 sm:px-4 sm:py-3.5 flex items-center justify-between gap-3 sm:gap-4 overflow-hidden`}
     >
       {/* 4px Hardware Color Spine matching Parent 3D Folder */}
       <div
         className="w-1.5 self-stretch rounded-full shrink-0"
-        style={{ background: parentFolderTheme.accentPrimary }}
+        style={{
+          background: isFailed
+            ? "#ef4444"
+            : isProcessing
+              ? "#f59e0b"
+              : parentFolderTheme.accentPrimary,
+        }}
       />
 
-      {/* Left: 44x44px Tactile Hardware Play Tile */}
-      <button
-        type="button"
-        onClick={() => onTogglePlay(file)}
-        title={isPlaying ? "Pause" : "Play"}
-        className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex flex-col items-center justify-center shrink-0 cursor-pointer transition border ${
-          isPlaying
-            ? "bg-[var(--ink)] text-[var(--bg)] border-[var(--ink)] shadow-md"
-            : "bg-[var(--card)] text-[var(--ink)] border-[var(--ink)]/15 hover:bg-[var(--ink)] hover:text-[var(--bg)]"
-        }`}
-      >
-        {isPlaying ? (
-          <>
-            <span className="flex items-end gap-0.5 h-3.5">
-              <span className="w-0.5 bg-current eq-bar-1" />
-              <span className="w-0.5 bg-current eq-bar-2" />
-              <span className="w-0.5 bg-current eq-bar-3" />
-            </span>
-            <span className="mono-meta text-[8px] uppercase mt-0.5 opacity-80">ON</span>
-          </>
-        ) : (
-          <>
-            <StudioIcon name="play" className="w-3.5 h-3.5 ml-0.5" />
-            <span className="mono-meta text-[9px] opacity-65 mt-0.5">{trackNum}</span>
-          </>
-        )}
-      </button>
+      {/* Left: 44x44px Tactile Hardware Play Tile (or Processing / Failed State) */}
+      {isProcessing ? (
+        <div
+          title="Verifying upload integrity..."
+          className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex flex-col items-center justify-center shrink-0 border border-amber-500/40 bg-amber-500/10 text-amber-800"
+        >
+          <span className="w-3.5 h-3.5 rounded-full border-2 border-amber-700 border-t-transparent animate-spin" />
+          <span className="mono-meta text-[7px] uppercase mt-1 opacity-85">SYNC</span>
+        </div>
+      ) : isFailed ? (
+        <button
+          type="button"
+          onClick={() => onRetryUpload?.()}
+          title="Upload failed — click to try again"
+          className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex flex-col items-center justify-center shrink-0 cursor-pointer transition border border-red-500/40 bg-red-500/10 text-red-700 hover:bg-red-500/20"
+        >
+          <StudioIcon name="replay" className="w-3.5 h-3.5" />
+          <span className="mono-meta text-[7px] uppercase mt-1">RETRY</span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => onTogglePlay(file)}
+          title={isPlaying ? "Pause" : "Play"}
+          className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex flex-col items-center justify-center shrink-0 cursor-pointer transition border ${
+            isPlaying
+              ? "bg-[var(--ink)] text-[var(--bg)] border-[var(--ink)] shadow-md"
+              : "bg-[var(--card)] text-[var(--ink)] border-[var(--ink)]/15 hover:bg-[var(--ink)] hover:text-[var(--bg)]"
+          }`}
+        >
+          {isPlaying ? (
+            <>
+              <span className="flex items-end gap-0.5 h-3.5">
+                <span className="w-0.5 bg-current eq-bar-1" />
+                <span className="w-0.5 bg-current eq-bar-2" />
+                <span className="w-0.5 bg-current eq-bar-3" />
+              </span>
+              <span className="mono-meta text-[8px] uppercase mt-0.5 opacity-80">ON</span>
+            </>
+          ) : (
+            <>
+              <StudioIcon name="play" className="w-3.5 h-3.5 ml-0.5" />
+              <span className="mono-meta text-[9px] opacity-65 mt-0.5">{trackNum}</span>
+            </>
+          )}
+        </button>
+      )}
 
       {/* Center: Studio Mono Title + Format Pill + Separated Spec Badges */}
-      <div onClick={() => onTogglePlay(file)} className="min-w-0 flex-1 cursor-pointer">
+      <div
+        onClick={() => {
+          if (isReady) onTogglePlay(file);
+          else if (isFailed) onRetryUpload?.();
+        }}
+        className={`min-w-0 flex-1 ${isReady || isFailed ? "cursor-pointer" : "cursor-default"}`}
+      >
         <div className="flex items-center gap-2 min-w-0">
           <h3 className="file-title-font text-[15px] sm:text-[17px] text-[var(--ink)] truncate">
             {cleanTitle}
@@ -98,15 +140,15 @@ export function StudioFileCard({
           >
             {ext}
           </span>
-          {file.status && file.status !== "ready" && (
-            <span
-              className={`mono-meta text-[9px] uppercase px-1.5 py-0.5 rounded-md border shrink-0 font-semibold ${
-                file.status === "failed"
-                  ? "bg-red-500/15 text-red-700 border-red-500/40"
-                  : "bg-amber-500/15 text-amber-800 border-amber-500/40"
-              }`}
-            >
-              {file.status}
+          {isProcessing && (
+            <span className="mono-meta text-[9px] uppercase px-2 py-0.5 rounded-md border shrink-0 font-semibold bg-amber-500/15 text-amber-800 border-amber-500/40 inline-flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse" />
+              Verifying
+            </span>
+          )}
+          {isFailed && (
+            <span className="mono-meta text-[9px] uppercase px-2 py-0.5 rounded-md border shrink-0 font-semibold bg-red-500/15 text-red-700 border-red-500/40">
+              Upload failed, try again
             </span>
           )}
         </div>
@@ -129,8 +171,8 @@ export function StudioFileCard({
         </div>
       </div>
 
-      {/* Center-Right: Interactive Mini Waveform Strip for Audio Files */}
-      {isAudio && (
+      {/* Center-Right: Interactive Mini Waveform Strip for Ready Audio Files */}
+      {isAudio && isReady && (
         <div
           onClick={() => onTogglePlay(file)}
           className="hidden md:flex items-center gap-0.5 h-8 px-2.5 py-1 rounded-xl bg-[var(--card)]/70 border border-[var(--hair)] cursor-pointer shrink-0"
@@ -167,14 +209,26 @@ export function StudioFileCard({
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={() => onDownload(file)}
-          title="Download master file"
-          className="icon-btn w-9 h-9 hidden sm:inline-flex"
-        >
-          <StudioIcon name="download" className="w-3.5 h-3.5" />
-        </button>
+        {isFailed && onRetryUpload && (
+          <button
+            type="button"
+            onClick={onRetryUpload}
+            className="px-2.5 py-1.5 rounded-xl bg-red-600 text-white mono-meta text-[9px] uppercase cursor-pointer hover:bg-red-700 transition"
+          >
+            Try again
+          </button>
+        )}
+
+        {isReady && (
+          <button
+            type="button"
+            onClick={() => onDownload(file)}
+            title="Download master file"
+            className="icon-btn w-9 h-9 hidden sm:inline-flex"
+          >
+            <StudioIcon name="download" className="w-3.5 h-3.5" />
+          </button>
+        )}
 
         <button
           type="button"
@@ -212,6 +266,8 @@ export function StudioFileSection({
   playProgress,
   parentFolderTheme,
   otherUserName,
+  vaultMembers,
+  currentUser,
   onSelectAllInRoot,
   onSelectSubfolder,
   onOpenCreateSubfolder,
@@ -235,6 +291,8 @@ export function StudioFileSection({
   playProgress: number;
   parentFolderTheme: HardwareThemeSlot;
   otherUserName: string;
+  vaultMembers?: VaultMember[];
+  currentUser?: User | null;
   onSelectAllInRoot: () => void;
   onSelectSubfolder: (subId: string) => void;
   onOpenCreateSubfolder: () => void;
@@ -373,9 +431,12 @@ export function StudioFileSection({
               playProgress={playProgress}
               parentFolderTheme={parentFolderTheme}
               otherUserName={otherUserName}
+              vaultMembers={vaultMembers}
+              currentUser={currentUser}
               onTogglePlay={onTogglePlay}
               onDownload={onDownload}
               onOpenPopover={onOpenPopover}
+              onRetryUpload={onUploadClick}
             />
           ))}
         </div>

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { formatBytes, parseStudioFileDisplay } from "./App.tsx";
+import { computeBlobSha256, createSampleWavBlob } from "./utils/format.ts";
 import {
   describeFileMeta,
   generateRandomSharedPalette,
@@ -85,22 +86,38 @@ describe("The Vault UI & Theme Specification (T020 & T021)", () => {
     assert.equal(sharedBeatsMeta.iconKey, "rap_cup");
   });
 
-  it("formats byte sizes and resolves file owner names", () => {
+  it("formats byte sizes and resolves file owner names from vaultMembers or fallback", async () => {
     assert.equal(formatBytes(48_400_000), "46.2 MB");
     assert.equal(resolveFileOwnerName("u_artist"), "Swish");
     assert.equal(resolveFileOwnerName("u_prod"), "Todo");
     assert.equal(
+      resolveFileOwnerName("u_real_123", [
+        {
+          userId: "u_real_123",
+          email: "lush@bpackz.studio",
+          name: "Lush",
+          role: "owner",
+        },
+      ]),
+      "Lush",
+    );
+
+    const wav = createSampleWavBlob();
+    const digest = await computeBlobSha256(wav, "sample.wav", wav.size);
+    assert.match(digest, /^[0-9a-f]{64}$/);
+
+    assert.equal(
       describeFileMeta({
         id: "file_1",
         vaultId: "v_personal",
-        folderId: "f_root_beats",
+        folderId: null,
         name: "swish_142bpm_dark_loop.wav",
-        status: "ready",
+        status: "processing",
         size: 48_400_000,
         mime: "audio/wav",
-        sha256: "a".repeat(64),
-        durationMs: 148000,
-        hasWaveform: true,
+        sha256: null,
+        durationMs: null,
+        hasWaveform: false,
         createdBy: "u_artist",
         createdAt: "2026-10-21T00:00:00.000Z",
         updatedAt: "2026-10-21T00:00:00.000Z",
