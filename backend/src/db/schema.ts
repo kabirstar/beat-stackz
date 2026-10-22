@@ -1,4 +1,5 @@
-import { bigint, boolean, index, jsonb, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { bigint, boolean, check, index, jsonb, pgTable, primaryKey, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: text('id').primaryKey(),
@@ -62,4 +63,26 @@ export const auditLog = pgTable('audit_log', {
 }, (table) => [
   index('audit_log_actor_at_idx').on(table.actorId, table.at),
   index('audit_log_vault_at_idx').on(table.vaultId, table.at),
+]);
+
+export const vaults = pgTable('vaults', {
+  id: text('id').primaryKey(),
+  kind: text('kind').notNull(),
+  name: text('name').notNull(),
+  createdBy: text('created_by').notNull().references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+}, (table) => [
+  check('vaults_kind_check', sql`${table.kind} in ('personal', 'shared')`),
+  uniqueIndex('vaults_personal_owner_idx').on(table.createdBy).where(sql`${table.kind} = 'personal'`),
+]);
+
+export const vaultMembers = pgTable('vault_members', {
+  vaultId: text('vault_id').notNull().references(() => vaults.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  role: text('role').notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.vaultId, table.userId] }),
+  index('vault_members_user_idx').on(table.userId),
+  check('vault_members_role_check', sql`${table.role} in ('owner', 'editor', 'viewer')`),
 ]);
