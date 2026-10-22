@@ -80,6 +80,31 @@ importers:
         specifier: ^5.9.0
         version: 5.9.3
 
+  worker:
+    dependencies:
+      '@aws-sdk/client-s3':
+        specifier: ^3.1155.0
+        version: 3.1155.0
+      api:
+        specifier: workspace:*
+        version: link:../backend
+      drizzle-orm:
+        specifier: 0.45.4
+        version: 0.45.4(@types/pg@8.23.1)(kysely@0.29.7)(pg@8.23.1)
+    devDependencies:
+      '@bpackz/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@hono/node-server':
+        specifier: ^2.1.5
+        version: 2.1.5(hono@4.13.13)
+      '@types/node':
+        specifier: ^24.19.2
+        version: 24.19.2
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
+
 packages:
 
   '@aws-sdk/checksums@3.1001.5':

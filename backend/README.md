@@ -151,7 +151,7 @@ instance. The PowerShell test command above overrides it for this process only;
 it does not change any other .env key.
 
 Remaining scope: member invitations/removal, share-token access, restore/purge
-and worker integration. There is no vault-delete contract.
+and full-stack browser/Compose integration. There is no vault-delete contract.
 Docker service verification and current test evidence are in Red's handoffs.
 
 ## Uploads and storage (ADR 0001)
@@ -182,13 +182,13 @@ completion. It creates a processing file, unverified blob, verify job and audits
 atomically. Retrying after S3 success but DB failure recovers from HeadObject;
 replaying completion produces the same file rather than another reference/job.
 
-The worker is a separate T015 slice. Until it verifies bytes, new uploads stay
+Run the T015 worker with `pnpm -F worker dev`. Until it verifies bytes, new uploads stay
 processing and download/waveform return 409. The API never treats the claimed
 hash as verified. Worker job payload contains claimedSha256 and the completion
 request hash; keep that payload and completed job as the idempotency receipt.
-Worker expiry cleanup must abort stale intents and remove their rows. Orphan
-S3 multipart uploads after a failed compensating abort also require lifecycle
-cleanup. Jobs and expiry cleanup are not running yet.
+The worker aborts stale intents and removes their rows. The bucket lifecycle
+rule installed by storage:setup also aborts orphan multipart uploads after one
+day. Start the worker process explicitly; the API does not run jobs itself.
 
 Download/waveform currently require vault-member sessions. Share-token access
 will arrive with the sharing slice. Metadata/list responses expose status and
@@ -220,3 +220,11 @@ database and RUN_STORAGE_INTEGRATION=1, then run `pnpm -F api test:integration`.
 The root .env supplies S3 settings. The migration-upgrade test requires CREATEDB
 on the disposable PostgreSQL instance and removes its temporary test database.
 Current handoff: `comms/red/T013-upload-endpoints.md`.
+
+## Verification worker (T015)
+
+Run `pnpm -F worker dev` alongside the API to verify uploads and promote them from
+`processing` to `ready` or `failed`. Setup and retry/cleanup behavior are documented
+in [worker/README.md](../worker/README.md). `pnpm -F api storage:setup` now also
+preserves existing lifecycle rules while installing a one-day incomplete-multipart
+abort rule for `blobs/`. No database migration is required for T015.
