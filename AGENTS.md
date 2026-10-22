@@ -14,8 +14,16 @@ public catalog.** Don't build toward them.
 |---|---|---|---|
 | **Yellow** (Antigravity/Gemini) | Mac | `frontend/**` | `backend`, `shared`, infra |
 | **Red** (Astra) | PC | `backend/**`, `worker/**` | `frontend`, `shared`, infra |
-| **Blue** (Claude) | PC | `shared/**`, `docs/**`, `infra/**`, root configs, code review | app code except via review |
+| **Blue** (Claude) | PC | `shared/**`, `docs/**`, `infra/**`, `brain/**`, `.claude/**`, root configs, code review | app code except via review |
+| **BRAIN** (Claude agent, run by `brain/brain.py` on the PC) | PC | `comms/brain/**`, its own section of `TASKS.md`, `.claude/agents/*` and `.claude/skills/*` it creates | product code; never pushes `main` or merges |
 | **Kabir + Swish** (humans) | — | product decisions, design direction, merging to `main` | — |
+
+**BRAIN** is the front door. Humans talk to BRAIN in `#beat-stackz-hq`; BRAIN reads
+`TASKS.md`, `COMMS_LOG.md`, `comms/*` and open PRs, then delegates with a handoff
+file in `comms/brain/` plus a Discord ping, or spins up a purpose-built agent and
+saves it as a skill under `.claude/skills/` so the next run starts from what it
+learned. Talking to Yellow, Red or Blue directly still works; BRAIN just keeps
+the board straight. See `brain/README.md`.
 
 Rule: you edit only inside the paths you own. Need a change elsewhere? Write it
 in that owner's inbox (see Comms). Blue may make one-line fixes anywhere during
@@ -47,7 +55,9 @@ worker/       Red      waveform/ffmpeg jobs
 shared/       Blue     zod schemas, API route contracts, generated TS client, shared types
 docs/         Blue     ARCHITECTURE.md, ADRs, API notes
 infra/        Blue     docker-compose.yml, .env.example, Coolify config
-comms/        all      <owner>/<task-id>.md — one handoff file per task
+comms/        all      <owner>/<task-id>.md — one handoff file per task (brain/ = BRAIN)
+brain/        Blue     BRAIN Discord loop + README
+.claude/      Blue     agents/ and skills/ (BRAIN adds to these)
 COMMS_LOG.md  all      one-line index of handoffs (append only)
 TASKS.md      all      task board
 AGENTS.md     Blue     this file

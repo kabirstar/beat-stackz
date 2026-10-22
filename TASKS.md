@@ -12,10 +12,12 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
 
 ## BLUE
 - [x] T001 [BLUE] repo skeleton: AGENTS.md, docs, infra, shared schemas (on main)
-- [x] T002 [BLUE] CI: typecheck, lint, test, shared build, openapi gen (PR open)
+- [x] T002 [BLUE] CI: typecheck, lint, test, shared build, openapi gen
       paths: .github/**  depends: T001  verify: green on PR
-- [x] T003 [BLUE] MSW handlers generated from shared schemas for Yellow (PR open)
+- [x] T003 [BLUE] MSW handlers generated from shared schemas for Yellow
       paths: shared/src/mocks/**  depends: T001  verify: pnpm -F @bpackz/shared test
+- [x] T004 [BLUE] BRAIN coordinator agent + Discord loop + delegate/spawn skills (PR #5, dry run verified)
+      paths: brain/**, .claude/**  depends: none  verify: py brain/brain.py --once "<q>" answers from TASKS/COMMS/PRs
 
 ## RED
 - [ ] T010 [RED] pick Hono or Fastify; scaffold backend with Drizzle + Better Auth
@@ -34,3 +36,9 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       paths: frontend/**  depends: T020  verify: pnpm -F web typecheck
 - [ ] T022 [YELLOW] uploader (Uppy aws-s3 multipart) + download
       paths: frontend/**  depends: T021  verify: manual against mocks, then T013
+
+## BRAIN
+- [ ] T090 [BRAIN] first live run on #beat-stackz-hq
+      paths: comms/brain/**  depends: Kabir runs `py brain/brain.py` on the PC
+      deliverable: BRAIN answers a status question in Discord from TASKS/COMMS/PRs
+      verify: reply appears as BRAIN within a minute of the question
