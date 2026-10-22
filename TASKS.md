@@ -28,10 +28,10 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
 - [ ] T010b [RED] shared validators, Drizzle + Better Auth integration
       paths: backend/**  depends: T010a
       deliverable: authenticated API foundation against shared/src/api contracts
-      status: in progress on red/auth-foundation; auth schema/migrations and /auth/* wired; /me awaits T011
+      status: PR #7 replaces closed #4; T005 audit review fixes verified; /me awaits T011
       verify: pnpm -F api test; pnpm -F api db:check; TEST_DATABASE_URL=... pnpm -F api test:integration
       verification: native Postgres 17.11 migrations + real HTTP auth passed; 12 tests passed, none skipped
-      blockers: Blue audit/retention review; /me awaits T011; see comms/red/T010b-postgres-verification.md
+      blockers: /me awaits T011; T005 retention/scope settled; see comms/red/T005-review-fixes.md
 - [ ] T011 [RED] migrations for schema in docs/ARCHITECTURE.md §3; personal vault on signup
       paths: backend/**  depends: T010b  verify: pnpm -F api test
 - [ ] T012 [RED] vaults + folders + files CRUD per shared contract

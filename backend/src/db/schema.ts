@@ -59,4 +59,7 @@ export const auditLog = pgTable('audit_log', {
   targetId: text('target_id'),
   action: text('action').notNull(),
   meta: jsonb('meta'),
-});
+}, (table) => [
+  index('audit_log_actor_at_idx').on(table.actorId, table.at),
+  index('audit_log_vault_at_idx').on(table.vaultId, table.at),
+]);

@@ -73,6 +73,20 @@ test('HTTP/PostgreSQL signup, cookie sessions, signout, and transactional audit'
     assert.ok(actions.rows.some((row) => row.action === 'auth.accounts.insert'));
     assert.ok(actions.rows.some((row) => row.action === 'auth.sessions.delete'));
 
+    await db.execute(sql`update sessions set updated_at = now() where user_id = ${userId}`);
+    const refreshed = await db.execute(sql`select id from audit_log where actor_id = ${userId} and action = 'auth.sessions.update'`);
+    assert.equal(refreshed.rowCount, 0, 'routine session refresh must not generate audit noise');
+    const verificationId = randomUUID();
+    await db.execute(sql`insert into verifications (id, identifier, value, expires_at)
+      values (${verificationId}, 'test', 'test', now() + interval '1 minute')`);
+    await db.execute(sql`update verifications set value = 'changed' where id = ${verificationId}`);
+    await db.execute(sql`delete from verifications where id = ${verificationId}`);
+    const verificationAudit = await db.execute(sql`select id from audit_log where target_id = ${verificationId}`);
+    assert.equal(verificationAudit.rowCount, 0, 'verification plumbing must not generate audit rows');
+    const indexes = await db.execute(sql`select indexname from pg_indexes where tablename = 'audit_log'`);
+    assert.ok(indexes.rows.some((row) => row.indexname === 'audit_log_actor_at_idx'));
+    assert.ok(indexes.rows.some((row) => row.indexname === 'audit_log_vault_at_idx'));
+
     const rollbackId = randomUUID();
     await assert.rejects(db.transaction(async (transaction) => {
       await transaction.insert(users).values({ id: rollbackId, name: 'Rollback', email: `${rollbackId}@example.com` });

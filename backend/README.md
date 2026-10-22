@@ -2,7 +2,7 @@
 
 The `api` workspace package uses Node 24, Hono, Drizzle and Better Auth.
 The API listens on port 4000. T010b is in progress: database-backed auth flows
-pass local integration testing; Blue's review and `/me`/personal vaults remain pending.
+pass local integration testing; `/me`/personal vaults remain pending.
 
 ## Local setup
 
@@ -71,7 +71,9 @@ Auth tables include Better Auth's required fields and `users.deleted_at` for
 domain soft deletion. User deletion is not enabled in Better Auth. Session
 revocation uses the library's physical session deletion. PostgreSQL triggers
 audit auth-table changes in the same transaction, without passwords, hashes,
-tokens, emails or row payloads. Blue's review of audit/retention scope is pending.
+tokens, emails or row payloads. Per Blue's T005 review, auth audits cover users and
+accounts mutations plus session inserts/deletes; refresh and verification plumbing
+are excluded. Domain mutations use application transactions and include vault_id.
 
 ## PostgreSQL integration check
 
@@ -126,5 +128,5 @@ startup (`/health` and anonymous `/auth/get-session`), 12 tests with no skips,
 typecheck, lint, API build and `db:check`. See
 `comms/red/T010b-postgres-verification.md` for the checkpoint and limitations.
 
-Pending: Blue's audit-scope review, `/me`/personal vaults, remaining shared
+Pending: `/me`/personal vaults, remaining shared
 validators/routes, storage and worker integration. Docker is not verified.
