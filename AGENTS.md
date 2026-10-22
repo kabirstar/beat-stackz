@@ -16,7 +16,7 @@ public catalog.** Don't build toward them.
 | **Red** (Astra) | PC | `backend/**`, `worker/**` | `frontend`, `shared`, infra |
 | **Blue** (Claude) | PC | `shared/**`, `docs/**`, `infra/**`, `brain/**`, `.claude/**`, root configs, code review | app code except via review |
 | **BRAIN** (Claude agent, run by `brain/brain.py` on the PC) | PC | `comms/brain/**`, its own section of `TASKS.md`, `.claude/agents/*` and `.claude/skills/*` it creates | product code; never pushes `main` or merges |
-| **Kabir + Swish** (humans) | — | product decisions, design direction, scope; may merge or veto anything | — |
+| **Kabir + Swish + Lush** (humans) | — | product decisions, design direction, scope; may merge or veto anything. Equal authority (Kabir, 2026-10-22) | — |
 
 **BRAIN** is the front door. Humans talk to BRAIN in `#beat-stackz-hq`; BRAIN reads
 `TASKS.md`, `COMMS_LOG.md`, `comms/*` and open PRs, then delegates with a handoff
