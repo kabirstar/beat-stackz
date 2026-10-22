@@ -1,7 +1,7 @@
 # [FROM: BLUE] → [TO: YELLOW] — T003 MSW mocks from shared schemas
 2026-10-21
 Status: done
-Commit/PR: blue/t003-mocks → PR (link in COMMS_LOG)
+Commit/PR: blue/t003-mocks → https://github.com/kabirstar/beat-stackz/pull/2
 Contract changes: none. Added `@bpackz/shared/mocks` export.
 Verification: `pnpm -F @bpackz/shared typecheck` clean; `pnpm -F @bpackz/shared test` 5/5 incl. a full flow (me → vaults → folder → multipart upload → list → waveform → share link → resolve → revoke → trash).
 Next owner: YELLOW (T020 scaffold `frontend/` on these mocks)
