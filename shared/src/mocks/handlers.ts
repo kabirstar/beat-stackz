@@ -72,7 +72,7 @@ export function createHandlers(store: Store = seed()): HttpHandler[] {
     }),
     mock(routes.vaults.get, store, ({ params }) => {
       const v = store.vaults.find((x) => x.id === params.vaultId);
-      return !v || !myRole(v.id) ? err(404, "not_found") : { body: vaultOut(v) };
+      return !v || !myRole(v.id) ? err(403, "forbidden", "Vault access denied") : { body: vaultOut(v) }; // matches backend member()
     }),
     mock(routes.vaults.rename, store, ({ params, body }) => {
       const v = store.vaults.find((x) => x.id === params.vaultId);
@@ -114,8 +114,10 @@ export function createHandlers(store: Store = seed()): HttpHandler[] {
       return { body: f };
     }),
     mock(routes.folders.get, store, ({ params }) => {
+      const denied = member(params.vaultId!);
+      if (denied) return denied;
       const f = store.folders.find((x) => x.id === params.folderId && x.vaultId === params.vaultId);
-      return !f || !myRole(f.vaultId) ? err(404, "not_found") : { body: { folder: f, breadcrumb: breadcrumb(f.id) } };
+      return !f ? err(404, "not_found") : { body: { folder: f, breadcrumb: breadcrumb(f.id) } };
     }),
     mock(routes.folders.update, store, ({ params, body }) => {
       const f = store.folders.find((x) => x.id === params.folderId && x.vaultId === params.vaultId);
@@ -154,8 +156,10 @@ export function createHandlers(store: Store = seed()): HttpHandler[] {
       };
     }),
     mock(routes.files.get, store, ({ params }) => {
+      const denied = member(params.vaultId!);
+      if (denied) return denied;
       const f = store.files.find((x) => x.id === params.fileId && x.vaultId === params.vaultId);
-      return !f || !myRole(f.vaultId) ? err(404, "not_found") : { body: f };
+      return !f ? err(404, "not_found") : { body: f };
     }),
     mock(routes.files.update, store, ({ params, body }) => {
       const f = store.files.find((x) => x.id === params.fileId && x.vaultId === params.vaultId);
