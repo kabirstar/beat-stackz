@@ -185,3 +185,8 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: comms/blue/T009-*.md with item → route; shared + mocks updated for accepted items
       verify: pnpm -F @bpackz/shared test
       handoff: comms/brain/T009-feature-gap-check.md
+- [ ] T043b [BLUE] re-review PR #45 @ a07913a (Yellow's T043 fixes + T028 gate); merge + Coolify redeploy only after Kabir/Swish say yes in-channel
+      paths: review on PR #45; infra/**  depends: T043; human yes on the gate  assigned-by: BRAIN
+      deliverable: review on #45 confirming blockers 1+2 gone and CI green; squash-merge + redeploy app.beatstackz.com on the yes, else request-changes in comms/blue/
+      verify: gh pr view 45 --repo kabirstar/beat-stackz --json reviews,state; node infra/smoke.mjs against the live API → SMOKE OK
+      handoff: comms/brain/T043b-rereview-merge-pr45.md
