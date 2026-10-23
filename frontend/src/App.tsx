@@ -1147,8 +1147,8 @@ export function App() {
     setSubfoldersByRoot({});
     setFilesByFolder({});
     setAuthName("");
-    setAuthEmail("swish@bpackz.studio");
-    setAuthPassword("password1234");
+    setAuthEmail("");
+    setAuthPassword("");
     setAuthError(null);
     setAuthModalOpen(false);
     showToast("Vault locked & signed out");
@@ -1170,14 +1170,6 @@ export function App() {
         onChangeEmail={setAuthEmail}
         onChangePassword={setAuthPassword}
         onSubmitAuth={handleAuthSubmit}
-        onQuickSelectProfile={(profileKey) => {
-          setAuthMode("signin");
-          setAuthEmail(
-            profileKey === "todo" ? "todo@bpackz.studio" : "swish@bpackz.studio",
-          );
-          setAuthPassword("password1234");
-          setAuthError(null);
-        }}
         onUnlock={() => {
           if (typeof window !== "undefined" && window.sessionStorage) {
             window.sessionStorage.setItem(VAULT_GATE_SESSION_KEY, "1");
