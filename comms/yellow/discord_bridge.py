@@ -213,8 +213,25 @@ def append_to_comms_log(agent: str, message: str, to_target: str = "ALL"):
         f.write(entry)
 
 
+def resolve_updates_channel_id(env: dict, cached_id: str = None) -> str:
+    explicit = os.environ.get("DISCORD_UPDATES_CHANNEL_ID") or env.get("DISCORD_UPDATES_CHANNEL_ID")
+    if explicit:
+        return explicit
+    if cached_id:
+        return cached_id
+    guild_id = os.environ.get("DISCORD_GUILD_ID") or env.get("DISCORD_GUILD_ID")
+    if not guild_id:
+        return ""
+    try:
+        channels = discord_api("GET", f"/guilds/{guild_id}/channels")
+        ch = next((c for c in channels if c.get("name") == "brain-updates"), None)
+        return ch["id"] if ch else ""
+    except Exception:
+        return ""
+
+
 def wait_for_discord_message(agent: str, poll_interval: int = 4, timeout_sec: int = 1800):
-    """Blocks until a new message (not authored by `agent`) appears in #beat-stackz-hq, then prints it and exits."""
+    """Blocks until a new message (not authored by `agent`) appears in #beat-stackz-hq or #brain-updates, then prints it and exits."""
     env = load_env()
     channel_id = os.environ.get("DISCORD_CHANNEL_ID") or env.get("DISCORD_CHANNEL_ID")
     if not channel_id:
@@ -222,44 +239,94 @@ def wait_for_discord_message(agent: str, poll_interval: int = 4, timeout_sec: in
         sys.exit(1)
 
     state_file = os.path.join(REPO_ROOT, f".discord_state_{agent.lower()}.json")
-    last_id = None
+    state = {}
     if os.path.exists(state_file):
         try:
-            last_id = json.load(open(state_file)).get("last_message_id")
+            state = json.load(open(state_file))
         except Exception:
-            pass
+            state = {}
 
+    last_id = state.get("last_message_id")
+    updates_channel_id = resolve_updates_channel_id(env, state.get("updates_channel_id"))
+    last_updates_id = state.get("last_updates_message_id")
+
+    state_dirty = False
     if not last_id:
         latest = discord_api("GET", f"/channels/{channel_id}/messages?limit=1")
         if latest:
             last_id = latest[0]["id"]
-            with open(state_file, "w", encoding="utf-8") as f:
-                json.dump({"last_message_id": last_id}, f)
+            state_dirty = True
+
+    if updates_channel_id and not last_updates_id:
+        try:
+            latest_up = discord_api("GET", f"/channels/{updates_channel_id}/messages?limit=1")
+            if latest_up:
+                last_updates_id = latest_up[0]["id"]
+                state_dirty = True
+        except Exception:
+            pass
+
+    if state_dirty or state.get("updates_channel_id") != updates_channel_id:
+        with open(state_file, "w", encoding="utf-8") as f:
+            json.dump(
+                {
+                    "last_message_id": last_id,
+                    "updates_channel_id": updates_channel_id,
+                    "last_updates_message_id": last_updates_id,
+                },
+                f,
+            )
 
     my_username = AGENT_PROFILES.get(agent.upper(), {}).get("username", agent)
+    ignored_authors = {my_username, "BRAIN updates"}
     start = time.time()
 
     while time.time() - start < timeout_sec:
         try:
+            collected = []
+
             path = f"/channels/{channel_id}/messages?limit=10"
             if last_id:
                 path += f"&after={last_id}"
             msgs = list(reversed(discord_api("GET", path)))
             if msgs:
                 last_id = msgs[-1]["id"]
-                with open(state_file, "w", encoding="utf-8") as f:
-                    json.dump({"last_message_id": last_id}, f)
+                collected.extend(
+                    m for m in msgs if m.get("author", {}).get("username") not in ignored_authors
+                )
 
-                relevant = [m for m in msgs if m.get("author", {}).get("username") != my_username]
-                if relevant:
-                    for m in relevant:
-                        author = m.get("author", {}).get("username", "Unknown")
-                        content = m.get("content", "")
-                        if not content and m.get("embeds"):
-                            content = m["embeds"][0].get("description", "")
-                        ts = m.get("timestamp", "")[:16].replace("T", " ")
-                        print(f"🔔 NEW DISCORD MESSAGE [{ts}] {author}: {content}", flush=True)
-                    return
+            if updates_channel_id:
+                up_path = f"/channels/{updates_channel_id}/messages?limit=10"
+                if last_updates_id:
+                    up_path += f"&after={last_updates_id}"
+                up_msgs = list(reversed(discord_api("GET", up_path)))
+                if up_msgs:
+                    last_updates_id = up_msgs[-1]["id"]
+                    collected.extend(
+                        m
+                        for m in up_msgs
+                        if m.get("author", {}).get("username") not in ignored_authors
+                    )
+
+            with open(state_file, "w", encoding="utf-8") as f:
+                json.dump(
+                    {
+                        "last_message_id": last_id,
+                        "updates_channel_id": updates_channel_id,
+                        "last_updates_message_id": last_updates_id,
+                    },
+                    f,
+                )
+
+            if collected:
+                for m in collected:
+                    author = m.get("author", {}).get("username", "Unknown")
+                    content = m.get("content", "")
+                    if not content and m.get("embeds"):
+                        content = m["embeds"][0].get("description", "")
+                    ts = m.get("timestamp", "")[:16].replace("T", " ")
+                    print(f"🔔 NEW DISCORD MESSAGE [{ts}] {author}: {content}", flush=True)
+                return
         except Exception:
             pass
         time.sleep(poll_interval)
