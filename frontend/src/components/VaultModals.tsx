@@ -1,7 +1,7 @@
-import type { FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import type { FileItem, Folder, Share, User, Vault, VaultMember } from "@bpackz/shared";
 import { UserAvatarBadge } from "../HardwareIcons.tsx";
-import { formatBytes } from "../utils/format.ts";
+import { formatBytes, parseStudioFileDisplay } from "../utils/format.ts";
 import {
   describeFileMeta,
   getOrCreateSharedVaultPalette,
@@ -85,6 +85,8 @@ export function ShareContextSheet({
   onChangeExpiry,
   onCreatePublicShareLink,
   onRevokeShareLink,
+  onPreviewShareToken,
+  onRenameFile,
   onDownload,
   onSoftDelete,
 }: {
@@ -99,9 +101,13 @@ export function ShareContextSheet({
   onChangeExpiry: (exp: "24h" | "7d" | "30d") => void;
   onCreatePublicShareLink: () => void;
   onRevokeShareLink: (shareId: string) => void;
+  onPreviewShareToken?: (token: string) => void;
+  onRenameFile?: (file: FileItem, nextName: string) => void;
   onDownload: (file: FileItem) => void;
   onSoftDelete: (file: FileItem) => void;
 }) {
+  const [editingName, setEditingName] = useState(file.name);
+
   return (
     <StudioModal maxWidthClass="max-w-sm" alignBottomOnMobile onClose={onClose}>
       <div className="p-4 bg-[var(--card)] border-b border-[var(--hair)] flex items-center justify-between gap-3">
@@ -121,6 +127,27 @@ export function ShareContextSheet({
           ×
         </button>
       </div>
+
+      {/* Inline Rename Row (files.update) */}
+      {onRenameFile && (
+        <div className="px-4 py-2.5 border-b border-[var(--hair)] flex items-center gap-2">
+          <input
+            type="text"
+            value={editingName}
+            onChange={(e) => setEditingName(e.target.value)}
+            placeholder="Rename file..."
+            className="flex-1 px-3 py-1.5 rounded-xl bg-[var(--card)] border border-[var(--hair)] text-xs text-[var(--ink)] focus:outline-none focus:border-[var(--ink)]"
+          />
+          <button
+            type="button"
+            disabled={!editingName.trim() || editingName.trim() === file.name}
+            onClick={() => onRenameFile(file, editingName.trim())}
+            className="px-2.5 py-1.5 rounded-xl bg-[var(--ink)] text-[var(--bg)] mono-meta text-[9px] uppercase cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Save
+          </button>
+        </div>
+      )}
 
       {/* AirDrop-Style Collaborator & Shared Vault Row */}
       <div className="px-4 py-3.5 border-b border-[var(--hair)]">
@@ -226,17 +253,29 @@ export function ShareContextSheet({
               return (
                 <div
                   key={s.id}
-                  className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-[var(--card)] mono-meta text-[10px]"
+                  className="flex items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-lg bg-[var(--card)] mono-meta text-[10px]"
                 >
                   <span className="truncate">{label}</span>
-                  <button
-                    type="button"
-                    onClick={() => onRevokeShareLink(s.id)}
-                    title="Revoke"
-                    className="icon-btn w-6 h-6"
-                  >
-                    ×
-                  </button>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {tokEntry && onPreviewShareToken && (
+                      <button
+                        type="button"
+                        onClick={() => onPreviewShareToken(tokEntry.token)}
+                        title="Open Public Share View (/s/:token)"
+                        className="px-2 py-0.5 rounded-md bg-[var(--ink)] text-[var(--bg)] text-[9px] uppercase cursor-pointer"
+                      >
+                        Open
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => onRevokeShareLink(s.id)}
+                      title="Revoke"
+                      className="icon-btn w-6 h-6"
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -441,6 +480,8 @@ export function CollaboratorsModal({
   onChangeInviteEmail,
   onChangeInviteRole,
   onInviteMember,
+  onRemoveMember,
+  onRenameSharedVault,
   onClose,
 }: {
   vaults: Vault[];
@@ -454,8 +495,13 @@ export function CollaboratorsModal({
   onChangeInviteEmail: (v: string) => void;
   onChangeInviteRole: (v: "editor" | "viewer") => void;
   onInviteMember: () => void;
+  onRemoveMember?: (userId: string) => void;
+  onRenameSharedVault?: (name: string) => void;
   onClose: () => void;
 }) {
+  const activeShared = vaults.find((v) => v.id === activeVaultId && v.kind === "shared");
+  const [vaultNameDraft, setVaultNameDraft] = useState(activeShared?.name ?? "");
+
   return (
     <StudioModal title="Shared Vaults & Collaborators" onClose={onClose}>
       <div className="p-5 space-y-4">
@@ -472,7 +518,10 @@ export function CollaboratorsModal({
                   <button
                     key={sv.id}
                     type="button"
-                    onClick={() => onSwitchSharedVault(sv.id)}
+                    onClick={() => {
+                      setVaultNameDraft(sv.name);
+                      onSwitchSharedVault(sv.id);
+                    }}
                     className={`px-3 py-1.5 rounded-full text-xs flex items-center gap-2 cursor-pointer border transition ${
                       sv.id === activeVaultId
                         ? "bg-[var(--ink)] text-[var(--bg)] border-[var(--ink)]"
@@ -496,6 +545,25 @@ export function CollaboratorsModal({
               +
             </button>
           </div>
+          {activeShared && onRenameSharedVault && (
+            <div className="flex items-center gap-2 mt-2.5">
+              <input
+                type="text"
+                value={vaultNameDraft}
+                onChange={(e) => setVaultNameDraft(e.target.value)}
+                placeholder="Rename shared vault..."
+                className="flex-1 px-3 py-1.5 rounded-full bg-[var(--card)] border border-[var(--hair)] text-xs text-[var(--ink)] focus:outline-none focus:border-[var(--ink)]"
+              />
+              <button
+                type="button"
+                disabled={!vaultNameDraft.trim() || vaultNameDraft.trim() === activeShared.name}
+                onClick={() => onRenameSharedVault(vaultNameDraft.trim())}
+                className="px-3 py-1.5 rounded-full bg-[var(--ink)] text-[var(--bg)] mono-meta text-[9px] uppercase cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Rename
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="space-y-2 pt-2 border-t border-[var(--hair)]">
@@ -505,16 +573,28 @@ export function CollaboratorsModal({
               key={m.userId}
               className="flex items-center justify-between px-3 py-2 rounded-xl bg-[var(--card)] border border-[var(--hair)] text-xs"
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2.5 min-w-0">
                 <UserAvatarBadge byName={m.name ?? m.email} sizeClass="w-6 h-6 text-[10px]" />
-                <div>
+                <div className="truncate">
                   <span className="font-medium text-[var(--ink)]">{m.name ?? m.email}</span>
                   <span className="text-[var(--ink-soft)] ml-1.5">{m.email}</span>
                 </div>
               </div>
-              <span className="mono-meta text-[10px] uppercase px-2 py-0.5 rounded-full bg-[var(--card-deep)] text-[var(--ink)]">
-                {m.role}
-              </span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="mono-meta text-[10px] uppercase px-2 py-0.5 rounded-full bg-[var(--card-deep)] text-[var(--ink)]">
+                  {m.role}
+                </span>
+                {m.role !== "owner" && onRemoveMember && (
+                  <button
+                    type="button"
+                    onClick={() => onRemoveMember(m.userId)}
+                    title={`Remove ${m.name ?? m.email}`}
+                    className="icon-btn w-6 h-6 text-xs text-red-700"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -623,6 +703,118 @@ export function AuthModal({
           </button>
         </div>
       </form>
+    </StudioModal>
+  );
+}
+
+export function PublicShareLandingModal({
+  token,
+  resolvedFile,
+  resolvedRole,
+  resolvedExpiresAt,
+  error,
+  waveformBars,
+  isPlaying,
+  playProgress,
+  onTogglePlay,
+  onDownload,
+  onClose,
+}: {
+  token: string;
+  resolvedFile: FileItem | null;
+  resolvedRole: "view" | "edit" | null;
+  resolvedExpiresAt: string | null;
+  error: string | null;
+  waveformBars: number[];
+  isPlaying: boolean;
+  playProgress: number;
+  onTogglePlay: () => void;
+  onDownload: () => void;
+  onClose: () => void;
+}) {
+  const parsed = resolvedFile ? parseStudioFileDisplay(resolvedFile.name) : null;
+  return (
+    <StudioModal title={`Public Share · /s/${token.slice(0, 12)}…`} onClose={onClose}>
+      <div className="p-5 space-y-4">
+        {error ? (
+          <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-xs text-red-800">
+            {error}
+          </div>
+        ) : !resolvedFile || !parsed ? (
+          <div className="p-6 text-center mono-meta text-[11px] uppercase text-[var(--ink-soft)]">
+            Resolving share token…
+          </div>
+        ) : (
+          <>
+            <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--hair)] space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="file-title-font text-base text-[var(--ink)] truncate">
+                    {parsed.cleanTitle}
+                  </div>
+                  <div className="mono-meta text-[10px] uppercase text-[var(--ink-soft)] mt-0.5">
+                    {resolvedFile.name} · {formatBytes(resolvedFile.size)}
+                  </div>
+                </div>
+                <span className="mono-meta text-[9px] uppercase px-2 py-1 rounded-md bg-[var(--ink)] text-[var(--bg)] shrink-0">
+                  {parsed.ext} · {resolvedRole ?? "view"}
+                </span>
+              </div>
+
+              {parsed.isAudio && (
+                <div className="flex items-center gap-3 pt-1">
+                  <button
+                    type="button"
+                    onClick={onTogglePlay}
+                    className="w-10 h-10 rounded-xl bg-[var(--ink)] text-[var(--bg)] flex items-center justify-center shrink-0 cursor-pointer"
+                  >
+                    <StudioIcon name={isPlaying ? "pause" : "play"} className="w-3.5 h-3.5" />
+                  </button>
+                  <div className="flex-1 flex items-center gap-0.5 h-8 px-2.5 py-1 rounded-xl bg-[#f4f1eb] border border-[var(--hair)]">
+                    {waveformBars.map((h, i) => {
+                      const active = isPlaying && (i / waveformBars.length) * 100 <= playProgress;
+                      return (
+                        <span
+                          key={i}
+                          className="flex-1 rounded-full"
+                          style={{
+                            height: `${Math.max(4, Math.round(h * 0.22))}px`,
+                            background: active ? "var(--ink)" : "rgba(22,19,43,0.25)",
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {resolvedExpiresAt && (
+                <div className="mono-meta text-[9px] uppercase text-[var(--ink-soft)]">
+                  Expires {new Date(resolvedExpiresAt).toLocaleDateString()}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-3.5 py-2 rounded-full bg-[var(--card)] border border-[var(--hair)] mono-meta text-[10px] uppercase text-[var(--ink)] cursor-pointer"
+              >
+                Back to Vault
+              </button>
+              <button
+                type="button"
+                onClick={onDownload}
+                className="px-4 py-2 rounded-full bg-[var(--ink)] text-[var(--bg)] mono-meta text-[10px] uppercase flex items-center gap-1.5 cursor-pointer"
+              >
+                <StudioIcon name="download" className="w-3.5 h-3.5" />
+                <span>Download Master</span>
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </StudioModal>
   );
 }

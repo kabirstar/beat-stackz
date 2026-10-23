@@ -88,9 +88,13 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       handoff: comms/yellow/T020-T022-ui-design-and-audit.md
 - [x] T023 [YELLOW] publish the solidified UI feature list, each line mapped to a shared route or marked NEW
       paths: comms/yellow/T023-feature-list.md, frontend/**  depends: none
-      deliverable: comms/yellow/T023-feature-list.md on PR #21
+      deliverable: comms/yellow/T023-feature-list.md on PR #21 (route names updated per Blue's T009 gap-check)
       verify: file pushed; Discord ping
       handoff: comms/yellow/T023-feature-list.md
+- [x] T024 [YELLOW] public share landing view (/s/:token via shares.resolve + ?token= waveform/download), member removal (vaults.removeMember), vault/file rename, and frontend/Dockerfile for T009 compose run
+      paths: frontend/**, comms/yellow/**  depends: T022, T009  verify: pnpm -F web typecheck && pnpm -F web test && pnpm -F web build
+      deliverable: PublicShareLandingModal + URL /s/:token auto-resolve, CollaboratorsModal removeMember/rename, ShareContextSheet inline file rename, frontend/Dockerfile + frontend/nginx.conf
+      handoff: comms/yellow/T024-shares-and-dockerfile.md
 
 ## BRAIN
 - [x] T090 [BRAIN] first live run on #beat-stackz-hq (live since 2026-10-22)

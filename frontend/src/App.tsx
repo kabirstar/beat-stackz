@@ -16,6 +16,7 @@ import {
   CreateFolderModal,
   CreateSharedVaultModal,
   PlusActionMenu,
+  PublicShareLandingModal,
   ShareContextSheet,
 } from "./components/VaultModals.tsx";
 import { UserAvatarBadge } from "./HardwareIcons.tsx";
@@ -87,6 +88,12 @@ export function App() {
   const [activePopoverFile, setActivePopoverFile] = useState<FileItem | null>(null);
   const [activeFileShares, setActiveFileShares] = useState<Share[]>([]);
   const [shareLinkExpiry, setShareLinkExpiry] = useState<"24h" | "7d" | "30d">("7d");
+
+  const [publicShareToken, setPublicShareToken] = useState<string | null>(null);
+  const [publicShareFile, setPublicShareFile] = useState<FileItem | null>(null);
+  const [publicShareRole, setPublicShareRole] = useState<"view" | "edit" | null>(null);
+  const [publicShareExpiresAt, setPublicShareExpiresAt] = useState<string | null>(null);
+  const [publicShareError, setPublicShareError] = useState<string | null>(null);
 
   const [playingFile, setPlayingFile] = useState<FileItem | null>(null);
   const [waveformBars, setWaveformBars] = useState<number[]>(WAVEFORM_BARS);
@@ -566,6 +573,83 @@ export function App() {
       if (err instanceof BpackzApiError) showToast(err.message);
     }
   };
+
+  const handleRemoveMember = async (targetUserId: string) => {
+    if (!activeVaultId) return;
+    try {
+      await api.vaults.removeMember(activeVaultId, targetUserId);
+      const m = await api.vaults.members(activeVaultId);
+      setVaultMembers(m.items);
+      showToast("Removed collaborator from Shared Vault");
+    } catch (err) {
+      if (err instanceof BpackzApiError) showToast(err.message);
+    }
+  };
+
+  const handleRenameSharedVault = async (nextName: string) => {
+    if (!activeVaultId || !nextName.trim()) return;
+    try {
+      const updated = await api.vaults.rename(activeVaultId, { name: nextName.trim() });
+      setVaults((prev) => prev.map((v) => (v.id === updated.id ? updated : v)));
+      showToast(`Renamed Shared Vault to "${updated.name}"`);
+    } catch (err) {
+      if (err instanceof BpackzApiError) showToast(err.message);
+    }
+  };
+
+  const handleRenameFile = async (file: FileItem, nextName: string) => {
+    if (!activeVaultId || !nextName.trim()) return;
+    try {
+      const updated = await api.files.update(activeVaultId, file.id, {
+        name: nextName.trim(),
+        ifUpdatedAt: file.updatedAt,
+      });
+      setActivePopoverFile(updated);
+      await loadVaultContents(activeVaultId);
+      showToast(`Renamed to "${updated.name}"`);
+    } catch (err) {
+      if (err instanceof BpackzApiError) showToast(err.message);
+    }
+  };
+
+  const handlePreviewShareToken = useCallback(async (token: string) => {
+    setActivePopoverFile(null);
+    setPublicShareToken(token);
+    setPublicShareFile(null);
+    setPublicShareRole(null);
+    setPublicShareExpiresAt(null);
+    setPublicShareError(null);
+    try {
+      const resolved = await api.shares.resolve(token);
+      setPublicShareFile(resolved.file);
+      setPublicShareRole(resolved.role);
+      setPublicShareExpiresAt(resolved.expiresAt);
+      try {
+        const wf = await api.files.waveform(resolved.file.vaultId, resolved.file.id, { token });
+        if (wf.data.length > 0) {
+          const normalized = wf.data
+            .filter((_, idx) => idx % 2 === 1)
+            .slice(0, 28)
+            .map((v) => Math.max(24, Math.min(96, Math.round(Math.abs(v)))));
+          if (normalized.length > 8) setWaveformBars(normalized);
+        }
+      } catch {
+        setWaveformBars(WAVEFORM_BARS);
+      }
+    } catch (err) {
+      setPublicShareError(
+        err instanceof BpackzApiError ? err.message : "Share link expired or invalid",
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const match = window.location.pathname.match(/^\/s\/([A-Za-z0-9_-]{32,})$/);
+    if (match?.[1]) {
+      void handlePreviewShareToken(match[1]);
+    }
+  }, [handlePreviewShareToken]);
 
   const runMultipartUpload = async (
     targetVaultId: string,
@@ -1240,8 +1324,75 @@ export function App() {
           onChangeExpiry={setShareLinkExpiry}
           onCreatePublicShareLink={() => void handleCreatePublicShareLink()}
           onRevokeShareLink={(shareId) => void handleRevokeShareLink(shareId)}
+          onPreviewShareToken={(tok) => void handlePreviewShareToken(tok)}
+          onRenameFile={(f, nextName) => void handleRenameFile(f, nextName)}
           onDownload={(f) => void handleDownloadFile(f)}
           onSoftDelete={(f) => void handleSoftDeleteFile(f)}
+        />
+      )}
+
+      {publicShareToken && (
+        <PublicShareLandingModal
+          token={publicShareToken}
+          resolvedFile={publicShareFile}
+          resolvedRole={publicShareRole}
+          resolvedExpiresAt={publicShareExpiresAt}
+          error={publicShareError}
+          waveformBars={waveformBars}
+          isPlaying={Boolean(publicShareFile && playingFile?.id === publicShareFile.id)}
+          playProgress={playProgress}
+          onTogglePlay={() => {
+            if (!publicShareFile) return;
+            if (playingFile?.id === publicShareFile.id) {
+              audioRef.current?.pause();
+              setPlayingFile(null);
+              return;
+            }
+            setPlayingFile(publicShareFile);
+            setPlayProgress(0);
+            void api.files
+              .downloadUrl(publicShareFile.vaultId, publicShareFile.id, {
+                disposition: "inline",
+                token: publicShareToken,
+              })
+              .then(({ url }) => {
+                if (audioRef.current) {
+                  audioRef.current.src = url;
+                  audioRef.current.currentTime = 0;
+                  void audioRef.current.play().catch(() => {});
+                }
+              })
+              .catch(() => {});
+          }}
+          onDownload={() => {
+            if (!publicShareFile) return;
+            void api.files
+              .downloadUrl(publicShareFile.vaultId, publicShareFile.id, {
+                disposition: "attachment",
+                token: publicShareToken,
+              })
+              .then(({ url }) => {
+                if (typeof document !== "undefined") {
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = publicShareFile.name;
+                  a.rel = "noopener";
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                }
+                showToast(`Downloaded shared file · ${publicShareFile.name}`);
+              })
+              .catch((err) => {
+                if (err instanceof BpackzApiError) showToast(err.message);
+              });
+          }}
+          onClose={() => {
+            setPublicShareToken(null);
+            if (typeof window !== "undefined" && window.location.pathname.startsWith("/s/")) {
+              window.history.replaceState(null, "", "/");
+            }
+          }}
         />
       )}
 
@@ -1287,6 +1438,8 @@ export function App() {
           onChangeInviteEmail={setInviteEmail}
           onChangeInviteRole={setInviteRole}
           onInviteMember={() => void handleInviteMember()}
+          onRemoveMember={(uid) => void handleRemoveMember(uid)}
+          onRenameSharedVault={(nextName) => void handleRenameSharedVault(nextName)}
           onClose={() => setManagingMembers(false)}
         />
       )}
