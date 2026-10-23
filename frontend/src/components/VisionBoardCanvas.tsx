@@ -36,8 +36,12 @@ export function VisionBoardCanvas({
   onTogglePlayFile: (fileId: string, fallbackName: string, fallbackSize: number) => void;
   onUploadSongToBoard: () => void;
 }) {
-  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 20, y: 16 });
-  const [zoom, setZoom] = useState<number>(1);
+  const [pan, setPan] = useState<{ x: number; y: number }>(() =>
+    typeof window !== "undefined" && window.innerWidth < 640 ? { x: 12, y: 12 } : { x: 20, y: 16 },
+  );
+  const [zoom, setZoom] = useState<number>(() =>
+    typeof window !== "undefined" && window.innerWidth < 640 ? 0.78 : 1,
+  );
   const [selectedStickyColor, setSelectedStickyColor] = useState<StickyColorKey>("canary");
   const [trackPickerOpen, setTrackPickerOpen] = useState(false);
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
@@ -615,7 +619,7 @@ export function VisionBoardCanvas({
         {/* Floating Bottom-Center Figma Creation Dock */}
         <div
           data-board-card="true"
-          className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 px-3 py-2 rounded-2xl bg-[#16132b]/95 text-[#edeae4] border border-white/15 shadow-2xl flex flex-wrap items-center gap-2"
+          className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 z-20 w-[calc(100%-1.5rem)] sm:w-auto px-3 py-2 rounded-2xl bg-[#16132b]/95 text-[#edeae4] border border-white/15 shadow-2xl flex flex-wrap items-center justify-center gap-2"
         >
           {/* Sticky Color Swatches + Add Sticky Button */}
           <div className="flex items-center gap-1 pr-2 border-r border-white/15">
