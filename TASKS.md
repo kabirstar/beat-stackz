@@ -32,6 +32,7 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       paths: infra/**, .dockerignore  depends: #25 #30  verify: node infra/smoke.mjs → SMOKE OK
 - [x] T042 [BLUE] hosted deploy: Hetzner + Coolify + R2, SMOKE OK on app.beatstackz.com (comms/blue/T042-hosted-deploy.md)
 - [x] T046 [BLUE] #brain-updates is two-way: Kabir and Swish can prompt BRAIN there, reply comes back there; others ignored (#50; comms/blue/T046-humans-channel-two-way.md)
+- [x] T080 [BLUE] invite code: ADR 0003 + SignUpBody contract; env INVITE_CODE (comms/blue/T080-invite-code.md)
 
 - [x] T040 [BLUE] hosted deploy prep: infra/docker-compose.prod.yml (R2, no RustFS, HTTPS, no host ports) + docs/HOSTING.md runbook; waiting on Kabir for Hetzner/Cloudflare/domain
       paths: infra/**, docs/**  depends: #33  verify: compose -f base -f prod --profile full config
