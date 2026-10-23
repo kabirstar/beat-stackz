@@ -1,7 +1,7 @@
 # [FROM: RED] -> [TO: BLUE, YELLOW, BRAIN] — T026a folder kind + default seeding
 
 Status: done (implementation/local checks; pending review)
-Commit/PR: red/t026a -> PR pending
+Commit/PR: red/t026a -> PR #38 https://github.com/kabirstar/beat-stackz/pull/38
 Contract changes: none; implements Folder.kind/DEFAULT_FOLDERS from merged #29
 Verification: 72 tests passed, zero skips (35 API + 22 worker Docker + 7 shared + 8 frontend)
 Blockers: none for backend review; Yellow owns T026b icons/sorting

@@ -89,7 +89,7 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       handoff: comms/red/T016-waveforms.md
 - [ ] T026a [RED] folders.kind migration + seed the 18-folder default tree on signup and vault create; backfill where name free
       paths: backend/**  depends: T026 (PR #29 merged)
-      status: implemented on red/t026a; pending Blue review
+      status: implemented on red/t026a / PR #38; pending Blue review
       deliverable: stable folder kind, transactional DEFAULT_FOLDERS seeding, collision-safe legacy backfill
       verify: Docker PostgreSQL taxonomy/migration checks; pnpm -F api test; worker Docker test target
       verification: 72 tests passed, zero skips (35 API + 22 worker + 7 shared + 8 frontend)
