@@ -2,6 +2,8 @@
 # enable profiles, so this is the base + prod overlay flattened: no RustFS (blobs in R2),
 # no profiles, relative paths, no host ports (Coolify's proxy routes app.<domain> -> web:80,
 # api.<domain> -> api:4000). Values come from Coolify's environment panel.
+# Build contexts are "." because Coolify runs compose with --project-directory = repo root; for a manual run
+# use the same: docker compose --project-directory . -f infra/docker-compose.hosted.yml up -d --build
 #   Regenerate the reference: docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.yml --profile full config --no-interpolate
 services:
   postgres:
@@ -17,7 +19,7 @@ services:
     restart: unless-stopped
 
   api:
-    build: { context: .., dockerfile: backend/Dockerfile }
+    build: { context: ., dockerfile: backend/Dockerfile }
     environment:
       NODE_ENV: production
       DATABASE_URL: postgres://bpackz:${POSTGRES_PASSWORD}@postgres:5432/bpackz
@@ -37,7 +39,7 @@ services:
     restart: unless-stopped
 
   worker:
-    build: { context: .., dockerfile: worker/Dockerfile }
+    build: { context: ., dockerfile: worker/Dockerfile }
     environment:
       NODE_ENV: production
       DATABASE_URL: postgres://bpackz:${POSTGRES_PASSWORD}@postgres:5432/bpackz
@@ -52,7 +54,7 @@ services:
 
   web:
     build:
-      context: ..
+      context: .
       dockerfile: frontend/Dockerfile
       args:
         VITE_API_ORIGIN: ${API_ORIGIN}
