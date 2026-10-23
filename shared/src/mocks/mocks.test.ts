@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { setupServer } from "msw/node";
 import { createHandlers, MOCK_API, setMockVerifyMs } from "./handlers.js";
 import { seed } from "./store.js";
-import { PART_SIZE } from "../index.js";
+import { PART_SIZE, DEFAULT_FOLDERS } from "../index.js";
 
 const server = setupServer(...createHandlers(seed()));
 before(() => { setMockVerifyMs(50); server.listen({ onUnhandledRequest: "error" }); });
@@ -93,6 +93,17 @@ test("knowing a hash is not authorization (ADR 0001)", async () => {
     assert.equal(r.dedup, false, "must require a real upload");
     assert.doesNotMatch(r.key, new RegExp(bass.sha256!), "key must be opaque");
   } finally { srv.close(); server.listen({ onUnhandledRequest: "error" }); }
+});
+
+test("new vaults are seeded with the default taxonomy; user folders have kind null", async () => {
+  const v = await api("POST", "/vaults", { name: "Seeded" }, 201);
+  const root = await api("GET", `/vaults/${v.id}/children`);
+  assert.deepEqual(root.folders.map((f: { kind: string }) => f.kind), DEFAULT_FOLDERS.map((d) => d.kind));
+  const songs = root.folders.find((f: { kind: string }) => f.kind === "songs");
+  const subs = await api("GET", `/vaults/${v.id}/children?folderId=${songs.id}`);
+  assert.deepEqual(subs.folders.map((f: { kind: string }) => f.kind), ["songs/demo", "songs/mix", "songs/drop"]);
+  const custom = await api("POST", `/vaults/${v.id}/folders`, { parentId: null, name: "Custom" }, 201);
+  assert.equal(custom.kind, null);
 });
 
 test("validation and permissions", async () => {

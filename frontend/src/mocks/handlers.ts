@@ -1,5 +1,6 @@
 import { http, HttpResponse, type HttpHandler } from "msw";
 import { createHandlers, MOCK_API, MOCK_BUCKET, seed, type Store } from "@bpackz/shared/mocks";
+import type { FolderKind } from "@bpackz/shared";
 
 const MSW_STORAGE_KEY = "bpackz_msw_store_v2";
 
@@ -131,6 +132,7 @@ export function ensureVaultHasTaxonomy(store: Store, vaultId: string, creatorId:
         vaultId,
         parentId: null,
         name: rootSpec.name,
+        kind: rootSpec.slug as FolderKind, // ADR 0002 (Blue, T026): kind = slug path
         createdBy: creatorId,
         updatedAt: nowIso,
       };
@@ -149,6 +151,7 @@ export function ensureVaultHasTaxonomy(store: Store, vaultId: string, creatorId:
           vaultId,
           parentId: rootFolder.id,
           name: subSpec.name,
+          kind: `${rootSpec.slug}/${subSpec.slug}` as FolderKind,
           createdBy: creatorId,
           updatedAt: nowIso,
         });

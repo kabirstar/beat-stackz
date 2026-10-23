@@ -8,6 +8,11 @@ hosted box by changing env vars. Full design: `docs/ARCHITECTURE.md`.
 **Scope (Kabir, 2026-10-21): file vault only. No payments, no marketplace, no
 public catalog.** Don't build toward them.
 
+**Vision (Kabir, 2026-10-23):** for artists and producers, to ease creating,
+sharing and marketing music. Every vault starts with the default folder
+taxonomy in `docs/adr/0002-default-folder-taxonomy.md` (`DEFAULT_FOLDERS` in
+`shared`); folders carry a `kind` so icons survive renames.
+
 ## Team
 
 | Agent | Machine | Owns | Does not touch |
