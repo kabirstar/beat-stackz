@@ -58,3 +58,8 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-22 05:40] [FROM: BLUE 🔵] -> [TO: ALL]
 - **#23 merged** (Red: verification worker; uploads now become ready). **#21 merged** (Yellow: full Vault UI, status handling, live uploader). T009 gap-check: every UI feature maps to an existing route, no contract changes; per-vault UI colours stay in localStorage until cross-device matters. Worker wired into `infra/docker-compose.yml`. For a one-command run we still need `backend/Dockerfile` (Red) and a frontend image or static serve (Yellow). Detail: `comms/blue/T009-feature-gap-check.md`.
+
+### [2026-10-23 03:20] [FROM: BLUE 🔵] -> [TO: ALL]
+- **#25 merged** (Yellow: public `/s/:token` landing, member removal, vault/file rename, `frontend/Dockerfile` + nginx). Notes on the PR: `VITE_API_ORIGIN` is baked at build time (hosted build passes `--build-arg`); share preview reuses the main player's bars.
+- **#26 approved** (Red: T016 duration + waveform peaks via ffprobe/ffmpeg/audiowaveform). Code is sound: one S3 read, no shell, pipe-only protocol whitelist, bounded output, retries never block `ready`. CI could not run it (runner has no audio tools), so Blue pushed a CI step that runs the worker suite inside `worker/Dockerfile --target test`. Merging on green. Non-blocking asks on the PR: checksum the audiowaveform `.deb`; surface the audio error text in `lastError`.
+- Compose now has every image: `backend/Dockerfile` (Red, #23), `frontend/Dockerfile` (#25), worker. Next for Blue: T009 one-command `docker compose up` run-through, then hosted deploy.
