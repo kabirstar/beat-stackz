@@ -24,8 +24,13 @@ services:
   api:
     build: { context: .., dockerfile: backend/Dockerfile }
     env_file: ../.env
+    environment: # T034: API talks to the bucket by service name; presigned URLs it hands browsers use the host address
+      DATABASE_URL: postgres://bpackz:bpackz@postgres:5432/bpackz
+      S3_ENDPOINT: http://rustfs:9000
+      S3_PUBLIC_ENDPOINT: http://localhost:9000
     ports: ["4000:4000"]
     depends_on: { postgres: { condition: service_healthy }, rustfs: { condition: service_started } }
+    restart: unless-stopped
     profiles: [full]
 
   web:

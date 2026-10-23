@@ -28,6 +28,7 @@ PY = sys.executable
 ENV = {**os.environ, "PYTHONUTF8": "1"}
 ALLOWED = ",".join([
     "Read", "Write", "Edit", "Glob", "Grep", "Agent", "Skill",
+    "Edit(.claude/**)", "Write(.claude/**)",  # .claude/ is a protected path; BRAIN must record skill lessons there
     "Bash(py comms/yellow/discord_bridge.py *)",
     "Bash(gh pr list*)", "Bash(gh pr view*)", "Bash(gh pr diff*)",
     "Bash(git status*)", "Bash(git log*)", "Bash(git diff*)", "Bash(git add *)",
@@ -211,6 +212,9 @@ def new_delegations() -> list[tuple[str, str, str]]:
 
 def spawn(owner: str, tid: str, path: str):
     folder, branch = WORKERS[owner]
+    if not os.path.exists(os.path.join(ROOT, ".env")):
+        print(f"[dispatch] not starting {owner} on {tid}: no .env at {ROOT}", flush=True)
+        return
     cwd = ensure_worktree(os.path.join(os.path.dirname(ROOT), folder), branch)
     prompt = (
         f"You are {owner} on the Beat Stackz team. BRAIN delegated task {tid} to you.\n"

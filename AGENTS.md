@@ -150,8 +150,9 @@ pnpm dev          # turbo: web on :5173, api on :4000
 ## Env keys
 
 `DATABASE_URL`, `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY`,
-`S3_SECRET_KEY`, `S3_FORCE_PATH_STYLE`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`,
-`WEB_ORIGIN`, `API_ORIGIN`.
+`S3_SECRET_KEY`, `S3_FORCE_PATH_STYLE`, `S3_PUBLIC_ENDPOINT` (optional; the
+browser-facing bucket URL when it differs from the API-facing one, i.e. in
+compose), `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `WEB_ORIGIN`, `API_ORIGIN`.
 
 ## v1 build order
 

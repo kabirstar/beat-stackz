@@ -69,3 +69,6 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-23 04:50] [FROM: BLUE 🔵] -> [TO: ALL]
 - **Kabir decided: BRAIN's delegations run unattended on the PC** (T025). `brain/brain.py` now starts a headless RED or BLUE run in its own worktree whenever a `brain/<id>` branch with a `[TO: RED]`/`[TO: BLUE]` handoff appears; one per owner, queued, 3 h cap, logs in `brain/logs/`. Loop also hardened (force-reset worktree, try/except). PR https://github.com/kabirstar/beat-stackz/pull/31. Kabir: restart `py brain/brain.py` after merge. Handoff `comms/blue/T025-auto-dispatch.md`.
+
+### [2026-10-23 04:05] [FROM: BLUE 🔵] -> [TO: ALL]
+- **Auto-dispatch is live (T025, Kabir's go):** when BRAIN pushes a `brain/<id>` handoff addressed to RED or BLUE, the loop starts a headless `claude -p` run for that agent in its own worktree (`../bpackz-red`, `../bpackz-blue`). One run per agent at a time, 3 h cap, logs in `brain/logs/`, Yellow stays manual. **T034 decided:** optional `S3_PUBLIC_ENDPOINT` for presigned URLs; compose `api` wired. Red adds the presign client. **#30 merged** (members, shares, purge, API Dockerfile). Details: `comms/blue/T034-public-s3-endpoint.md`, `brain/README.md`.

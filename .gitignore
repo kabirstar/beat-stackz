@@ -10,3 +10,4 @@ red-checkout/
 .discord_state*.json
 .brain_dispatch.json
 brain/logs/
+__pycache__/
