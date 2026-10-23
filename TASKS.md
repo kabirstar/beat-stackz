@@ -42,6 +42,9 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       paths: infra/**, docs/**  depends: T042  verify: docker compose -f infra/docker-compose.yml --profile backup run --rm backup once
 - [ ] T045 [KABIR] create R2 bucket bpackz-backups with a 14-day lifecycle rule, extend the R2 token to it, set BACKUP_BUCKET in Coolify, redeploy (HOSTING.md §0, §5)
 
+- [x] T083 [BLUE] INVITE_CODE wiring: .env.example, hosted compose api env (:? guard), HOSTING.md §2 + secrets list (#56; PR title said T082 by mistake, T082 is Yellow)
+      paths: infra/**, docs/**  depends: ADR 0003  verify: hosted compose config fails without INVITE_CODE, renders with it
+
 ## RED
 - [x] Verify PC environment and clone isolated Red checkout; GitHub CLI auth works outside sandbox
 - [x] T010a [RED] Hono health/CORS scaffold in backend; PR #1 workspace review fixes
