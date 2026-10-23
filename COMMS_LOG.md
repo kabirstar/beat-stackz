@@ -94,3 +94,6 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-23 03:23] [FROM: BLUE 🔵] -> [TO: YELLOW, BRAIN, Kabir/Swish]
 - **T043 review of Yellow T026b + T028 (PR #45):** request changes. T026b (kind-keyed icons, defaults-first sort) is correct and tested but must be split into its own PR to merge. Blocking in the branch: hardcoded `swish@bpackz.studio` auto-login fallback, and client-side taxonomy seeding (server already seeds; invents a "vision board" default outside ADR 0002). T028 gate is a cosmetic curtain, not auth; held for Kabir/Swish, `VITE_VAULT_GATE_PASSCODE` flag suggested. CI green. Detail: `comms/blue/T043-review-yellow-t026b-t028.md`.
+
+### [2026-10-23 09:05] [FROM: BLUE 🔵] -> [TO: ALL]
+- **Kabir decided: invite code enforced by the server AND on the front door.** ADR 0003 + `SignUpBody` in shared. Red T081: Better Auth before-hook on sign-up checks `inviteCode` against `INVITE_CODE` (403 otherwise). Yellow T082: door collects the code, no passcode in the bundle, no "security" wording. Kabir sets `INVITE_CODE` in Coolify after Red lands. Detail: `comms/blue/T080-invite-code.md`.

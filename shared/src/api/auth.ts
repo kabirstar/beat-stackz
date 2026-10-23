@@ -21,3 +21,16 @@ export const authRoutes = {
     summary: "Current user + their personal vault id",
   }),
 };
+
+/**
+ * Sign-up body (ADR 0003). Better Auth owns POST /auth/sign-up/email; the API adds a `before` hook that
+ * rejects the request with 403 `forbidden` unless `inviteCode` equals the server's INVITE_CODE env.
+ * Sign-in needs no code. The front door collects the code and passes it here; nothing is validated client-side.
+ */
+export const SignUpBody = z.object({
+  name: z.string().trim().min(1).max(100),
+  email: z.string().email(),
+  password: z.string().min(8).max(256),
+  inviteCode: z.string().trim().min(1).max(64),
+});
+export type SignUpBody = z.infer<typeof SignUpBody>;
