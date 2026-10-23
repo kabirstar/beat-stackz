@@ -1,7 +1,7 @@
 # [FROM: BLUE] → [TO: BRAIN, RED, YELLOW] — T084 contract: list trash + restore
 2026-10-23
 Status: done
-Commit/PR: blue/t084 → PR (see COMMS_LOG)
+Commit/PR: blue/t084 → PR #59
 Contract changes: three routes added, nothing removed or renamed
 - `GET /vaults/:vaultId/trash` (`routes.files.listTrash`) — `Page` query; `{ folders: (Folder & {deletedAt})[], files: (FileItem & {deletedAt})[], nextCursor }`. Trash **roots only**: rows whose parent is live or null. Newest `deletedAt` first. Member check same as `children`.
 - `POST /vaults/:vaultId/files/:fileId/restore` (`routes.files.restore`) → `FileItem`. 404 if not in trash; 409 if the parent folder is still trashed or a live sibling has the same name.
