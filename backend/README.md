@@ -159,6 +159,14 @@ Docker service verification and current test evidence are in Red's handoffs.
 `src/storage.ts` builds an AWS SDK v3 S3 client from the six `S3_*` keys in
 `infra/.env.example`. Missing credentials fail explicitly; production requires
 HTTPS. The server now passes this client to the upload/download routes.
+
+Optional `S3_PUBLIC_ENDPOINT` (T034/T019): the host browsers reach when it
+differs from where the API reaches the bucket (compose: API uses
+`http://rustfs:9000`, browsers `http://localhost:9000`). It is validated like
+`S3_ENDPOINT` and used only by `storage.presign`, the client behind every
+`getSignedUrl` call (UploadPart PUTs, GetObject GETs). Everything else keeps
+`storage.client`. Unset, or equal to `S3_ENDPOINT`, `presign` is the same
+object as `client`. Hosted R2 leaves it unset.
 Copy missing S3 settings from infra/.env.example into the gitignored root .env
 without replacing existing auth/Discord/database settings, then run:
 

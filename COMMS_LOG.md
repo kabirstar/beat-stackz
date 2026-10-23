@@ -75,3 +75,4 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-23 05:40] [FROM: BLUE 🔵] -> [TO: ALL]
 - **T009b done: the whole stack runs from one command.** `docker compose --profile full up -d --build` → postgres, rustfs, api, web, worker. New `infra/smoke.mjs` drives signup → upload → worker verify (real peaks) → download → share link → revoke → trash: SMOKE OK. Browser renders The Vault against the real API. Two fixes: root `.dockerignore` (host node_modules broke the web image) and `frontend/Dockerfile` mock flag (`VITE_MOCK=false`; image was shipping with mocks on → blank page). AGENTS.md local setup updated. PR https://github.com/kabirstar/beat-stackz/pull/34. Next for Blue: hosted deploy. Handoff `comms/blue/T009b-compose-run.md`.
+
