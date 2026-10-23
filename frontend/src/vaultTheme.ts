@@ -170,6 +170,7 @@ export const WAVEFORM_BARS = [
 ];
 
 export const ICON_TYPES = [
+  { key: "vision_board", label: "Vision Board" },
   { key: "rap_cup", label: "Lean Cup" },
   { key: "rap_chain", label: "Diamond Chain" },
   { key: "rap_money", label: "Cash Stack" },
@@ -190,6 +191,7 @@ export const SHARED_RAP_ICON_MAP: Record<string, string> = {
   vocals: "rap_money",
   songs: "rap_lambo",
   media: "rap_watch",
+  "vision board": "vision_board",
 };
 
 export interface FolderUiMeta {
@@ -205,6 +207,7 @@ const DEFAULT_ROOT_META: Record<string, FolderUiMeta> = {
   vocals: { by: "main · adlib · bg", colorSlot: 2, iconKey: "vocals", order: 2 },
   songs: { by: "demo · mix · drop", colorSlot: 3, iconKey: "songs", order: 3 },
   media: { by: "photos · videos · covers", colorSlot: 4, iconKey: "media", order: 4 },
+  "vision board": { by: "notes · songs · threads", colorSlot: 0, iconKey: "vision_board", order: 5 },
 };
 
 const DEFAULT_SUB_META: Record<string, FolderUiMeta> = {
@@ -231,11 +234,160 @@ export interface TrashedFileEntry {
   deletedAt: number;
 }
 
+export type StickyColorKey = "canary" | "coral" | "mint" | "lavender";
+
+export const STICKY_NOTE_COLORS: Record<
+  StickyColorKey,
+  { label: string; bg: string; border: string; tagBg: string }
+> = {
+  canary: {
+    label: "Hook / Lyrics",
+    bg: "#fef08a",
+    border: "rgba(161, 98, 7, 0.35)",
+    tagBg: "rgba(161, 98, 7, 0.14)",
+  },
+  coral: {
+    label: "Mix / 808 Note",
+    bg: "#fecdd3",
+    border: "rgba(190, 18, 60, 0.32)",
+    tagBg: "rgba(190, 18, 60, 0.14)",
+  },
+  mint: {
+    label: "Ready / Cleared",
+    bg: "#bbf7d0",
+    border: "rgba(21, 128, 61, 0.32)",
+    tagBg: "rgba(21, 128, 61, 0.14)",
+  },
+  lavender: {
+    label: "Rollout / Visual",
+    bg: "#e9d5ff",
+    border: "rgba(107, 33, 168, 0.32)",
+    tagBg: "rgba(107, 33, 168, 0.14)",
+  },
+};
+
+export interface VisionBoardNote {
+  id: string;
+  text: string;
+  author: string;
+  color: StickyColorKey;
+  x: number;
+  y: number;
+  createdAt: string;
+}
+
+export interface VisionBoardFileComment {
+  id: string;
+  author: string;
+  text: string;
+  timestampTag?: string;
+  createdAt: string;
+}
+
+export interface VisionBoardFileNode {
+  id: string;
+  fileId: string;
+  fileName: string;
+  fileSize: number;
+  fileMime: string | null;
+  addedBy: string;
+  x: number;
+  y: number;
+  comments: VisionBoardFileComment[];
+}
+
+export interface VisionBoardVaultState {
+  notes: VisionBoardNote[];
+  fileNodes: VisionBoardFileNode[];
+}
+
+export function createDefaultVisionBoardState(): VisionBoardVaultState {
+  return {
+    notes: [
+      {
+        id: "vb_note_1",
+        text: "HOOK IDEA: Double the main vocal on bar 9 & cut the drums for 1 beat before the 808 drops.",
+        author: "Swish",
+        color: "canary",
+        x: 60,
+        y: 50,
+        createdAt: "Today · 9:15 PM",
+      },
+      {
+        id: "vb_note_2",
+        text: "PRODUCER NOTE: Swapped the distorted spinz 808 for the sub brass patch in the outro.",
+        author: "Todo",
+        color: "coral",
+        x: 370,
+        y: 45,
+        createdAt: "Today · 9:42 PM",
+      },
+      {
+        id: "vb_note_3",
+        text: "TRACKLIST ORDER: 1. Obsidian Intro → 2. Nightfall Master → 3. Late Idea Interlude",
+        author: "Swish",
+        color: "mint",
+        x: 700,
+        y: 65,
+        createdAt: "Today · 10:05 PM",
+      },
+    ],
+    fileNodes: [
+      {
+        id: "vb_file_1",
+        fileId: "fi_sh_b1",
+        fileName: "swish_x_todo_collab_beat.wav",
+        fileSize: 50_000_000,
+        fileMime: "audio/wav",
+        addedBy: "Swish",
+        x: 90,
+        y: 265,
+        comments: [
+          {
+            id: "c_1",
+            author: "Swish",
+            text: "Bring the 808 glide in 2 bars earlier right at 0:24",
+            timestampTag: "0:24",
+            createdAt: "9:20 PM",
+          },
+          {
+            id: "c_2",
+            author: "Todo",
+            text: "Bet, boosted 60Hz on the kick and tucked the synth pad -2dB",
+            timestampTag: "0:48",
+            createdAt: "9:34 PM",
+          },
+        ],
+      },
+      {
+        id: "vb_file_2",
+        fileId: "fi_sh_vm1",
+        fileName: "collab_hook_stems.wav",
+        fileSize: 46_000_000,
+        fileMime: "audio/wav",
+        addedBy: "Todo",
+        x: 500,
+        y: 260,
+        comments: [
+          {
+            id: "c_3",
+            author: "Todo",
+            text: "Dry lead vox + stereo adlib throw lined up to 144 BPM",
+            timestampTag: "1:12",
+            createdAt: "9:50 PM",
+          },
+        ],
+      },
+    ],
+  };
+}
+
 export interface PersistedUiMeta {
   folderMeta: Record<string, FolderUiMeta>;
   sharedVaultPalettes: Record<string, HardwareThemeSlot[]>;
   trashedByVault: Record<string, TrashedFileEntry[]>;
   shareLinkTokens: Record<string, { id: string; token: string; expiry: string; fileId: string }[]>;
+  visionBoards?: Record<string, VisionBoardVaultState>;
 }
 
 export function loadPersistedUiMeta(): PersistedUiMeta {
@@ -244,6 +396,7 @@ export function loadPersistedUiMeta(): PersistedUiMeta {
     sharedVaultPalettes: {},
     trashedByVault: {},
     shareLinkTokens: {},
+    visionBoards: {},
   };
   if (typeof window === "undefined" || !window.localStorage) return empty;
   try {
@@ -255,6 +408,7 @@ export function loadPersistedUiMeta(): PersistedUiMeta {
         sharedVaultPalettes: parsed.sharedVaultPalettes ?? {},
         trashedByVault: parsed.trashedByVault ?? {},
         shareLinkTokens: parsed.shareLinkTokens ?? {},
+        visionBoards: parsed.visionBoards ?? {},
       };
     }
   } catch {
