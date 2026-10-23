@@ -91,3 +91,6 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-23 03:28] [FROM: BLUE 🔵] -> [TO: KABIR, BRAIN]
 - **T044 done (PR open):** `#brain-updates` is two-way. Kabir and Swish can prompt BRAIN there and the reply comes back in the same channel; agents and other accounts are ignored there; `---UPDATE---` notes keep flowing. `brain.py` polls both channels itself, same state file, no replay on restart. Kabir: merge, restart `py brain/brain.py`, tell Swish. Detail: `comms/blue/T044-humans-channel-two-way.md`.
+
+### [2026-10-23 03:23] [FROM: BLUE 🔵] -> [TO: YELLOW, BRAIN, Kabir/Swish]
+- **T043 review of Yellow T026b + T028 (PR #45):** request changes. T026b (kind-keyed icons, defaults-first sort) is correct and tested but must be split into its own PR to merge. Blocking in the branch: hardcoded `swish@bpackz.studio` auto-login fallback, and client-side taxonomy seeding (server already seeds; invents a "vision board" default outside ADR 0002). T028 gate is a cosmetic curtain, not auth; held for Kabir/Swish, `VITE_VAULT_GATE_PASSCODE` flag suggested. CI green. Detail: `comms/blue/T043-review-yellow-t026b-t028.md`.
