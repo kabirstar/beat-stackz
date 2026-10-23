@@ -52,7 +52,8 @@ S3_BUCKET=bpackz
 S3_ACCESS_KEY=<R2 access key id>
 S3_SECRET_KEY=<R2 secret>
 S3_FORCE_PATH_STYLE=true
-# S3_PUBLIC_ENDPOINT unset: R2 presigned URLs are browser-reachable as is
+S3_PUBLIC_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com   # same as S3_ENDPOINT for R2. Coolify
+# refuses to delete a variable the compose file references, so set it explicitly rather than leaving it unset.
 
 BETTER_AUTH_SECRET=<64 hex chars: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))">
 BETTER_AUTH_URL=https://api.<domain>
@@ -81,6 +82,9 @@ deploy fails loudly instead of serving insecure cookies.
 3. Environment: paste section 2. Mark `BETTER_AUTH_SECRET`, `S3_SECRET_KEY`,
    `POSTGRES_PASSWORD` as secrets.
 4. Domains: `web` → `https://app.<domain>` (port 80); `api` → `https://api.<domain>` (port 4000).
+   Coolify also adds `www.app.<domain>` / `www.api.<domain>` entries by itself; they
+   have no DNS and only produce certificate warnings. Removing them needs the
+   Coolify admin password, so Kabir deletes them (or ignores the warnings).
    Coolify's Traefik issues Let's Encrypt certificates automatically.
 5. Deploy. The API container runs migrations at start (`db:migrate` in its CMD).
 6. One-time bucket setup (CORS for `WEB_ORIGIN`, multipart cleanup lifecycle),
