@@ -1257,13 +1257,15 @@ export function App() {
       )}
 
       <main
-        className={`flex-1 px-4 sm:px-6 md:px-12 ${canGoBack ? "sm:pl-20" : ""} py-8 sm:py-10 ${
-          playingFile ? "pb-28" : ""
+        className={`flex-1 px-4 sm:px-6 md:px-12 ${canGoBack ? "sm:pl-20" : ""} pt-6 sm:pt-10 ${
+          playingFile
+            ? "pb-[calc(7.5rem+env(safe-area-inset-bottom))]"
+            : "pb-[calc(5.5rem+env(safe-area-inset-bottom))]"
         } max-w-6xl w-full mx-auto`}
       >
         {/* Hero Workspace Title Bar */}
-        <div className="flex items-end justify-between gap-4 pb-6 border-b border-[var(--hair)] relative">
-          <div className="flex items-center gap-3.5">
+        <div className="flex items-end justify-between gap-3 pb-5 sm:pb-6 border-b border-[var(--hair)] relative">
+          <div className="flex items-center gap-3 min-w-0">
             {canGoBack && (
               <button
                 type="button"
@@ -1275,8 +1277,8 @@ export function App() {
               </button>
             )}
 
-            <div>
-              <h1 className="display-heading text-5xl sm:text-7xl text-[var(--ink)]">
+            <div className="min-w-0">
+              <h1 className="display-heading text-3xl sm:text-5xl md:text-7xl text-[var(--ink)] truncate">
                 {titleText}
               </h1>
               <div className="flex flex-wrap items-center gap-2.5 mt-2">

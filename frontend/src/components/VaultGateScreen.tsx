@@ -81,7 +81,7 @@ export function VaultGateScreen({
 
   return (
     <div
-      className="min-h-screen w-full text-[#edeae4] flex flex-col items-center justify-between p-4 sm:p-7 relative overflow-hidden select-none"
+      className="min-h-[100dvh] w-full text-[#edeae4] flex flex-col items-center justify-between p-3 sm:p-7 pb-[calc(1rem+env(safe-area-inset-bottom))] relative overflow-hidden select-none"
       style={{
         background:
           "linear-gradient(145deg, #16151c 0%, #0d0c11 45%, #15131b 75%, #09080c 100%)",
@@ -186,7 +186,7 @@ export function VaultGateScreen({
         {/* Outer Recessed Steel Door Jamb / Frame */}
         <div
           className={`relative w-[360px] h-[360px] sm:w-[490px] sm:h-[490px] rounded-full flex items-center justify-center transition-all duration-700 ${
-            unlocking ? "scale-[1.04]" : ""
+            unlocking ? "scale-[0.96] sm:scale-[1.04]" : "scale-[0.92] sm:scale-100"
           }`}
           style={{
             background:

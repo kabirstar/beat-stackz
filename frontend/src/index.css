@@ -34,12 +34,20 @@ body[data-font-pair="zodiak"] {
 
 body {
   margin: 0;
-  min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--bg);
   color: var(--ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  padding-top: env(safe-area-inset-top);
+}
+
+@media (max-width: 639px) {
+  .icon-btn {
+    width: 38px;
+    height: 38px;
+  }
 }
 
 .paper-grain {

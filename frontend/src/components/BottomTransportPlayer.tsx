@@ -30,7 +30,21 @@ export function BottomTransportPlayer({
   onClose: () => void;
 }) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 px-4 sm:px-8 py-2.5 bg-[#e4e0d8]/95 backdrop-blur-xl border-t border-[var(--hair)] flex items-center justify-between gap-3">
+    <div className="fixed bottom-0 left-0 right-0 z-40 px-4 sm:px-8 pt-2.5 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-[#e4e0d8]/95 backdrop-blur-xl border-t border-[var(--hair)] flex items-center justify-between gap-3">
+      {/* Mobile-visible top progress bar */}
+      <div
+        className="sm:hidden absolute top-0 left-0 right-0 h-1 bg-black/10 cursor-pointer"
+        onClick={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const pct = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+          onSeek(Math.round(pct));
+        }}
+      >
+        <div
+          className="h-full bg-[var(--ink)] transition-all duration-150"
+          style={{ width: `${playProgress}%` }}
+        />
+      </div>
       <div className="flex items-center gap-3 min-w-0 flex-1 max-w-xs">
         <UserAvatarBadge
           byName={resolveFileOwnerName(playingFile.createdBy, vaultMembers, currentUser)}
