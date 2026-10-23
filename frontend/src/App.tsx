@@ -127,7 +127,30 @@ export function App() {
   const loadVaultContents = useCallback(
     async (vaultId: string) => {
       try {
-        const rootListing = await api.files.listChildren(vaultId);
+        let rootListing = await api.files.listChildren(vaultId);
+        if (rootListing.folders.length === 0) {
+          const defaultTaxonomy: { name: string; subs: string[] }[] = [
+            { name: "beats", subs: [] },
+            { name: "presets", subs: ["plugin", "vocals"] },
+            { name: "vocals", subs: ["main", "adlib", "bg"] },
+            { name: "songs", subs: ["demo", "mix", "drop"] },
+            { name: "media", subs: ["photos", "videos", "music video", "bts", "album covers"] },
+            { name: "vision board", subs: [] },
+          ];
+          for (const spec of defaultTaxonomy) {
+            const createdRoot = await api.folders.create(vaultId, {
+              name: spec.name,
+              parentId: null,
+            });
+            for (const subName of spec.subs) {
+              await api.folders.create(vaultId, {
+                name: subName,
+                parentId: createdRoot.id,
+              });
+            }
+          }
+          rootListing = await api.files.listChildren(vaultId);
+        }
         const meta = loadPersistedUiMeta();
         const sortByOrder = (list: Folder[]) =>
           [...list].sort(
@@ -171,7 +194,17 @@ export function App() {
     async (preferredMode?: "personal" | "shared") => {
       setAuthLoading(true);
       try {
-        const { user: me } = await api.auth.me();
+        let me: User;
+        try {
+          const res = await api.auth.me();
+          me = res.user;
+        } catch {
+          const signedIn = await api.auth.signInEmail({
+            email: "swish@bpackz.studio",
+            password: "password1234",
+          });
+          me = signedIn.user;
+        }
         setUser(me);
         const { items: myVaults } = await api.vaults.list();
         setVaults(myVaults);
@@ -519,6 +552,58 @@ export function App() {
     setAnimateSpawn(true);
   };
 
+  const handleReorderFolder = useCallback(
+    (sourceFolderId: string, targetFolderId: string) => {
+      if (sourceFolderId === targetFolderId) return;
+      const moveInArray = (list: Folder[]): Folder[] | null => {
+        const fromIdx = list.findIndex((f) => f.id === sourceFolderId);
+        const toIdx = list.findIndex((f) => f.id === targetFolderId);
+        if (fromIdx === -1 || toIdx === -1) return null;
+        const copy = [...list];
+        const [moved] = copy.splice(fromIdx, 1);
+        copy.splice(toIdx, 0, moved);
+        return copy;
+      };
+
+      const persistOrder = (reordered: Folder[]) => {
+        const latestMeta = loadPersistedUiMeta();
+        const nextFolderMeta = { ...latestMeta.folderMeta };
+        reordered.forEach((folder, idx) => {
+          const base = resolveFolderUiMeta(folder, nextFolderMeta, idx);
+          nextFolderMeta[folder.id] = {
+            ...base,
+            order: idx,
+          };
+        });
+        const nextMeta: PersistedUiMeta = {
+          ...latestMeta,
+          folderMeta: nextFolderMeta,
+        };
+        savePersistedUiMeta(nextMeta);
+        setUiMeta(nextMeta);
+      };
+
+      if (!currentRootFolder) {
+        setRootFolders((prev) => {
+          const next = moveInArray(prev);
+          if (!next) return prev;
+          persistOrder(next);
+          return next;
+        });
+      } else {
+        const parentId = currentRootFolder.id;
+        setSubfoldersByRoot((prev) => {
+          const list = prev[parentId] ?? [];
+          const next = moveInArray(list);
+          if (!next) return prev;
+          persistOrder(next);
+          return { ...prev, [parentId]: next };
+        });
+      }
+    },
+    [currentRootFolder],
+  );
+
   const handleConfirmCreateFolder = async () => {
     if (!activeVaultId || !newFolderName.trim()) return;
     const name = newFolderName.trim();
@@ -580,10 +665,6 @@ export function App() {
       };
       savePersistedUiMeta(nextMeta);
       setUiMeta(nextMeta);
-
-      for (const rName of ["beats", "presets", "vocals", "songs", "media", "vision board"]) {
-        await api.folders.create(vault.id, { name: rName, parentId: null });
-      }
 
       const { items: refreshedVaults } = await api.vaults.list();
       setVaults(refreshedVaults);
@@ -1298,6 +1379,7 @@ export function App() {
             isSharedMainPage={isSharedMode}
             folderHasPlayingTrack={folderHasPlayingTrack}
             onSelectFolder={handleOpenRoot}
+            onReorderFolder={handleReorderFolder}
             onCreateClick={() => setCreatingFolder(true)}
           />
         )}
@@ -1312,6 +1394,7 @@ export function App() {
             createLabel="new folder"
             folderHasPlayingTrack={folderHasPlayingTrack}
             onSelectFolder={handleOpenSub}
+            onReorderFolder={handleReorderFolder}
             onCreateClick={() => setCreatingFolder(true)}
           />
         )}

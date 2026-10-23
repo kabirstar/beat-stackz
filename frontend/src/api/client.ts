@@ -288,6 +288,9 @@ function resolveDefaultApiOrigin(): string {
   if (metaEnv?.VITE_API_ORIGIN) {
     return metaEnv.VITE_API_ORIGIN;
   }
+  if (metaEnv?.VITE_MOCK === "false") {
+    return "http://localhost:4000";
+  }
   return MOCK_API;
 }
 

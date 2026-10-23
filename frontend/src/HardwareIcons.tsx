@@ -1863,6 +1863,7 @@ export function HardwareObject3D({
 }
 
 export function RecordHardwareItem({
+  folderId,
   name,
   by,
   iconKey,
@@ -1870,8 +1871,12 @@ export function RecordHardwareItem({
   theme,
   animateSpawn,
   isPlayingFolder,
+  jiggleMode = false,
+  isDragging = false,
   onClick,
+  onPointerDown,
 }: {
+  folderId?: string;
   name: string;
   by: string;
   iconKey: string;
@@ -1879,20 +1884,27 @@ export function RecordHardwareItem({
   theme: HardwareThemeSlot;
   animateSpawn: boolean;
   isPlayingFolder: boolean;
+  jiggleMode?: boolean;
+  isDragging?: boolean;
   onClick: () => void;
+  onPointerDown?: (e: React.PointerEvent<HTMLDivElement>) => void;
 }) {
   const code = `0${idx + 1}`;
   const spawnDelayMs = idx * 85;
+  const jiggleDelayMs = (idx % 5) * 45;
 
   return (
     <div
+      data-folder-id={folderId}
+      draggable={false}
+      onDragStart={(e) => e.preventDefault()}
       onClick={onClick}
-      className={`flex flex-col items-center text-center min-w-0 group cursor-pointer ${
-        animateSpawn ? "spawn-active" : ""
-      } ${isPlayingFolder ? "is-playing-folder" : ""}`}
+      onPointerDown={onPointerDown}
       style={
         {
+          touchAction: jiggleMode ? "none" : "manipulation",
           "--spawn-delay": `${spawnDelayMs}ms`,
+          "--jiggle-delay": `${jiggleDelayMs}ms`,
           "--chassis-bg": theme.chassisBg,
           "--chassis-mid": theme.chassisMid,
           "--chassis-edge": theme.chassisEdge,
@@ -1904,15 +1916,32 @@ export function RecordHardwareItem({
           "--stamp-color": theme.stampColor,
         } as CSSProperties
       }
+      className={`relative flex flex-col items-center text-center min-w-0 group cursor-pointer select-none transition-all duration-200 ${
+        animateSpawn && !jiggleMode ? "spawn-active" : ""
+      } ${isPlayingFolder ? "is-playing-folder" : ""} ${
+        jiggleMode && !isDragging ? "jiggle-mode-card" : ""
+      } ${
+        isDragging
+          ? "opacity-30 scale-95 rounded-3xl outline-2 outline-dashed outline-[var(--ink)]/35 bg-[var(--card)]/40"
+          : ""
+      }`}
     >
-      <div className="icon-stage">
+      {jiggleMode && !isDragging && (
+        <div
+          className="absolute top-1 left-2 z-20 w-6 h-6 rounded-full bg-[var(--ink)] text-[var(--bg)] shadow-md flex items-center justify-center mono-meta text-[10px] pointer-events-none"
+          title="Drag to rearrange"
+        >
+          ⋮⋮
+        </div>
+      )}
+      <div className="icon-stage pointer-events-none">
         <div className="icon-shadow" />
         <div className="icon-3d-rig">
           <HardwareObject3D iconKey={iconKey} code={code} />
         </div>
       </div>
 
-      <div className="mt-3 sm:mt-4">
+      <div className="mt-3 sm:mt-4 pointer-events-none">
         <h3 className="record-heading text-base sm:text-lg text-[var(--ink)]">
           {name}
         </h3>
