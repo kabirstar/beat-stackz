@@ -56,6 +56,7 @@ S3_PUBLIC_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com   # same as S3_
 # refuses to delete a variable the compose file references, so set it explicitly rather than leaving it unset.
 
 BETTER_AUTH_SECRET=<64 hex chars: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))">
+INVITE_CODE=<the code you hand to invited artists>   # required; sign-up is rejected without it (ADR 0003)
 BETTER_AUTH_URL=https://api.<domain>
 API_ORIGIN=https://api.<domain>
 WEB_ORIGIN=https://app.<domain>
@@ -84,7 +85,7 @@ deploy fails loudly instead of serving insecure cookies.
    manual command is `docker compose --project-directory . -f infra/docker-compose.hosted.yml up -d --build`.
    Early tell for a path mistake in the deploy log: "Dockerfile not found for
    service X at ../backend/Dockerfile, skipping ARG injection".
-3. Environment: paste section 2. Mark `BETTER_AUTH_SECRET`, `S3_SECRET_KEY`,
+3. Environment: paste section 2. Mark `BETTER_AUTH_SECRET`, `S3_SECRET_KEY`, `INVITE_CODE`,
    `POSTGRES_PASSWORD` as secrets.
 4. Domains: `web` → `https://app.<domain>` (port 80); `api` → `https://api.<domain>` (port 4000).
    Coolify also adds `www.app.<domain>` / `www.api.<domain>` entries by itself; they

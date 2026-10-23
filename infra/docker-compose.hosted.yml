@@ -31,6 +31,7 @@ services:
       S3_SECRET_KEY: ${S3_SECRET_KEY:?R2 secret}
       S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-true}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?32+ random chars}
+      INVITE_CODE: ${INVITE_CODE:?invite code for sign-up (ADR 0003)}
       BETTER_AUTH_URL: ${API_ORIGIN:?https origin of the API}
       WEB_ORIGIN: ${WEB_ORIGIN:?https origin of the web app}
       API_ORIGIN: ${API_ORIGIN}
