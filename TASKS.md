@@ -189,3 +189,8 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: comms/blue/T009-*.md with item → route; shared + mocks updated for accepted items
       verify: pnpm -F @bpackz/shared test
       handoff: comms/brain/T009-feature-gap-check.md
+- [ ] T084 [BLUE] contract: list trash + restore files/folders (Yellow T030 QA: trash lives in localStorage today)
+      paths: shared/**, docs/**  depends: none  assigned-by: BRAIN
+      deliverable: listTrash + restore routes in shared + mocks; comms/blue/T084-*.md; Red T085 and Yellow follow
+      verify: pnpm -F @bpackz/shared test
+      handoff: comms/brain/T084-trash-list-restore-contract.md
