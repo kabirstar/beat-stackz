@@ -74,6 +74,7 @@ export function App() {
   const [subId, setSubId] = useState<string | null>(null);
   const [forceFilesView, setForceFilesView] = useState(false);
   const [viewingTrash, setViewingTrash] = useState(false);
+  const [visionBoardOpen, setVisionBoardOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [trackFilter, setTrackFilter] = useState<"all" | "swish" | "todo">("all");
   const [fileLayout, setFileLayout] = useState<FileLayoutMode>("cards");
@@ -133,30 +134,7 @@ export function App() {
   const loadVaultContents = useCallback(
     async (vaultId: string) => {
       try {
-        let rootListing = await api.files.listChildren(vaultId);
-        if (rootListing.folders.length === 0) {
-          const defaultTaxonomy: { name: string; subs: string[] }[] = [
-            { name: "beats", subs: [] },
-            { name: "presets", subs: ["plugin", "vocals"] },
-            { name: "vocals", subs: ["main", "adlib", "bg"] },
-            { name: "songs", subs: ["demo", "mix", "drop"] },
-            { name: "media", subs: ["photos", "videos", "music video", "bts", "album covers"] },
-            { name: "vision board", subs: [] },
-          ];
-          for (const spec of defaultTaxonomy) {
-            const createdRoot = await api.folders.create(vaultId, {
-              name: spec.name,
-              parentId: null,
-            });
-            for (const subName of spec.subs) {
-              await api.folders.create(vaultId, {
-                name: subName,
-                parentId: createdRoot.id,
-              });
-            }
-          }
-          rootListing = await api.files.listChildren(vaultId);
-        }
+        const rootListing = await api.files.listChildren(vaultId);
         const meta = loadPersistedUiMeta();
         const sortByOrder = (list: Folder[]) => sortVaultFolders(list, meta.folderMeta);
 
@@ -281,13 +259,15 @@ export function App() {
   );
 
   const viewingVisionBoard = useMemo(() => {
-    if (!currentRootFolder || viewingTrash) return false;
+    if (viewingTrash) return false;
+    if (visionBoardOpen) return true;
+    if (!currentRootFolder) return false;
     const meta = resolveFolderUiMeta(currentRootFolder, uiMeta.folderMeta, 0);
     return (
       currentRootFolder.name.trim().toLowerCase() === "vision board" ||
       meta.iconKey === "vision_board"
     );
-  }, [currentRootFolder, viewingTrash, uiMeta.folderMeta]);
+  }, [currentRootFolder, viewingTrash, visionBoardOpen, uiMeta.folderMeta]);
 
   const viewingFiles = Boolean(
     !viewingVisionBoard &&
@@ -296,10 +276,18 @@ export function App() {
         (currentRootFolder && currentSubFolder)),
   );
 
+  const allVaultFilesFlat = useMemo(() => {
+    const out: FileItem[] = [];
+    for (const list of Object.values(filesByFolder)) {
+      for (const f of list) out.push(f);
+    }
+    return out;
+  }, [filesByFolder]);
+
   const activeVisionBoardState: VisionBoardVaultState = useMemo(() => {
     const vKey = activeVaultId ?? "default";
-    return uiMeta.visionBoards?.[vKey] ?? createDefaultVisionBoardState();
-  }, [activeVaultId, uiMeta.visionBoards]);
+    return uiMeta.visionBoards?.[vKey] ?? createDefaultVisionBoardState(allVaultFilesFlat);
+  }, [activeVaultId, uiMeta.visionBoards, allVaultFilesFlat]);
 
   const handleUpdateVisionBoard = useCallback(
     (nextBoard: VisionBoardVaultState) => {
@@ -317,14 +305,6 @@ export function App() {
     [activeVaultId, uiMeta],
   );
 
-  const allVaultFilesFlat = useMemo(() => {
-    const out: FileItem[] = [];
-    for (const list of Object.values(filesByFolder)) {
-      for (const f of list) out.push(f);
-    }
-    return out;
-  }, [filesByFolder]);
-
   const activeFolderId = currentSubFolder?.id ?? currentRootFolder?.id ?? null;
 
   const activeFolderFiles = useMemo(
@@ -334,20 +314,40 @@ export function App() {
 
   const query = search.trim().toLowerCase();
 
-  const visibleRoots = useMemo(
-    () =>
-      rootFolders.filter((f, idx) => {
-        if (!query) return true;
-        const meta = resolveFolderUiMeta(f, uiMeta.folderMeta, idx);
-        const subs = subfoldersByRoot[f.id] ?? [];
-        return (
-          f.name.toLowerCase().includes(query) ||
-          meta.by.toLowerCase().includes(query) ||
-          subs.some((sf) => sf.name.toLowerCase().includes(query))
-        );
-      }),
-    [rootFolders, query, uiMeta.folderMeta, subfoldersByRoot],
-  );
+  const visibleRoots = useMemo(() => {
+    const hasVisionFolder = rootFolders.some((f, idx) => {
+      const meta = resolveFolderUiMeta(f, uiMeta.folderMeta, idx);
+      return (
+        f.name.trim().toLowerCase() === "vision board" ||
+        meta.iconKey === "vision_board"
+      );
+    });
+    const combinedRoots: Folder[] = hasVisionFolder
+      ? rootFolders
+      : [
+          ...rootFolders,
+          {
+            id: "__vision_board__",
+            vaultId: activeVaultId ?? "default",
+            parentId: null,
+            name: "vision board",
+            kind: null,
+            createdBy: user?.id ?? "u_artist",
+            updatedAt: new Date(0).toISOString(),
+          },
+        ];
+
+    return combinedRoots.filter((f, idx) => {
+      if (!query) return true;
+      const meta = resolveFolderUiMeta(f, uiMeta.folderMeta, idx);
+      const subs = subfoldersByRoot[f.id] ?? [];
+      return (
+        f.name.toLowerCase().includes(query) ||
+        meta.by.toLowerCase().includes(query) ||
+        subs.some((sf) => sf.name.toLowerCase().includes(query))
+      );
+    });
+  }, [rootFolders, activeVaultId, user?.id, query, uiMeta.folderMeta, subfoldersByRoot]);
 
   const visibleSubs = useMemo(
     () =>
@@ -442,24 +442,27 @@ export function App() {
     [activeVaultId, uiMeta.trashedByVault],
   );
 
-  const canGoBack = Boolean(currentRootFolder || viewingTrash);
+  const canGoBack = Boolean(currentRootFolder || viewingTrash || visionBoardOpen);
 
   const profileSubheading =
     isSharedMode && activeVault ? activeVault.name : user?.name ?? "Swish";
 
   const titleText = viewingTrash
     ? "Trash"
-    : !currentRootFolder
-      ? "The Vault"
-      : currentSubFolder?.name ?? currentRootFolder.name;
+    : visionBoardOpen && !currentRootFolder
+      ? "Vision Board"
+      : !currentRootFolder
+        ? "The Vault"
+        : currentSubFolder?.name ?? currentRootFolder.name;
 
   const subtitleText = useMemo(() => {
     if (viewingTrash) return `${profileSubheading} · 30-day recovery`;
+    if (visionBoardOpen && !currentRootFolder) return `${profileSubheading} · notes · songs · threads`;
     if (!currentRootFolder) return profileSubheading;
     const target = currentSubFolder ?? currentRootFolder;
     const meta = resolveFolderUiMeta(target, uiMeta.folderMeta, 0);
     return `${profileSubheading} · ${meta.by}`;
-  }, [viewingTrash, profileSubheading, currentRootFolder, currentSubFolder, uiMeta.folderMeta]);
+  }, [viewingTrash, visionBoardOpen, profileSubheading, currentRootFolder, currentSubFolder, uiMeta.folderMeta]);
 
   const parentFolderTheme: HardwareThemeSlot = useMemo(() => {
     if (!currentRootFolder) return activePalette[0];
@@ -482,6 +485,7 @@ export function App() {
     setSubId(null);
     setForceFilesView(false);
     setViewingTrash(false);
+    setVisionBoardOpen(false);
     setCreatingFolder(false);
     setSharedDropdownOpen(false);
     setPlusMenuOpen(false);
@@ -513,6 +517,7 @@ export function App() {
 
   const handleBack = () => {
     if (viewingTrash) setViewingTrash(false);
+    else if (visionBoardOpen) setVisionBoardOpen(false);
     else if (forceFilesView) setForceFilesView(false);
     else if (subId) setSubId(null);
     else setRootId(null);
@@ -522,10 +527,21 @@ export function App() {
   };
 
   const handleOpenRoot = (id: string) => {
+    if (id === "__vision_board__") {
+      setRootId(null);
+      setSubId(null);
+      setForceFilesView(false);
+      setViewingTrash(false);
+      setVisionBoardOpen(true);
+      setCreatingFolder(false);
+      setPlusMenuOpen(false);
+      return;
+    }
     setRootId(id);
     setSubId(null);
     setForceFilesView(false);
     setViewingTrash(false);
+    setVisionBoardOpen(false);
     setCreatingFolder(false);
     setPlusMenuOpen(false);
     setAnimateSpawn(true);
@@ -1289,14 +1305,21 @@ export function App() {
                     title="Collaborators & Shared Vaults"
                     className="inline-flex items-center -space-x-1.5 cursor-pointer hover:opacity-90"
                   >
-                    <UserAvatarBadge
-                      byName="Swish"
-                      sizeClass="w-5 h-5 text-[9px] ring-2 ring-[#edeae4]"
-                    />
-                    <UserAvatarBadge
-                      byName="Todo"
-                      sizeClass="w-5 h-5 text-[9px] ring-2 ring-[#edeae4]"
-                    />
+                    {(vaultMembers.length > 0
+                      ? vaultMembers.slice(0, 4).map((m) => m.name || m.email.split("@")[0] || "Member")
+                      : ["Swish", "Todo"]
+                    ).map((memberName) => (
+                      <UserAvatarBadge
+                        key={memberName}
+                        byName={memberName}
+                        sizeClass="w-5 h-5 text-[9px] ring-2 ring-[#edeae4]"
+                      />
+                    ))}
+                    {vaultMembers.length > 4 && (
+                      <span className="w-5 h-5 rounded-full bg-[var(--ink)] text-[var(--bg)] mono-meta text-[8px] ring-2 ring-[#edeae4] inline-flex items-center justify-center">
+                        +{vaultMembers.length - 4}
+                      </span>
+                    )}
                   </button>
                 ) : (
                   <UserAvatarBadge
@@ -1313,7 +1336,23 @@ export function App() {
 
           {/* Right Workspace Pure Icon Toolbar */}
           <div className="flex items-center gap-2 relative">
-            {!viewingFiles && !viewingTrash && (
+            <button
+              type="button"
+              onClick={() => {
+                setViewingTrash(false);
+                setVisionBoardOpen((v) => !v);
+              }}
+              title="Collab Vision Board"
+              className={`px-3 py-1.5 rounded-full border mono-meta text-[10px] uppercase tracking-wider transition-all cursor-pointer ${
+                viewingVisionBoard
+                  ? "bg-[var(--ink)] text-[var(--bg)] border-[var(--ink)]"
+                  : "bg-[var(--card)] text-[var(--ink)] border-[var(--hair)] hover:border-[var(--ink)]"
+              }`}
+            >
+              Vision Board
+            </button>
+
+            {!viewingFiles && !viewingVisionBoard && !viewingTrash && (
               <button
                 type="button"
                 onClick={() => {
@@ -1327,7 +1366,7 @@ export function App() {
               </button>
             )}
 
-            {currentRootFolder && !currentSubFolder && !viewingFiles && !viewingTrash && (
+            {currentRootFolder && !currentSubFolder && !viewingFiles && !viewingVisionBoard && !viewingTrash && (
               <button
                 type="button"
                 onClick={() => setForceFilesView(true)}
@@ -1402,7 +1441,7 @@ export function App() {
         )}
 
         {/* LEVEL 1: Spawning 3D Studio Hardware Root Icons */}
-        {!currentRootFolder && !viewingTrash && !authLoading && (
+        {!currentRootFolder && !viewingVisionBoard && !viewingTrash && !authLoading && (
           <HardwareGridSection
             folders={visibleRoots}
             folderMetaMap={uiMeta.folderMeta}
@@ -1442,27 +1481,12 @@ export function App() {
             playProgress={playProgress}
             accentTheme={parentFolderTheme}
             onUpdateBoard={handleUpdateVisionBoard}
-            onTogglePlayFile={(fileId, fallbackName, fallbackSize) => {
+            onTogglePlayFile={(fileId) => {
               const found = allVaultFilesFlat.find((f) => f.id === fileId);
               if (found) {
                 void handleTogglePlay(found);
               } else {
-                const nowIso = new Date().toISOString();
-                void handleTogglePlay({
-                  id: fileId,
-                  vaultId: activeVaultId ?? "v_shared",
-                  folderId: currentRootFolder?.id ?? null,
-                  name: fallbackName,
-                  status: "ready",
-                  size: fallbackSize,
-                  mime: "audio/wav",
-                  sha256: "a".repeat(64),
-                  durationMs: 180_000,
-                  hasWaveform: true,
-                  createdBy: user?.id ?? "u_me",
-                  createdAt: nowIso,
-                  updatedAt: nowIso,
-                });
+                showToast("File is no longer in this vault");
               }
             }}
             onUploadSongToBoard={() => fileInputRef.current?.click()}

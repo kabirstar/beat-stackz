@@ -342,7 +342,7 @@ export function VisionBoardCanvas({
             })}
           </svg>
 
-          {/* 1. STICKY NOTES ON INFINITE CANVAS */}
+          {/* 1. STUDIO NOTEPAD SHEETS ON INFINITE CANVAS */}
           {boardState.notes.map((note) => {
             const palette = STICKY_NOTE_COLORS[note.color] ?? STICKY_NOTE_COLORS.canary;
             return (
@@ -353,25 +353,45 @@ export function VisionBoardCanvas({
                   position: "absolute",
                   left: `${note.x}px`,
                   top: `${note.y}px`,
-                  width: "268px",
+                  width: "276px",
                   background: palette.bg,
                   border: `1.5px solid ${palette.border}`,
                   boxShadow:
-                    "0 12px 26px rgba(22, 19, 43, 0.14), inset 0 1px 0 rgba(255,255,255,0.65)",
+                    "0 16px 32px rgba(22, 19, 43, 0.2), -3px 4px 0 rgba(22, 19, 43, 0.16), inset 0 1px 0 rgba(255,255,255,0.75)",
                 }}
-                className="rounded-2xl flex flex-col overflow-hidden transition-shadow hover:shadow-2xl"
+                className="rounded-xl flex flex-col overflow-visible transition-shadow hover:shadow-2xl"
               >
-                {/* Sticky Drag Header */}
+                {/* Chrome Wire-O Spiral Binding Rings Along Top of Notepad Sheet */}
+                <div className="pointer-events-none absolute -top-2.5 left-4 right-4 flex items-center justify-between z-20">
+                  {[0, 1, 2, 3, 4, 5, 6].map((ringIdx) => (
+                    <div key={ringIdx} className="flex flex-col items-center">
+                      <div
+                        className="w-2 h-4 rounded-full"
+                        style={{
+                          background:
+                            "linear-gradient(90deg, #18181b 0%, #f4f4f5 48%, #3f3f46 88%, #09090b 100%)",
+                          boxShadow: "0 2px 4px rgba(0,0,0,0.65)",
+                        }}
+                      />
+                      <div className="w-2 h-1.5 rounded-full bg-black/75 -mt-0.5" />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Stitched Leatherette Notepad Header Bar (Drag Handle) */}
                 <div
                   onPointerDown={(e) =>
                     handlePointerDownItem(e, "note", note.id, note.x, note.y)
                   }
-                  className="px-3 py-2 flex items-center justify-between border-b border-black/10 cursor-move"
-                  style={{ background: palette.tagBg }}
+                  className="px-3.5 pt-3 pb-2 flex items-center justify-between border-b-2 border-[#7f1d1d]/60 rounded-t-[10px] cursor-move"
+                  style={{
+                    background:
+                      "linear-gradient(180deg, #27272a 0%, #14131a 75%, #2d1215 100%)",
+                  }}
                 >
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-red-600 shadow-xs" />
-                    <span className="mono-meta text-[9px] uppercase text-[var(--ink)] font-semibold">
+                    <span className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_6px_#ef4444]" />
+                    <span className="mono-meta text-[9px] uppercase tracking-wider text-[#edeae4] font-semibold">
                       {palette.label}
                     </span>
                   </div>
@@ -380,8 +400,8 @@ export function VisionBoardCanvas({
                       type="button"
                       onPointerDown={(e) => e.stopPropagation()}
                       onClick={() => handleCycleNoteColor(note.id, note.color)}
-                      title="Change sticky color"
-                      className="w-5 h-5 rounded-full border border-black/25 flex items-center justify-center text-[9px] cursor-pointer bg-white/60 hover:bg-white"
+                      title="Change notepad sheet color"
+                      className="w-5 h-5 rounded-full border border-white/25 flex items-center justify-center text-[9px] cursor-pointer bg-white/15 hover:bg-white/30 text-white"
                     >
                       🎨
                     </button>
@@ -389,29 +409,41 @@ export function VisionBoardCanvas({
                       type="button"
                       onPointerDown={(e) => e.stopPropagation()}
                       onClick={() => handleDeleteNote(note.id)}
-                      title="Delete sticky note"
-                      className="w-5 h-5 rounded-full border border-black/15 flex items-center justify-center text-xs cursor-pointer bg-white/60 hover:bg-white"
+                      title="Tear off notepad sheet"
+                      className="w-5 h-5 rounded-full border border-white/20 flex items-center justify-center text-xs cursor-pointer bg-white/15 hover:bg-red-500/80 text-white"
                     >
                       ×
                     </button>
                   </div>
                 </div>
 
-                {/* Editable Sticky Body */}
-                <div className="p-3">
+                {/* Ruled Legal Notepad Body with Double Red Margin Line & Horizontal Rules */}
+                <div
+                  className="relative pl-8 pr-3 py-2.5"
+                  style={{
+                    backgroundImage:
+                      "repeating-linear-gradient(180deg, transparent 0px, transparent 23px, rgba(59, 130, 246, 0.24) 23px, rgba(59, 130, 246, 0.24) 24px)",
+                    backgroundPositionY: "6px",
+                  }}
+                >
+                  {/* Double Red Vertical Margin Rule */}
+                  <div className="pointer-events-none absolute top-0 bottom-0 left-5 w-[1.5px] bg-red-500/45" />
+                  <div className="pointer-events-none absolute top-0 bottom-0 left-[23px] w-[0.5px] bg-red-500/30" />
+
                   <textarea
                     value={note.text}
                     onChange={(e) => handleUpdateNoteText(note.id, e.target.value)}
                     rows={4}
-                    className="w-full bg-transparent resize-none border-0 focus:outline-none text-xs sm:text-[13px] font-medium text-[#16132b] leading-relaxed"
+                    className="w-full bg-transparent resize-none border-0 focus:outline-none text-xs sm:text-[13px] font-medium text-[#16132b] leading-[24px]"
                   />
                 </div>
 
-                {/* Sticky Footer: Author & Timestamp */}
-                <div className="px-3 py-2 border-t border-black/10 flex items-center justify-between text-[10px]">
+                {/* Notepad Sheet Footer: Author & Timestamp */}
+                <div className="relative pl-8 pr-3 py-2 border-t border-black/10 flex items-center justify-between text-[10px]">
+                  <div className="pointer-events-none absolute top-0 bottom-0 left-5 w-[1.5px] bg-red-500/45" />
                   <div className="flex items-center gap-1.5">
                     <UserAvatarBadge byName={note.author} sizeClass="w-4 h-4 text-[8px]" />
-                    <span className="mono-meta text-[9px] uppercase text-[#16132b]/80">
+                    <span className="mono-meta text-[9px] uppercase text-[#16132b]/80 font-semibold">
                       {note.author}
                     </span>
                   </div>
