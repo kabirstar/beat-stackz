@@ -9,7 +9,7 @@ export const Folder = z.object({
   name: Name,
   // Set on seeded default folders (ADR 0002); null for user-created. `.default(null)` only so the
   // backend keeps parsing until T026a adds the column; remove the default after that lands.
-  kind: FolderKind.nullable().default(null),
+  kind: FolderKind.nullable(), // always present since T026a (#38); null for custom folders
   createdBy: Id.nullable(),
   updatedAt: Timestamp,
 });

@@ -838,7 +838,6 @@
                       "maxLength": 255
                     },
                     "kind": {
-                      "default": null,
                       "nullable": true,
                       "type": "string",
                       "enum": [
@@ -964,7 +963,6 @@
                           "maxLength": 255
                         },
                         "kind": {
-                          "default": null,
                           "nullable": true,
                           "type": "string",
                           "enum": [
@@ -1146,7 +1144,6 @@
                       "maxLength": 255
                     },
                     "kind": {
-                      "default": null,
                       "nullable": true,
                       "type": "string",
                       "enum": [
@@ -1340,7 +1337,6 @@
                             "maxLength": 255
                           },
                           "kind": {
-                            "default": null,
                             "nullable": true,
                             "type": "string",
                             "enum": [
