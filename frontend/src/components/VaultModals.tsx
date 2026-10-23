@@ -581,8 +581,8 @@ export function CollaboratorsModal({
                 </div>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
-                <span className="mono-meta text-[10px] uppercase px-2 py-0.5 rounded-full bg-[var(--card-deep)] text-[var(--ink)]">
-                  {m.role}
+                <span className="mono-meta text-[9px] uppercase px-2 py-0.5 rounded-full bg-[var(--card-deep)] text-[var(--ink)]">
+                  {m.role === "owner" ? "owner · full access" : "full edit & download"}
                 </span>
                 {m.role !== "owner" && onRemoveMember && (
                   <button
@@ -604,21 +604,19 @@ export function CollaboratorsModal({
             type="email"
             value={inviteEmail}
             onChange={(e) => onChangeInviteEmail(e.target.value)}
-            placeholder="Invite collaborator email..."
+            placeholder="Invite collaborator email (Full Edit & Download)..."
             className="flex-1 px-3.5 py-2 rounded-full bg-[var(--card)] border border-[var(--hair)] text-xs text-[var(--ink)] focus:outline-none focus:border-[var(--ink)]"
           />
-          <select
-            value={inviteRole}
-            onChange={(e) => onChangeInviteRole(e.target.value as "editor" | "viewer")}
-            className="px-2.5 py-2 rounded-full bg-[var(--card)] border border-[var(--hair)] mono-meta text-[10px] uppercase"
+          <span
+            onClick={() => onChangeInviteRole("editor")}
+            className="px-2.5 py-2 rounded-full bg-[var(--card)] border border-[var(--hair)] mono-meta text-[9px] uppercase text-[var(--ink-soft)] shrink-0"
           >
-            <option value="editor">Editor</option>
-            <option value="viewer">Viewer</option>
-          </select>
+            Full Edit + DL
+          </span>
           <button
             type="button"
             onClick={onInviteMember}
-            title="Send Invite"
+            title="Add Collaborator (Full Edit & Download)"
             className="icon-btn icon-btn-active"
           >
             <StudioIcon name="send" />

@@ -22,7 +22,6 @@ export interface VaultGateScreenProps {
   onChangeEmail: (email: string) => void;
   onChangePassword: (password: string) => void;
   onSubmitAuth: (e: React.FormEvent) => Promise<boolean> | boolean;
-  onQuickSelectProfile?: (profileKey: "swish" | "todo") => void;
   onUnlock: () => void;
 }
 
@@ -37,9 +36,11 @@ export function VaultGateScreen({
   onChangeEmail,
   onChangePassword,
   onSubmitAuth,
-  onQuickSelectProfile,
   onUnlock,
 }: VaultGateScreenProps) {
+  const [gateStep, setGateStep] = useState<"invite" | "auth">("invite");
+  const [inviteCode, setInviteCode] = useState("");
+  const [inviteError, setInviteError] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "submitting" | "unlocking">("idle");
 
   const triggerMechanicalUnlock = () => {
@@ -47,6 +48,17 @@ export function VaultGateScreen({
     window.setTimeout(() => {
       onUnlock();
     }, 620);
+  };
+
+  const handleInviteSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isVaultPasscodeValid(inviteCode)) {
+      setInviteError(null);
+      onChangeMode("signup");
+      setGateStep("auth");
+    } else {
+      setInviteError("INVALID INVITE CODE");
+    }
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -61,9 +73,11 @@ export function VaultGateScreen({
     }
   };
 
+  const maskedInviteAsterisks = maskWithAsterisks(inviteCode);
   const maskedAsterisks = maskWithAsterisks(authPassword);
   const boltAngles = [0, 45, 90, 135, 180, 225, 270, 315];
   const unlocking = status === "unlocking";
+  const activeError = gateStep === "invite" ? inviteError : authError;
 
   return (
     <div
@@ -253,149 +267,228 @@ export function VaultGateScreen({
               ))}
             </div>
 
-            {/* ==================== CENTER VAULT SIGN-ON HUB ==================== */}
-            <form
-              onSubmit={(e) => void handleFormSubmit(e)}
-              className="relative z-20 w-[268px] h-[268px] sm:w-[336px] sm:h-[336px] rounded-full flex flex-col items-center justify-center px-6 sm:px-8 text-center"
-              style={{
-                background:
-                  "radial-gradient(circle at 50% 30%, #1c1924 0%, #09080c 82%)",
-                border: unlocking
-                  ? "3px solid #34d399"
-                  : authError
+            {/* ==================== CENTER VAULT INVITE CODE / SIGN-ON HUB ==================== */}
+            {gateStep === "invite" ? (
+              <form
+                onSubmit={handleInviteSubmit}
+                autoComplete="off"
+                className="relative z-20 w-[268px] h-[268px] sm:w-[336px] sm:h-[336px] rounded-full flex flex-col items-center justify-center px-6 sm:px-8 text-center"
+                style={{
+                  background:
+                    "radial-gradient(circle at 50% 30%, #1c1924 0%, #09080c 82%)",
+                  border: activeError
                     ? "3px solid #ef4444"
                     : "3px solid rgba(220, 38, 38, 0.72)",
-                boxShadow:
-                  "0 18px 44px rgba(0,0,0,0.92), inset 0 2px 8px rgba(255,255,255,0.14)",
-              }}
-            >
-              <span className="mono-meta text-[8px] sm:text-[9px] uppercase tracking-[0.24em] text-[#edeae4]/60">
-                {unlocking ? "ACCESS GRANTED" : "BEAT STACKZ"}
-              </span>
+                  boxShadow:
+                    "0 18px 44px rgba(0,0,0,0.92), inset 0 2px 8px rgba(255,255,255,0.14)",
+                }}
+              >
+                <span className="mono-meta text-[8px] sm:text-[9px] uppercase tracking-[0.24em] text-[#edeae4]/60">
+                  INVITE ONLY ACCESS
+                </span>
 
-              <h1 className="display-heading text-base sm:text-xl text-[#edeae4] tracking-tight mt-0.5 mb-2">
-                THE VAULT
-              </h1>
+                <h1 className="display-heading text-base sm:text-xl text-[#edeae4] tracking-tight mt-1 mb-1">
+                  THE VAULT
+                </h1>
 
-              {/* Sign In / Create Account Mode Switcher */}
-              <div className="inline-flex rounded-full bg-white/10 p-0.5 border border-white/15 mb-2">
-                <button
-                  type="button"
-                  onClick={() => onChangeMode("signin")}
-                  className={`px-2.5 py-0.5 rounded-full mono-meta text-[8px] sm:text-[9px] uppercase cursor-pointer transition ${
-                    authMode === "signin"
-                      ? "bg-[#edeae4] text-[#09080c] font-semibold"
-                      : "text-[#edeae4]/70 hover:text-white"
-                  }`}
-                >
-                  Sign In
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onChangeMode("signup")}
-                  className={`px-2.5 py-0.5 rounded-full mono-meta text-[8px] sm:text-[9px] uppercase cursor-pointer transition ${
-                    authMode === "signup"
-                      ? "bg-[#edeae4] text-[#09080c] font-semibold"
-                      : "text-[#edeae4]/70 hover:text-white"
-                  }`}
-                >
-                  Create Account
-                </button>
-              </div>
+                <p className="mono-meta text-[8px] sm:text-[9px] uppercase tracking-[0.14em] text-[#edeae4]/55 mb-3">
+                  Enter studio invite code to register
+                </p>
 
-              {/* Inputs Stack Inside Vault Hub */}
-              <div className="w-full space-y-1.5">
-                {authMode === "signup" && (
-                  <input
-                    type="text"
-                    value={authName}
-                    onChange={(e) => onChangeName(e.target.value)}
-                    placeholder="Artist / Producer Name"
-                    className="w-full h-7 sm:h-8 rounded-lg bg-[#050507] border border-white/20 px-2.5 mono-meta text-[10px] sm:text-[11px] text-[#edeae4] placeholder:text-[#edeae4]/35 focus:outline-none focus:border-red-500 text-center"
-                  />
-                )}
-
-                <input
-                  type="email"
-                  required
-                  value={authEmail}
-                  onChange={(e) => onChangeEmail(e.target.value)}
-                  placeholder="Email (swish@bpackz.studio)"
-                  className="w-full h-8 sm:h-9 rounded-lg bg-[#050507] border border-white/20 px-2.5 mono-meta text-[10px] sm:text-[11px] text-[#edeae4] placeholder:text-[#edeae4]/35 focus:outline-none focus:border-red-500 text-center"
-                />
-
-                {/* Password Box Displaying Literal '*' Characters */}
                 <div className="relative w-full">
                   <div
                     data-testid="vault-gate-asterisks"
-                    className={`w-full h-8 sm:h-9 rounded-lg bg-[#050507] border flex items-center justify-center px-2.5 mono-meta text-sm sm:text-base tracking-[0.28em] transition-colors ${
-                      unlocking
-                        ? "border-emerald-400 text-emerald-300"
-                        : authError
-                          ? "border-red-500 text-red-400"
-                          : "border-white/20 text-[#edeae4]"
+                    className={`w-full h-9 sm:h-10 rounded-lg bg-[#050507] border flex items-center justify-center px-3 mono-meta text-base sm:text-lg tracking-[0.3em] transition-colors ${
+                      activeError
+                        ? "border-red-500 text-red-400"
+                        : "border-white/20 text-[#edeae4]"
                     }`}
                   >
-                    {maskedAsterisks.length > 0 ? (
-                      <span className="truncate">{maskedAsterisks}</span>
+                    {maskedInviteAsterisks.length > 0 ? (
+                      <span className="truncate">{maskedInviteAsterisks}</span>
                     ) : (
-                      <span className="text-[9px] sm:text-[10px] tracking-[0.18em] text-[#edeae4]/35 uppercase">
-                        PASSWORD (********)
+                      <span className="text-[9px] sm:text-[10px] tracking-[0.2em] text-[#edeae4]/35 uppercase">
+                        INVITE CODE (********)
                       </span>
                     )}
                   </div>
                   <input
                     type="password"
                     required
-                    aria-label="Vault Password"
-                    value={authPassword}
-                    onChange={(e) => onChangePassword(e.target.value)}
-                    autoComplete="current-password"
+                    aria-label="Vault Invite Code"
+                    value={inviteCode}
+                    onChange={(e) => {
+                      setInviteCode(e.target.value);
+                      if (inviteError) setInviteError(null);
+                    }}
+                    autoComplete="off"
                     className="absolute inset-0 w-full h-full opacity-0 cursor-text"
                   />
                 </div>
-              </div>
 
-              {authError && (
-                <div className="mono-meta text-[8px] sm:text-[9px] uppercase text-red-400 mt-1 max-w-[210px] truncate">
-                  {authError}
-                </div>
-              )}
+                {activeError && (
+                  <div className="mono-meta text-[8px] sm:text-[9px] uppercase text-red-400 mt-1.5">
+                    {activeError}
+                  </div>
+                )}
 
-              <button
-                type="submit"
-                disabled={status !== "idle"}
-                className="mt-2.5 px-4 py-1.5 rounded-full mono-meta text-[9px] sm:text-[10px] uppercase tracking-[0.2em] cursor-pointer transition border border-red-500/50 bg-red-600/90 hover:bg-red-500 text-white font-semibold shadow-md"
+                <button
+                  type="submit"
+                  className="mt-3 px-4 py-1.5 rounded-full mono-meta text-[9px] sm:text-[10px] uppercase tracking-[0.2em] cursor-pointer transition border border-red-500/50 bg-red-600/90 hover:bg-red-500 text-white font-semibold shadow-md"
+                >
+                  VERIFY INVITE CODE ↵
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setInviteError(null);
+                    onChangeMode("signin");
+                    setGateStep("auth");
+                  }}
+                  className="mt-2.5 mono-meta text-[8px] sm:text-[9px] uppercase tracking-[0.14em] text-[#edeae4]/65 hover:text-white cursor-pointer transition"
+                >
+                  Already have an account? Sign In →
+                </button>
+              </form>
+            ) : (
+              <form
+                onSubmit={(e) => void handleFormSubmit(e)}
+                autoComplete="off"
+                className="relative z-20 w-[268px] h-[268px] sm:w-[336px] sm:h-[336px] rounded-full flex flex-col items-center justify-center px-6 sm:px-8 text-center"
+                style={{
+                  background:
+                    "radial-gradient(circle at 50% 30%, #1c1924 0%, #09080c 82%)",
+                  border: unlocking
+                    ? "3px solid #34d399"
+                    : authError
+                      ? "3px solid #ef4444"
+                      : "3px solid rgba(220, 38, 38, 0.72)",
+                  boxShadow:
+                    "0 18px 44px rgba(0,0,0,0.92), inset 0 2px 8px rgba(255,255,255,0.14)",
+                }}
               >
-                {unlocking
-                  ? "OPENING VAULT..."
-                  : status === "submitting"
-                    ? "VERIFYING..."
-                    : authMode === "signin"
-                      ? "UNLOCK VAULT ↵"
-                      : "CREATE & UNLOCK ↵"}
-              </button>
+                <span className="mono-meta text-[8px] sm:text-[9px] uppercase tracking-[0.24em] text-[#edeae4]/60">
+                  {unlocking ? "ACCESS GRANTED" : "BEAT STACKZ"}
+                </span>
 
-              {/* Quick Demo Keycards for Swish / Todo */}
-              {onQuickSelectProfile && (
-                <div className="flex items-center gap-1.5 mt-2">
+                <h1 className="display-heading text-base sm:text-xl text-[#edeae4] tracking-tight mt-0.5 mb-2">
+                  THE VAULT
+                </h1>
+
+                {/* Sign In / Create Account Mode Switcher */}
+                <div className="inline-flex rounded-full bg-white/10 p-0.5 border border-white/15 mb-2">
                   <button
                     type="button"
-                    onClick={() => onQuickSelectProfile("swish")}
-                    className="px-2 py-0.5 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 mono-meta text-[8px] uppercase text-[#edeae4]/70 cursor-pointer"
+                    onClick={() => onChangeMode("signup")}
+                    className={`px-2.5 py-0.5 rounded-full mono-meta text-[8px] sm:text-[9px] uppercase cursor-pointer transition ${
+                      authMode === "signup"
+                        ? "bg-[#edeae4] text-[#09080c] font-semibold"
+                        : "text-[#edeae4]/70 hover:text-white"
+                    }`}
                   >
-                    Swish Key
+                    Sign Up
                   </button>
                   <button
                     type="button"
-                    onClick={() => onQuickSelectProfile("todo")}
-                    className="px-2 py-0.5 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 mono-meta text-[8px] uppercase text-[#edeae4]/70 cursor-pointer"
+                    onClick={() => onChangeMode("signin")}
+                    className={`px-2.5 py-0.5 rounded-full mono-meta text-[8px] sm:text-[9px] uppercase cursor-pointer transition ${
+                      authMode === "signin"
+                        ? "bg-[#edeae4] text-[#09080c] font-semibold"
+                        : "text-[#edeae4]/70 hover:text-white"
+                    }`}
                   >
-                    Todo Key
+                    Sign In
                   </button>
                 </div>
-              )}
-            </form>
+
+                {/* Inputs Stack Inside Vault Hub */}
+                <div className="w-full space-y-1.5">
+                  {authMode === "signup" && (
+                    <input
+                      type="text"
+                      value={authName}
+                      onChange={(e) => onChangeName(e.target.value)}
+                      placeholder="Artist / Producer Name"
+                      autoComplete="off"
+                      className="w-full h-7 sm:h-8 rounded-lg bg-[#050507] border border-white/20 px-2.5 mono-meta text-[10px] sm:text-[11px] text-[#edeae4] placeholder:text-[#edeae4]/35 focus:outline-none focus:border-red-500 text-center"
+                    />
+                  )}
+
+                  <input
+                    type="email"
+                    required
+                    value={authEmail}
+                    onChange={(e) => onChangeEmail(e.target.value)}
+                    placeholder="Email Address"
+                    autoComplete="off"
+                    className="w-full h-8 sm:h-9 rounded-lg bg-[#050507] border border-white/20 px-2.5 mono-meta text-[10px] sm:text-[11px] text-[#edeae4] placeholder:text-[#edeae4]/35 focus:outline-none focus:border-red-500 text-center"
+                  />
+
+                  {/* Password Box Displaying Literal '*' Characters */}
+                  <div className="relative w-full">
+                    <div
+                      data-testid="vault-gate-asterisks"
+                      className={`w-full h-8 sm:h-9 rounded-lg bg-[#050507] border flex items-center justify-center px-2.5 mono-meta text-sm sm:text-base tracking-[0.28em] transition-colors ${
+                        unlocking
+                          ? "border-emerald-400 text-emerald-300"
+                          : authError
+                            ? "border-red-500 text-red-400"
+                            : "border-white/20 text-[#edeae4]"
+                      }`}
+                    >
+                      {maskedAsterisks.length > 0 ? (
+                        <span className="truncate">{maskedAsterisks}</span>
+                      ) : (
+                        <span className="text-[9px] sm:text-[10px] tracking-[0.18em] text-[#edeae4]/35 uppercase">
+                          PASSWORD (********)
+                        </span>
+                      )}
+                    </div>
+                    <input
+                      type="password"
+                      required
+                      aria-label="Vault Password"
+                      value={authPassword}
+                      onChange={(e) => onChangePassword(e.target.value)}
+                      autoComplete="new-password"
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-text"
+                    />
+                  </div>
+                </div>
+
+                {authError && (
+                  <div className="mono-meta text-[8px] sm:text-[9px] uppercase text-red-400 mt-1 max-w-[210px] truncate">
+                    {authError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={status !== "idle"}
+                  className="mt-2.5 px-4 py-1.5 rounded-full mono-meta text-[9px] sm:text-[10px] uppercase tracking-[0.2em] cursor-pointer transition border border-red-500/50 bg-red-600/90 hover:bg-red-500 text-white font-semibold shadow-md"
+                >
+                  {unlocking
+                    ? "OPENING VAULT..."
+                    : status === "submitting"
+                      ? "VERIFYING..."
+                      : authMode === "signin"
+                        ? "UNLOCK VAULT ↵"
+                        : "CREATE & UNLOCK ↵"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setInviteError(null);
+                    setGateStep("invite");
+                  }}
+                  className="mt-1.5 mono-meta text-[8px] uppercase tracking-[0.14em] text-[#edeae4]/45 hover:text-[#edeae4]/80 cursor-pointer"
+                >
+                  ← Invite Code
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </div>
