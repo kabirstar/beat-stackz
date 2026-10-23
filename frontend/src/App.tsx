@@ -1378,6 +1378,7 @@ export function App() {
               <PlusActionMenu
                 hasRootFolder={Boolean(currentRootFolder)}
                 viewingFiles={viewingFiles}
+                onClose={() => setPlusMenuOpen(false)}
                 onCreateFolder={() => {
                   setPlusMenuOpen(false);
                   setCreatingFolder(true);

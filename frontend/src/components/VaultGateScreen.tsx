@@ -57,7 +57,7 @@ export function VaultGateScreen({
       onChangeMode("signup");
       setGateStep("auth");
     } else {
-      setInviteError("INVALID INVITE CODE");
+      setInviteError("Invalid code");
     }
   };
 
@@ -81,42 +81,40 @@ export function VaultGateScreen({
 
   return (
     <div
-      className="min-h-[100dvh] w-full text-[#edeae4] flex flex-col items-center justify-between p-3 sm:p-7 pb-[calc(1rem+env(safe-area-inset-bottom))] relative overflow-hidden select-none"
+      className="min-h-[100dvh] w-full text-[#edeae4] flex items-center justify-center p-4 sm:p-8 relative overflow-hidden select-none"
       style={{
         background:
           "linear-gradient(145deg, #16151c 0%, #0d0c11 45%, #15131b 75%, #09080c 100%)",
+        fontFamily: "var(--font-sans)",
       }}
     >
-      {/* ==================== FULL SAFE INTERIOR / EXTERIOR ARMOR WALL ==================== */}
-      {/* Brushed Steel Grain + Subtle Radial Studio Spotlight */}
+      {/* ==================== SAFE WALL BACKGROUND (PURE HARDWARE, ZERO TEXT CLUTTER) ==================== */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           backgroundImage:
-            "radial-gradient(circle at 50% 50%, rgba(220, 38, 38, 0.14) 0%, rgba(0, 0, 0, 0.65) 72%), repeating-linear-gradient(90deg, rgba(255,255,255,0.018) 0px, rgba(255,255,255,0.018) 1px, transparent 1px, transparent 4px)",
+            "radial-gradient(circle at 50% 50%, rgba(220, 38, 38, 0.12) 0%, rgba(0, 0, 0, 0.68) 72%), repeating-linear-gradient(90deg, rgba(255,255,255,0.018) 0px, rgba(255,255,255,0.018) 1px, transparent 1px, transparent 4px)",
         }}
       />
 
-      {/* Recessed Steel Safe Wall Frame Border + Welded Armor Seams */}
-      <div className="pointer-events-none absolute inset-3 sm:inset-5 rounded-3xl border-2 border-white/10 shadow-[inset_0_0_60px_rgba(0,0,0,0.9)]">
-        {/* Horizontal & Vertical Armor Plate Seam Lines */}
+      {/* Recessed Steel Safe Wall Frame + Welded Armor Seams + Perimeter Rivets */}
+      <div className="pointer-events-none absolute inset-3 sm:inset-6 rounded-3xl border-2 border-white/10 shadow-[inset_0_0_60px_rgba(0,0,0,0.9)]">
         <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-px bg-black/80 border-b border-white/10" />
         <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-px bg-black/80 border-r border-white/10" />
 
-        {/* Corner & Perimeter Machined Steel Rivets */}
         {[
-          "top-3 left-3",
-          "top-3 left-1/4",
-          "top-3 right-1/4",
-          "top-3 right-3",
-          "bottom-3 left-3",
-          "bottom-3 left-1/4",
-          "bottom-3 right-1/4",
-          "bottom-3 right-3",
-          "top-1/4 left-3",
-          "bottom-1/4 left-3",
-          "top-1/4 right-3",
-          "bottom-1/4 right-3",
+          "top-4 left-4",
+          "top-4 left-1/4",
+          "top-4 right-1/4",
+          "top-4 right-4",
+          "bottom-4 left-4",
+          "bottom-4 left-1/4",
+          "bottom-4 right-1/4",
+          "bottom-4 right-4",
+          "top-1/4 left-4",
+          "bottom-1/4 left-4",
+          "top-1/4 right-4",
+          "bottom-1/4 right-4",
         ].map((pos) => (
           <div
             key={pos}
@@ -129,37 +127,12 @@ export function VaultGateScreen({
         ))}
       </div>
 
-      {/* Top Safe Manufacturer Serial Plate & Status Bar */}
-      <div className="w-full max-w-5xl flex items-center justify-between z-10 px-4 sm:px-6 pt-3">
-        <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-[#0b0a0f]/90 border border-white/15 shadow-md">
-          <span
-            className={`w-2.5 h-2.5 rounded-full transition-colors ${
-              unlocking
-                ? "bg-emerald-400 shadow-[0_0_12px_#34d399]"
-                : authError
-                  ? "bg-red-500 shadow-[0_0_12px_#ef4444]"
-                  : "bg-red-500 shadow-[0_0_10px_#ef4444]"
-            }`}
-          />
-          <span className="mono-meta text-[9px] sm:text-[10px] uppercase tracking-[0.22em] text-[#edeae4]/85">
-            VAULT NO. 808-BS · ARMOURED STUDIO SAFE
-          </span>
-        </div>
-
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#0b0a0f]/90 border border-white/15 shadow-md">
-          <span className="mono-meta text-[9px] uppercase tracking-[0.18em] text-[#edeae4]/60">
-            {unlocking ? "HYDRAULIC BOLTS: RETRACTED" : "HYDRAULIC BOLTS: ENGAGED"}
-          </span>
-        </div>
-      </div>
-
       {/* ==================== CENTER 3D CIRCULAR BANK VAULT DOOR ==================== */}
-      <div className="relative flex items-center justify-center my-auto py-2 z-10">
+      <div className="relative flex items-center justify-center z-10">
         {/* Heavy Forged Steel Vault Hinges Mounted to the Right Safe Wall */}
-        <div className="pointer-events-none hidden md:flex flex-col justify-between h-[320px] absolute -right-14 z-20">
+        <div className="pointer-events-none hidden md:flex flex-col justify-between h-[360px] absolute -right-14 z-20">
           {[0, 1].map((hingeIdx) => (
             <div key={hingeIdx} className="flex items-center">
-              {/* Arm connecting door to hinge barrel */}
               <div
                 className="w-10 h-8 rounded-l-md border-y border-l border-white/25"
                 style={{
@@ -167,9 +140,8 @@ export function VaultGateScreen({
                   boxShadow: "0 8px 20px rgba(0,0,0,0.8)",
                 }}
               />
-              {/* Vertical Hinge Barrel */}
               <div
-                className="w-7 h-20 rounded-md border border-white/30 flex flex-col justify-between p-1"
+                className="w-7 h-22 rounded-md border border-white/30 flex flex-col justify-between p-1"
                 style={{
                   background:
                     "linear-gradient(90deg, #18181b 0%, #a1a1aa 45%, #27272a 85%, #09090b 100%)",
@@ -183,10 +155,10 @@ export function VaultGateScreen({
           ))}
         </div>
 
-        {/* Outer Recessed Steel Door Jamb / Frame */}
+        {/* Outer Recessed Steel Door Jamb */}
         <div
-          className={`relative w-[360px] h-[360px] sm:w-[490px] sm:h-[490px] rounded-full flex items-center justify-center transition-all duration-700 ${
-            unlocking ? "scale-[0.96] sm:scale-[1.04]" : "scale-[0.92] sm:scale-100"
+          className={`relative w-[370px] h-[370px] sm:w-[530px] sm:h-[530px] rounded-full flex items-center justify-center transition-all duration-700 ${
+            unlocking ? "scale-[0.98] sm:scale-[1.04]" : "scale-[0.94] sm:scale-100"
           }`}
           style={{
             background:
@@ -207,8 +179,8 @@ export function VaultGateScreen({
                 className="w-5 sm:w-6 h-8 sm:h-10 rounded-xs border border-white/30 transition-all duration-500"
                 style={{
                   transform: unlocking
-                    ? "translateY(-150px) sm:translateY(-202px)"
-                    : "translateY(-174px) sm:translateY(-236px)",
+                    ? "translateY(-155px) sm:translateY(-220px)"
+                    : "translateY(-180px) sm:translateY(-255px)",
                   marginTop: unlocking ? "28px" : "0px",
                   background:
                     "linear-gradient(90deg, #3f3f46 0%, #f4f4f5 48%, #27272a 100%)",
@@ -229,7 +201,7 @@ export function VaultGateScreen({
 
           {/* Inner Stepped Brushed Steel Vault Door Disc */}
           <div
-            className="w-[318px] h-[318px] sm:w-[432px] sm:h-[432px] rounded-full flex items-center justify-center relative"
+            className="w-[330px] h-[330px] sm:w-[468px] sm:h-[468px] rounded-full flex items-center justify-center relative"
             style={{
               background:
                 "conic-gradient(from 45deg, #18161d, #2a2733, #121016, #2e2a37, #15131a, #2a2733, #18161d)",
@@ -267,12 +239,12 @@ export function VaultGateScreen({
               ))}
             </div>
 
-            {/* ==================== CENTER VAULT INVITE CODE / SIGN-ON HUB ==================== */}
+            {/* ==================== SPACIOUS CENTER VAULT HUB ==================== */}
             {gateStep === "invite" ? (
               <form
                 onSubmit={handleInviteSubmit}
                 autoComplete="off"
-                className="relative z-20 w-[268px] h-[268px] sm:w-[336px] sm:h-[336px] rounded-full flex flex-col items-center justify-center px-6 sm:px-8 text-center"
+                className="relative z-20 w-[288px] h-[288px] sm:w-[392px] sm:h-[392px] rounded-full flex flex-col items-center justify-center px-8 sm:px-12 text-center gap-5 sm:gap-6"
                 style={{
                   background:
                     "radial-gradient(circle at 50% 30%, #1c1924 0%, #09080c 82%)",
@@ -283,32 +255,26 @@ export function VaultGateScreen({
                     "0 18px 44px rgba(0,0,0,0.92), inset 0 2px 8px rgba(255,255,255,0.14)",
                 }}
               >
-                <span className="mono-meta text-[8px] sm:text-[9px] uppercase tracking-[0.24em] text-[#edeae4]/60">
-                  INVITE ONLY ACCESS
-                </span>
-
-                <h1 className="display-heading text-base sm:text-xl text-[#edeae4] tracking-tight mt-1 mb-1">
-                  THE VAULT
+                <h1 className="display-heading text-2xl sm:text-3xl text-[#edeae4]">
+                  The Vault
                 </h1>
-
-                <p className="mono-meta text-[8px] sm:text-[9px] uppercase tracking-[0.14em] text-[#edeae4]/55 mb-3">
-                  Enter studio invite code to register
-                </p>
 
                 <div className="relative w-full">
                   <div
                     data-testid="vault-gate-asterisks"
-                    className={`w-full h-9 sm:h-10 rounded-lg bg-[#050507] border flex items-center justify-center px-3 mono-meta text-base sm:text-lg tracking-[0.3em] transition-colors ${
+                    className={`w-full h-11 sm:h-12 rounded-xl bg-[#050507] border flex items-center justify-center px-4 transition-colors ${
                       activeError
                         ? "border-red-500 text-red-400"
                         : "border-white/20 text-[#edeae4]"
                     }`}
                   >
                     {maskedInviteAsterisks.length > 0 ? (
-                      <span className="truncate">{maskedInviteAsterisks}</span>
+                      <span className="mono-meta text-lg sm:text-xl tracking-[0.32em] truncate">
+                        {maskedInviteAsterisks}
+                      </span>
                     ) : (
-                      <span className="text-[9px] sm:text-[10px] tracking-[0.2em] text-[#edeae4]/35 uppercase">
-                        INVITE CODE (********)
+                      <span className="text-xs sm:text-sm text-[#edeae4]/40">
+                        Invite code
                       </span>
                     )}
                   </div>
@@ -327,35 +293,37 @@ export function VaultGateScreen({
                 </div>
 
                 {activeError && (
-                  <div className="mono-meta text-[8px] sm:text-[9px] uppercase text-red-400 mt-1.5">
+                  <div className="text-xs text-red-400 -my-2">
                     {activeError}
                   </div>
                 )}
 
-                <button
-                  type="submit"
-                  className="mt-3 px-4 py-1.5 rounded-full mono-meta text-[9px] sm:text-[10px] uppercase tracking-[0.2em] cursor-pointer transition border border-red-500/50 bg-red-600/90 hover:bg-red-500 text-white font-semibold shadow-md"
-                >
-                  VERIFY INVITE CODE ↵
-                </button>
+                <div className="flex flex-col items-center gap-3 w-full">
+                  <button
+                    type="submit"
+                    className="w-full py-2.5 rounded-full text-xs sm:text-sm font-medium cursor-pointer transition border border-red-500/50 bg-red-600/90 hover:bg-red-500 text-white shadow-md"
+                  >
+                    Enter
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setInviteError(null);
-                    onChangeMode("signin");
-                    setGateStep("auth");
-                  }}
-                  className="mt-2.5 mono-meta text-[8px] sm:text-[9px] uppercase tracking-[0.14em] text-[#edeae4]/65 hover:text-white cursor-pointer transition"
-                >
-                  Already have an account? Sign In →
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInviteError(null);
+                      onChangeMode("signin");
+                      setGateStep("auth");
+                    }}
+                    className="text-xs text-[#edeae4]/60 hover:text-white cursor-pointer transition"
+                  >
+                    Sign in
+                  </button>
+                </div>
               </form>
             ) : (
               <form
                 onSubmit={(e) => void handleFormSubmit(e)}
                 autoComplete="off"
-                className="relative z-20 w-[268px] h-[268px] sm:w-[336px] sm:h-[336px] rounded-full flex flex-col items-center justify-center px-6 sm:px-8 text-center"
+                className="relative z-20 w-[288px] h-[288px] sm:w-[392px] sm:h-[392px] rounded-full flex flex-col items-center justify-center px-8 sm:px-11 text-center gap-3.5 sm:gap-4"
                 style={{
                   background:
                     "radial-gradient(circle at 50% 30%, #1c1924 0%, #09080c 82%)",
@@ -368,50 +336,46 @@ export function VaultGateScreen({
                     "0 18px 44px rgba(0,0,0,0.92), inset 0 2px 8px rgba(255,255,255,0.14)",
                 }}
               >
-                <span className="mono-meta text-[8px] sm:text-[9px] uppercase tracking-[0.24em] text-[#edeae4]/60">
-                  {unlocking ? "ACCESS GRANTED" : "BEAT STACKZ"}
-                </span>
-
-                <h1 className="display-heading text-base sm:text-xl text-[#edeae4] tracking-tight mt-0.5 mb-2">
-                  THE VAULT
+                <h1 className="display-heading text-xl sm:text-2xl text-[#edeae4]">
+                  The Vault
                 </h1>
 
-                {/* Sign In / Create Account Mode Switcher */}
-                <div className="inline-flex rounded-full bg-white/10 p-0.5 border border-white/15 mb-2">
-                  <button
-                    type="button"
-                    onClick={() => onChangeMode("signup")}
-                    className={`px-2.5 py-0.5 rounded-full mono-meta text-[8px] sm:text-[9px] uppercase cursor-pointer transition ${
-                      authMode === "signup"
-                        ? "bg-[#edeae4] text-[#09080c] font-semibold"
-                        : "text-[#edeae4]/70 hover:text-white"
-                    }`}
-                  >
-                    Sign Up
-                  </button>
+                {/* Sign In / Sign Up Mode Switcher */}
+                <div className="inline-flex rounded-full bg-white/10 p-1 border border-white/15">
                   <button
                     type="button"
                     onClick={() => onChangeMode("signin")}
-                    className={`px-2.5 py-0.5 rounded-full mono-meta text-[8px] sm:text-[9px] uppercase cursor-pointer transition ${
+                    className={`px-3.5 py-1 rounded-full text-xs font-medium cursor-pointer transition ${
                       authMode === "signin"
-                        ? "bg-[#edeae4] text-[#09080c] font-semibold"
+                        ? "bg-[#edeae4] text-[#09080c]"
                         : "text-[#edeae4]/70 hover:text-white"
                     }`}
                   >
-                    Sign In
+                    Sign in
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onChangeMode("signup")}
+                    className={`px-3.5 py-1 rounded-full text-xs font-medium cursor-pointer transition ${
+                      authMode === "signup"
+                        ? "bg-[#edeae4] text-[#09080c]"
+                        : "text-[#edeae4]/70 hover:text-white"
+                    }`}
+                  >
+                    Sign up
                   </button>
                 </div>
 
-                {/* Inputs Stack Inside Vault Hub */}
-                <div className="w-full space-y-1.5">
+                {/* Spaced-Out Inputs Inside Vault Hub (Zero Default Credentials) */}
+                <div className="w-full flex flex-col gap-2.5 sm:gap-3">
                   {authMode === "signup" && (
                     <input
                       type="text"
                       value={authName}
                       onChange={(e) => onChangeName(e.target.value)}
-                      placeholder="Artist / Producer Name"
+                      placeholder="Name"
                       autoComplete="off"
-                      className="w-full h-7 sm:h-8 rounded-lg bg-[#050507] border border-white/20 px-2.5 mono-meta text-[10px] sm:text-[11px] text-[#edeae4] placeholder:text-[#edeae4]/35 focus:outline-none focus:border-red-500 text-center"
+                      className="w-full h-10 sm:h-11 rounded-xl bg-[#050507] border border-white/20 px-4 text-xs sm:text-sm text-[#edeae4] placeholder:text-[#edeae4]/40 focus:outline-none focus:border-red-500 text-center"
                     />
                   )}
 
@@ -420,16 +384,16 @@ export function VaultGateScreen({
                     required
                     value={authEmail}
                     onChange={(e) => onChangeEmail(e.target.value)}
-                    placeholder="Email Address"
+                    placeholder="Email"
                     autoComplete="off"
-                    className="w-full h-8 sm:h-9 rounded-lg bg-[#050507] border border-white/20 px-2.5 mono-meta text-[10px] sm:text-[11px] text-[#edeae4] placeholder:text-[#edeae4]/35 focus:outline-none focus:border-red-500 text-center"
+                    className="w-full h-10 sm:h-11 rounded-xl bg-[#050507] border border-white/20 px-4 text-xs sm:text-sm text-[#edeae4] placeholder:text-[#edeae4]/40 focus:outline-none focus:border-red-500 text-center"
                   />
 
                   {/* Password Box Displaying Literal '*' Characters */}
                   <div className="relative w-full">
                     <div
                       data-testid="vault-gate-asterisks"
-                      className={`w-full h-8 sm:h-9 rounded-lg bg-[#050507] border flex items-center justify-center px-2.5 mono-meta text-sm sm:text-base tracking-[0.28em] transition-colors ${
+                      className={`w-full h-10 sm:h-11 rounded-xl bg-[#050507] border flex items-center justify-center px-4 transition-colors ${
                         unlocking
                           ? "border-emerald-400 text-emerald-300"
                           : authError
@@ -438,10 +402,12 @@ export function VaultGateScreen({
                       }`}
                     >
                       {maskedAsterisks.length > 0 ? (
-                        <span className="truncate">{maskedAsterisks}</span>
+                        <span className="mono-meta text-base sm:text-lg tracking-[0.3em] truncate">
+                          {maskedAsterisks}
+                        </span>
                       ) : (
-                        <span className="text-[9px] sm:text-[10px] tracking-[0.18em] text-[#edeae4]/35 uppercase">
-                          PASSWORD (********)
+                        <span className="text-xs sm:text-sm text-[#edeae4]/40">
+                          Password
                         </span>
                       )}
                     </div>
@@ -458,45 +424,41 @@ export function VaultGateScreen({
                 </div>
 
                 {authError && (
-                  <div className="mono-meta text-[8px] sm:text-[9px] uppercase text-red-400 mt-1 max-w-[210px] truncate">
+                  <div className="text-xs text-red-400 -my-1 max-w-[230px] truncate">
                     {authError}
                   </div>
                 )}
 
-                <button
-                  type="submit"
-                  disabled={status !== "idle"}
-                  className="mt-2.5 px-4 py-1.5 rounded-full mono-meta text-[9px] sm:text-[10px] uppercase tracking-[0.2em] cursor-pointer transition border border-red-500/50 bg-red-600/90 hover:bg-red-500 text-white font-semibold shadow-md"
-                >
-                  {unlocking
-                    ? "OPENING VAULT..."
-                    : status === "submitting"
-                      ? "VERIFYING..."
-                      : authMode === "signin"
-                        ? "UNLOCK VAULT ↵"
-                        : "CREATE & UNLOCK ↵"}
-                </button>
+                <div className="flex flex-col items-center gap-2 w-full">
+                  <button
+                    type="submit"
+                    disabled={status !== "idle"}
+                    className="w-full py-2.5 rounded-full text-xs sm:text-sm font-medium cursor-pointer transition border border-red-500/50 bg-red-600/90 hover:bg-red-500 text-white shadow-md"
+                  >
+                    {unlocking
+                      ? "Opening..."
+                      : status === "submitting"
+                        ? "..."
+                        : authMode === "signin"
+                          ? "Sign in"
+                          : "Create account"}
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setInviteError(null);
-                    setGateStep("invite");
-                  }}
-                  className="mt-1.5 mono-meta text-[8px] uppercase tracking-[0.14em] text-[#edeae4]/45 hover:text-[#edeae4]/80 cursor-pointer"
-                >
-                  ← Invite Code
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInviteError(null);
+                      setGateStep("invite");
+                    }}
+                    className="text-[11px] text-[#edeae4]/50 hover:text-white cursor-pointer transition"
+                  >
+                    Invite code
+                  </button>
+                </div>
               </form>
             )}
           </div>
         </div>
-      </div>
-
-      {/* Bottom Safe Wall Telemetry Plaque */}
-      <div className="w-full max-w-5xl flex items-center justify-between z-10 px-4 sm:px-6 pb-2 mono-meta text-[9px] sm:text-[10px] uppercase tracking-[0.18em] text-[#edeae4]/50">
-        <span>SWISH × TODO · STUDIO VAULT</span>
-        <span>SIGN IN AT CENTER WHEEL TO UNLOCK</span>
       </div>
     </div>
   );

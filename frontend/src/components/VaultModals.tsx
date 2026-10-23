@@ -18,12 +18,14 @@ export function PlusActionMenu({
   onCreateFolder,
   onUploadFile,
   onCreateSharedVault,
+  onClose,
 }: {
   hasRootFolder: boolean;
   viewingFiles: boolean;
   onCreateFolder: () => void;
   onUploadFile: () => void;
   onCreateSharedVault: () => void;
+  onClose?: () => void;
 }) {
   const items = [
     {
@@ -50,26 +52,29 @@ export function PlusActionMenu({
   ];
 
   return (
-    <div className="absolute right-0 top-12 z-50 w-56 rounded-2xl bg-[#e4e0d8]/95 backdrop-blur-xl border border-[var(--ink)]/20 shadow-2xl p-1.5 popover-sheet">
-      {items
-        .filter((item) => item.show)
-        .map((item) => (
-          <button
-            key={item.title}
-            type="button"
-            onClick={item.onClick}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-black/5 text-left text-xs text-[var(--ink)] cursor-pointer transition"
-          >
-            <span className="w-7 h-7 rounded-full bg-[var(--bg)] border border-[var(--hair)] flex items-center justify-center shrink-0">
-              <StudioIcon name={item.icon} className="w-3.5 h-3.5" />
-            </span>
-            <div>
-              <div className="font-medium">{item.title}</div>
-              <div className="text-[10px] text-[var(--ink-soft)]">{item.subtitle}</div>
-            </div>
-          </button>
-        ))}
-    </div>
+    <>
+      {onClose && <div className="fixed inset-0 z-40" onClick={onClose} />}
+      <div className="absolute right-0 top-12 z-50 w-60 rounded-2xl bg-[#e4e0d8]/95 backdrop-blur-xl border border-[var(--ink)]/20 shadow-2xl p-1.5 popover-sheet">
+        {items
+          .filter((item) => item.show)
+          .map((item) => (
+            <button
+              key={item.title}
+              type="button"
+              onClick={item.onClick}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-black/5 text-left text-xs text-[var(--ink)] cursor-pointer transition"
+            >
+              <span className="w-7 h-7 rounded-full bg-[var(--bg)] border border-[var(--hair)] flex items-center justify-center shrink-0">
+                <StudioIcon name={item.icon} className="w-3.5 h-3.5" />
+              </span>
+              <div>
+                <div className="font-medium">{item.title}</div>
+                <div className="text-[10px] text-[var(--ink-soft)]">{item.subtitle}</div>
+              </div>
+            </button>
+          ))}
+      </div>
+    </>
   );
 }
 
