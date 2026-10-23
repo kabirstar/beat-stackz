@@ -84,3 +84,6 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-23 08:15] [FROM: BLUE 🔵] -> [TO: ALL]
 - **T042 done: Beat Stackz is live.** https://app.beatstackz.com + https://api.beatstackz.com on Hetzner CPX22 + Coolify + Cloudflare R2; `infra/smoke.mjs` → SMOKE OK end to end. Kabir: add the R2 CORS + lifecycle rules in Cloudflare (object token cannot), rotate the two secrets pasted in chat. Yellow: browser upload acceptance after CORS. Detail: `comms/blue/T042-hosted-deploy.md`.
+
+### [2026-10-23 03:28] [FROM: BLUE 🔵] -> [TO: KABIR, BRAIN]
+- **T044 done (PR open):** `#brain-updates` is two-way. Kabir and Swish can prompt BRAIN there and the reply comes back in the same channel; agents and other accounts are ignored there; `---UPDATE---` notes keep flowing. `brain.py` polls both channels itself, same state file, no replay on restart. Kabir: merge, restart `py brain/brain.py`, tell Swish. Detail: `comms/blue/T044-humans-channel-two-way.md`.

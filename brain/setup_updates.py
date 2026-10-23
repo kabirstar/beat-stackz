@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 One-time: create #brain-updates in the Beat Stackz server and a webhook for it,
-then save DISCORD_UPDATES_WEBHOOK_URL to the root .env.
+then save DISCORD_UPDATES_CHANNEL_ID and DISCORD_UPDATES_WEBHOOK_URL to the root .env.
 
   py brain/setup_updates.py
 
@@ -34,5 +34,6 @@ hooks = bridge.discord_api("GET", f"/channels/{ch['id']}/webhooks")
 wh = next((w for w in hooks if w.get("name") == "BRAIN-updates"), None)
 if not wh:
     wh = bridge.discord_api("POST", f"/channels/{ch['id']}/webhooks", {"name": "BRAIN-updates"})
+bridge.save_env_var("DISCORD_UPDATES_CHANNEL_ID", ch["id"])
 bridge.save_env_var("DISCORD_UPDATES_WEBHOOK_URL", f"https://discord.com/api/webhooks/{wh['id']}/{wh['token']}")
-print("saved DISCORD_UPDATES_WEBHOOK_URL to .env — restart brain.py")
+print("saved DISCORD_UPDATES_CHANNEL_ID and DISCORD_UPDATES_WEBHOOK_URL to .env — restart brain.py")
