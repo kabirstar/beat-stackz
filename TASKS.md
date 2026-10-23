@@ -94,6 +94,12 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: compiled API image, startup migrations, unprivileged server
       verify: docker compose -f infra/docker-compose.yml build api; container HTTP/auth/share/download/revoke and SIGTERM
       handoff: comms/red/T017-members-shares-purge.md
+- [ ] T019 [RED] presign-only S3 client for S3_PUBLIC_ENDPOINT
+      paths: backend/src/storage.ts, backend/src/upload-routes.ts, backend/test/storage.test.ts, backend/README.md  depends: T034 (#32 merged)
+      status: implemented on red/t019; awaiting Blue review
+      deliverable: storage.presign (public endpoint, same creds) behind every getSignedUrl; storage.client for everything else
+      verify: pnpm -F api test (unit: presigned host public, HeadObject internal); compose api+worker upload+download via localhost:9000
+      handoff: comms/red/T019-presign-public-endpoint.md
 
 ## YELLOW
 - [x] T020 [YELLOW] scaffold frontend (Vite + React 19 + TS + Tailwind), consume @bpackz/shared client on mocks

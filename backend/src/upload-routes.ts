@@ -40,7 +40,7 @@ async function completed(tx: Transaction, vaultId: string, userId: string, id: s
 
 export function createUploadRoutes(db: Database, storage: Storage) {
   const app = new Hono<VaultEnv>();
-  const { client, bucket: Bucket } = storage;
+  const { client, presign, bucket: Bucket } = storage;
   app.use('/:vaultId/uploads/*', bodyLimit({ maxSize: 2 * 1024 * 1024, onError: () => fail(400, 'Upload request too large') }));
   app.use('/:vaultId/uploads', bodyLimit({ maxSize: 2 * 1024 * 1024, onError: () => fail(400, 'Upload request too large') }));
 
@@ -101,7 +101,7 @@ export function createUploadRoutes(db: Database, storage: Storage) {
       const expiresIn = Math.min(TTL_SECONDS, Math.floor((row.expiresAt.getTime() - Date.now()) / 1000));
       if (expiresIn < 1) fail(409, 'Upload expired');
       const urls = await Promise.all(input.partNumbers.map(async (partNumber) => ({ partNumber,
-        url: await getSignedUrl(client, new UploadPartCommand({ Bucket, Key: row.key, UploadId: row.multipartId, PartNumber: partNumber }), { expiresIn }),
+        url: await getSignedUrl(presign, new UploadPartCommand({ Bucket, Key: row.key, UploadId: row.multipartId, PartNumber: partNumber }), { expiresIn }),
       })));
       return uploadRoutes.sign.response.parse({ urls, expiresAt: new Date(Date.now() + expiresIn * 1000).toISOString() });
     });
@@ -205,7 +205,7 @@ export function createUploadRoutes(db: Database, storage: Storage) {
       const expiresIn = expiresAt ? Math.min(TTL_SECONDS, Math.floor((expiresAt.getTime() - Date.now()) / 1000)) : TTL_SECONDS;
       if (expiresIn < 1) fail(404, 'Share expired');
       const filename = encodeURIComponent(current.name).replace(/['()*]/g, (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`);
-      const url = await getSignedUrl(client, new GetObjectCommand({ Bucket, Key: blob.key,
+      const url = await getSignedUrl(presign, new GetObjectCommand({ Bucket, Key: blob.key,
         ResponseContentDisposition: `${query.disposition}; filename*=UTF-8''${filename}` }), { expiresIn });
       await audit(tx, c.get('userId') || null, vaultId, 'files', fileId, 'file.download');
       return fileRoutes.downloadUrl.response.parse({ url, expiresAt: new Date(Date.now() + expiresIn * 1000).toISOString() });
