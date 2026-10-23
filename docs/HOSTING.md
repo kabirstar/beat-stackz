@@ -67,9 +67,16 @@ deploy fails loudly instead of serving insecure cookies.
 
 1. Coolify → Project → **Add resource → Docker Compose** → source: the GitHub
    repo `kabirstar/beat-stackz`, branch `main`.
-2. Compose file paths: `infra/docker-compose.yml` **and** `infra/docker-compose.prod.yml`
-   (Coolify's "Docker Compose Location" accepts the base; add the override in
-   the build command field as `-f infra/docker-compose.prod.yml --profile full`).
+2. **Docker Compose Location:** `infra/docker-compose.hosted.yml`. Coolify
+   takes exactly one compose file and does not enable compose profiles, so the
+   base + overlay pair would start only Postgres (api/web/worker sit behind
+   `--profile full`). `docker-compose.hosted.yml` is the hand-flattened hosted
+   stack: no RustFS, no profiles, relative build contexts, `expose` instead of
+   `ports`, every value `${VAR}` with `:?` guards on the required ones. Keep it
+   in step with `docker-compose.prod.yml`, which remains the reference overlay
+   for manual `docker compose -f base -f prod --profile full` runs. (Learned on
+   the first deploy, 2026-10-23. `docker compose config` output cannot be
+   committed instead: it bakes in absolute paths.)
 3. Environment: paste section 2. Mark `BETTER_AUTH_SECRET`, `S3_SECRET_KEY`,
    `POSTGRES_PASSWORD` as secrets.
 4. Domains: `web` → `https://app.<domain>` (port 80); `api` → `https://api.<domain>` (port 4000).
