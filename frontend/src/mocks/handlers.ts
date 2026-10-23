@@ -139,7 +139,7 @@ export function ensureVaultHasTaxonomy(store: Store, vaultId: string, creatorId:
         vaultId,
         parentId: null,
         name: rootSpec.name,
-        kind: rootSpec.slug as FolderKind, // ADR 0002 (Blue, T026): kind = slug path
+        kind: rootSpec.slug === "vision_board" ? null : (rootSpec.slug as FolderKind), // ADR 0002 (Blue, T026): kind = slug path (null for custom/vision_board)
         createdBy: creatorId,
         updatedAt: nowIso,
       };
