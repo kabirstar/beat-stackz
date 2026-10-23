@@ -1,0 +1,19 @@
+{
+  "name": "The Vault — Beat Stackz",
+  "short_name": "The Vault",
+  "description": "3D Hardware File Vault for Artists & Producers",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d0c11",
+  "theme_color": "#edeae4",
+  "icons": [
+    {
+      "src": "/vault-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

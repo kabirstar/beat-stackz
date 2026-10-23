@@ -34,7 +34,7 @@ export function BottomTransportPlayer({
   onClose: () => void;
 }) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 px-4 sm:px-8 pt-2.5 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-[#e4e0d8]/95 backdrop-blur-xl border-t border-[var(--hair)] flex items-center justify-between gap-3">
+    <div className="fixed bottom-[calc(4.15rem+env(safe-area-inset-bottom))] left-2.5 right-2.5 sm:bottom-0 sm:left-0 sm:right-0 z-40 px-3.5 sm:px-8 py-2.5 sm:pt-2.5 sm:pb-[calc(0.75rem+env(safe-area-inset-bottom))] rounded-2xl sm:rounded-none shadow-2xl sm:shadow-none bg-[#e4e0d8]/96 backdrop-blur-xl border border-[var(--ink)]/20 sm:border-x-0 sm:border-b-0 sm:border-t sm:border-[var(--hair)] flex items-center justify-between gap-2.5 sm:gap-3 overflow-hidden">
       {/* Mobile-visible top progress bar */}
       <div
         className="sm:hidden absolute top-0 left-0 right-0 h-1 bg-black/10 cursor-pointer"
