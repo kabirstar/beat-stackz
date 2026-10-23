@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Id, Name, Timestamp } from "../common.js";
+import { FolderKind, Id, Name, Timestamp } from "../common.js";
 import { route } from "../route.js";
 
 export const Folder = z.object({
@@ -7,6 +7,9 @@ export const Folder = z.object({
   vaultId: Id,
   parentId: Id.nullable(), // null = vault root
   name: Name,
+  // Set on seeded default folders (ADR 0002); null for user-created. `.default(null)` only so the
+  // backend keeps parsing until T026a adds the column; remove the default after that lands.
+  kind: FolderKind.nullable().default(null),
   createdBy: Id.nullable(),
   updatedAt: Timestamp,
 });

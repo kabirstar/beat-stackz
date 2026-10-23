@@ -837,6 +837,31 @@
                       "minLength": 1,
                       "maxLength": 255
                     },
+                    "kind": {
+                      "default": null,
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "beats",
+                        "presets",
+                        "presets/plugin",
+                        "presets/vocals",
+                        "vocals",
+                        "vocals/main",
+                        "vocals/adlib",
+                        "vocals/bg",
+                        "songs",
+                        "songs/demo",
+                        "songs/mix",
+                        "songs/drop",
+                        "media",
+                        "media/photos",
+                        "media/videos",
+                        "media/mv",
+                        "media/bts",
+                        "media/covers"
+                      ]
+                    },
                     "createdBy": {
                       "nullable": true,
                       "type": "string",
@@ -854,6 +879,7 @@
                     "vaultId",
                     "parentId",
                     "name",
+                    "kind",
                     "createdBy",
                     "updatedAt"
                   ],
@@ -937,6 +963,31 @@
                           "minLength": 1,
                           "maxLength": 255
                         },
+                        "kind": {
+                          "default": null,
+                          "nullable": true,
+                          "type": "string",
+                          "enum": [
+                            "beats",
+                            "presets",
+                            "presets/plugin",
+                            "presets/vocals",
+                            "vocals",
+                            "vocals/main",
+                            "vocals/adlib",
+                            "vocals/bg",
+                            "songs",
+                            "songs/demo",
+                            "songs/mix",
+                            "songs/drop",
+                            "media",
+                            "media/photos",
+                            "media/videos",
+                            "media/mv",
+                            "media/bts",
+                            "media/covers"
+                          ]
+                        },
                         "createdBy": {
                           "nullable": true,
                           "type": "string",
@@ -954,6 +1005,7 @@
                         "vaultId",
                         "parentId",
                         "name",
+                        "kind",
                         "createdBy",
                         "updatedAt"
                       ],
@@ -1093,6 +1145,31 @@
                       "minLength": 1,
                       "maxLength": 255
                     },
+                    "kind": {
+                      "default": null,
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "beats",
+                        "presets",
+                        "presets/plugin",
+                        "presets/vocals",
+                        "vocals",
+                        "vocals/main",
+                        "vocals/adlib",
+                        "vocals/bg",
+                        "songs",
+                        "songs/demo",
+                        "songs/mix",
+                        "songs/drop",
+                        "media",
+                        "media/photos",
+                        "media/videos",
+                        "media/mv",
+                        "media/bts",
+                        "media/covers"
+                      ]
+                    },
                     "createdBy": {
                       "nullable": true,
                       "type": "string",
@@ -1110,6 +1187,7 @@
                     "vaultId",
                     "parentId",
                     "name",
+                    "kind",
                     "createdBy",
                     "updatedAt"
                   ],
@@ -1261,6 +1339,31 @@
                             "minLength": 1,
                             "maxLength": 255
                           },
+                          "kind": {
+                            "default": null,
+                            "nullable": true,
+                            "type": "string",
+                            "enum": [
+                              "beats",
+                              "presets",
+                              "presets/plugin",
+                              "presets/vocals",
+                              "vocals",
+                              "vocals/main",
+                              "vocals/adlib",
+                              "vocals/bg",
+                              "songs",
+                              "songs/demo",
+                              "songs/mix",
+                              "songs/drop",
+                              "media",
+                              "media/photos",
+                              "media/videos",
+                              "media/mv",
+                              "media/bts",
+                              "media/covers"
+                            ]
+                          },
                           "createdBy": {
                             "nullable": true,
                             "type": "string",
@@ -1278,6 +1381,7 @@
                           "vaultId",
                           "parentId",
                           "name",
+                          "kind",
                           "createdBy",
                           "updatedAt"
                         ],

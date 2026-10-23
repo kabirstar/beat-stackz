@@ -1,6 +1,6 @@
 import { http, HttpResponse, type HttpHandler } from "msw";
 import type { z } from "zod";
-import { routes, PART_SIZE } from "../index.js";
+import { routes, PART_SIZE, DEFAULT_FOLDERS } from "../index.js";
 import type { Route } from "../route.js";
 import { seed, newId, now, type Store } from "./store.js";
 
@@ -71,6 +71,10 @@ export function createHandlers(store: Store = seed()): HttpHandler[] {
       const v = { id: newId("v"), kind: "shared" as const, name: body.name, createdAt: now() };
       store.vaults.push(v);
       store.members.push({ vaultId: v.id, userId: store.me.id, role: "owner" });
+      for (const d of DEFAULT_FOLDERS) { // ADR 0002: every new vault starts with the default tree
+        const root = { id: newId("fo"), vaultId: v.id, parentId: null, name: d.name, kind: d.kind, createdBy: store.me.id, updatedAt: now() };
+        store.folders.push(root, ...d.children.map((c) => ({ ...root, id: newId("fo"), parentId: root.id, name: c.name, kind: c.kind })));
+      }
       return { body: vaultOut(v) };
     }),
     mock(routes.vaults.get, store, ({ params }) => {
@@ -112,7 +116,7 @@ export function createHandlers(store: Store = seed()): HttpHandler[] {
       if (denied) return denied;
       if (body.parentId && !store.folders.some((f) => f.id === body.parentId && f.vaultId === params.vaultId)) return err(404, "not_found", "parent");
       if (collides(params.vaultId!, body.parentId, body.name)) return err(409, "conflict");
-      const f = { id: newId("fo"), vaultId: params.vaultId!, parentId: body.parentId, name: body.name, createdBy: store.me.id, updatedAt: now() };
+      const f = { id: newId("fo"), vaultId: params.vaultId!, parentId: body.parentId, name: body.name, kind: null, createdBy: store.me.id, updatedAt: now() };
       store.folders.push(f);
       return { body: f };
     }),

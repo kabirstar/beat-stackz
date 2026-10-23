@@ -5,10 +5,11 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
 ## KABIR & SWISH
 - [x] GitHub repo created and pushed (Yellow)
 - [x] Confirm scope: file vault, no marketplace (2026-10-21)
-- [ ] Install Docker Desktop on the PC (Red needs Postgres + RustFS)
-- [ ] `gh auth login` on the PC
-- [ ] Share the core vision: what makes Beat Stackz different, target vibe, 2-3 reference sites
-- [ ] Folder taxonomy per artist (stems / masters / artwork / contracts / splits?)
+- [x] Install Docker Desktop on the PC (verified by Red, #8)
+- [x] `gh auth login` on the PC
+- [x] Share the core vision (2026-10-23: artists + producers; creating, sharing, marketing music → AGENTS.md, ADR 0002)
+- [ ] 2-3 reference sites whose feel you want (for Yellow)
+- [x] Folder taxonomy (2026-10-23: Yellow's icon tree is the default for every vault, ADR 0002)
 
 ## BLUE
 - [x] T001 [BLUE] repo skeleton: AGENTS.md, docs, infra, shared schemas (on main)
@@ -20,6 +21,9 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       paths: brain/**, .claude/**  depends: none  verify: py brain/brain.py --once "<q>" answers from TASKS/COMMS/PRs
 - [x] T007 [BLUE] upload integrity policy: ADR 0001, FileItem.status, scoped dedup, opaque keys (unblocks T013)
       paths: shared/**, docs/**  depends: none  verify: pnpm -F @bpackz/shared test (6/6)
+
+- [x] T026 [BLUE] default folder taxonomy: ADR 0002, Folder.kind, DEFAULT_FOLDERS, mocks seed (PR open)
+      paths: shared/**, docs/**  depends: none  verify: pnpm -F @bpackz/shared test
 
 ## RED
 - [x] Verify PC environment and clone isolated Red checkout; GitHub CLI auth works outside sandbox
@@ -34,7 +38,7 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       verify: pnpm -F api test; pnpm -F api db:check; TEST_DATABASE_URL=... pnpm -F api test:integration
       verification: Docker Postgres 17.11 migrations + real HTTP auth passed; 12 tests passed, none skipped
       blockers: none; see comms/red/T005-review-fixes.md
-- [ ] T011 [RED] migrations for schema in docs/ARCHITECTURE.md §3; personal vault on signup
+- [x] T011 [RED] migrations for schema in docs/ARCHITECTURE.md §3; personal vault on signup
       paths: backend/**  depends: T010b  verify: pnpm -F api test
       status: personal-vault slice approved by Blue and merged in PR #8
       deliverable: vaults/members migration + active-user backfill; atomic signup provisioning and GET /me
@@ -45,7 +49,7 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: native database stopped; Docker Postgres + RustFS running; DATABASE_URL updated alone
       verify: pnpm -F api db:migrate; TEST_DATABASE_URL=... pnpm -F api test:integration
       verification: passed on Docker PostgreSQL 17.11; see comms/red/T014-docker-local-db.md
-- [ ] T012 [RED] vaults + folders + files CRUD per shared contract
+- [x] T012 [RED] vaults + folders + files CRUD per shared contract
       paths: backend/**  depends: T011  verify: pnpm -F api test
       status: approved by Blue and merged in PR #10; validation issues follow-up on red/uploads
       deliverable: vault list/create/get/rename, folder CRUD/breadcrumbs, children/file metadata/moves/trash, migration 0004
@@ -65,13 +69,15 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       verification: 37 workspace tests passed, zero skips; 10 worker checks include killed-process recovery and real presigned download
       handoff: comms/red/T015-verification-worker.md
 
-- [ ] T016 [RED] audio duration and waveform JSON
+- [x] T016 [RED] audio duration and waveform JSON
       paths: worker/**, backend/**  depends: T015 (merged PR #23)
       status: implemented on red/waveform / PR #26; pending review and Blue's CI audio-tool wiring
       deliverable: streamed ffprobe/ffmpeg/audiowaveform, canonical blob peaks, existing private waveform route; preserve verified downloads on audio failure
       verify: Docker worker test target with TEST_DATABASE_URL + RUN_STORAGE_INTEGRATION=1; pnpm typecheck; pnpm lint
       verification: 16 worker checks passed with real Docker PostgreSQL/RustFS and audio tools, zero skips
       handoff: comms/red/T016-waveforms.md
+- [ ] T026a [RED] folders.kind migration + seed the 18-folder default tree on signup and vault create; backfill where name free
+      paths: backend/**  depends: T026  deliverable: per comms/blue/T026-default-taxonomy.md  verify: pnpm -F api test
 
 ## YELLOW
 - [x] T020 [YELLOW] scaffold frontend (Vite + React 19 + TS + Tailwind), consume @bpackz/shared client on mocks
@@ -95,6 +101,8 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       paths: frontend/**, comms/yellow/**  depends: T022, T009  verify: pnpm -F web typecheck && pnpm -F web test && pnpm -F web build
       deliverable: PublicShareLandingModal + URL /s/:token auto-resolve, CollaboratorsModal removeMember/rename, ShareContextSheet inline file rename, frontend/Dockerfile + frontend/nginx.conf
       handoff: comms/yellow/T024-shares-and-dockerfile.md
+- [ ] T026b [YELLOW] key icons by folder.kind (name fallback for null); defaults first in DEFAULT_FOLDERS order
+      paths: frontend/**  depends: T026  deliverable: per comms/blue/T026-default-taxonomy.md  verify: pnpm -F web test
 
 ## BRAIN
 - [x] T090 [BRAIN] first live run on #beat-stackz-hq (live since 2026-10-22)
