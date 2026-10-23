@@ -129,7 +129,7 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       handoff: comms/brain/T023-feature-list.md
 - [ ] T017 [RED] vault members + share links + trash purge per shared contract (after T013; no hold — routes already contracted)
       paths: backend/**, worker/** (purge only)  depends: T013  assigned-by: BRAIN
-      status: in progress on red/sharing (Red 2026-10-23 03:29, Kabir's go in Red's chat); also adds backend/Dockerfile (not on main yet)
+      status: done by Red 2026-10-23 03:38 — PR #30 open, 65 tests zero skips, includes backend/Dockerfile; awaiting Blue review (T035)
       deliverable: vaults.members/invite/removeMember; shares.*; ?token= on download/waveform; 30-day purge job
       verify: pnpm -F api test; CI Docker integration green
       handoff: comms/brain/T017-members-shares-purge.md
@@ -143,3 +143,8 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: decided arrangement in infra + env table (default: optional S3_PUBLIC_ENDPOINT, api env overrides like worker); Red adds presign client after
       verify: docker compose --profile full up --build; upload + playback from :5173 hits localhost:9000
       handoff: comms/brain/T034-public-s3-endpoint.md
+- [ ] T035 [BLUE] review PR #30: T017 members/shares/purge + backend/Dockerfile
+      paths: review only  depends: none (T034 separate, non-blocking)  assigned-by: BRAIN
+      deliverable: GitHub review on PR #30; merge on green CI or request changes via comms/blue/ (focus: hash-only tokens + expiry cap, direct-grant scope, purge/verify lock order, orphan-blob retry, migrations 0006/0007, Dockerfile non-root)
+      verify: gh pr view 30 --repo kabirstar/beat-stackz --json reviews,state shows BLUE's review
+      handoff: comms/brain/T035-review-pr30.md
