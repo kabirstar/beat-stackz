@@ -1111,7 +1111,7 @@ export function App() {
     }
   };
 
-  const handleAuthSubmit = async (e: React.FormEvent) => {
+  const handleAuthSubmit = async (e: React.FormEvent): Promise<boolean> => {
     e.preventDefault();
     setAuthError(null);
     try {
@@ -1127,13 +1127,19 @@ export function App() {
       setAuthModalOpen(false);
       await bootstrapSession("personal");
       showToast("Signed in to The Vault");
+      return true;
     } catch (err) {
       setAuthError(err instanceof Error ? err.message : "Authentication failed");
+      return false;
     }
   };
 
   const handleSignOut = async () => {
     await api.auth.signOut();
+    if (typeof window !== "undefined" && window.sessionStorage) {
+      window.sessionStorage.removeItem(VAULT_GATE_SESSION_KEY);
+    }
+    setVaultGateUnlocked(false);
     setUser(null);
     setVaults([]);
     setActiveVaultId(null);
@@ -1141,16 +1147,37 @@ export function App() {
     setSubfoldersByRoot({});
     setFilesByFolder({});
     setAuthName("");
-    setAuthEmail("");
-    setAuthPassword("");
+    setAuthEmail("swish@bpackz.studio");
+    setAuthPassword("password1234");
     setAuthError(null);
-    setAuthModalOpen(true);
-    showToast("Signed out");
+    setAuthModalOpen(false);
+    showToast("Vault locked & signed out");
   };
 
-  if (!vaultGateUnlocked && !publicShareToken) {
+  if ((!vaultGateUnlocked || !user) && !publicShareToken) {
     return (
       <VaultGateScreen
+        authMode={authMode}
+        authName={authName}
+        authEmail={authEmail}
+        authPassword={authPassword}
+        authError={authError}
+        onChangeMode={(m) => {
+          setAuthMode(m);
+          setAuthError(null);
+        }}
+        onChangeName={setAuthName}
+        onChangeEmail={setAuthEmail}
+        onChangePassword={setAuthPassword}
+        onSubmitAuth={handleAuthSubmit}
+        onQuickSelectProfile={(profileKey) => {
+          setAuthMode("signin");
+          setAuthEmail(
+            profileKey === "todo" ? "todo@bpackz.studio" : "swish@bpackz.studio",
+          );
+          setAuthPassword("password1234");
+          setAuthError(null);
+        }}
         onUnlock={() => {
           if (typeof window !== "undefined" && window.sessionStorage) {
             window.sessionStorage.setItem(VAULT_GATE_SESSION_KEY, "1");
