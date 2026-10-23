@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Folder } from "@bpackz/shared";
 import { CreateRecordHardwareButton, RecordHardwareItem } from "../HardwareIcons.tsx";
 import {
@@ -277,6 +277,7 @@ export function HardwareGridSection({
   isSharedMainPage = false,
   folderHasPlayingTrack,
   onSelectFolder,
+  onReorderFolder,
   onCreateClick,
 }: {
   folders: Folder[];
@@ -287,17 +288,159 @@ export function HardwareGridSection({
   isSharedMainPage?: boolean;
   folderHasPlayingTrack: (folder: Folder) => boolean;
   onSelectFolder: (folderId: string) => void;
+  onReorderFolder?: (sourceFolderId: string, targetFolderId: string) => void;
   onCreateClick: () => void;
 }) {
+  const [jiggleMode, setJiggleMode] = useState(false);
+  const [draggingFolderId, setDraggingFolderId] = useState<string | null>(null);
+  const [dragCursor, setDragCursor] = useState<{ x: number; y: number; width: number } | null>(
+    null,
+  );
+  const gridRef = useRef<HTMLDivElement | null>(null);
+  const holdTimerRef = useRef<number | null>(null);
+  const pressedRef = useRef<{
+    id: string;
+    startX: number;
+    startY: number;
+    width: number;
+  } | null>(null);
+  const lastSwapAtRef = useRef<number>(0);
+  const suppressClickRef = useRef(false);
+
+  const clearHoldTimer = () => {
+    if (holdTimerRef.current !== null) {
+      window.clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    const handlePointerMove = (e: PointerEvent) => {
+      const pressed = pressedRef.current;
+      let activeDragId = draggingFolderId;
+
+      if (!activeDragId && pressed) {
+        const dist = Math.hypot(e.clientX - pressed.startX, e.clientY - pressed.startY);
+        if (dist > 7) {
+          clearHoldTimer();
+          suppressClickRef.current = true;
+          activeDragId = pressed.id;
+          setJiggleMode(true);
+          setDraggingFolderId(pressed.id);
+        }
+      }
+
+      if (!activeDragId) return;
+
+      setDragCursor((prev) => ({
+        x: e.clientX,
+        y: e.clientY,
+        width: prev?.width ?? pressed?.width ?? 160,
+      }));
+
+      if (!onReorderFolder || !gridRef.current) return;
+      const now = performance.now();
+      if (now - lastSwapAtRef.current < 110) return;
+
+      const cards = gridRef.current.querySelectorAll<HTMLElement>("[data-folder-id]");
+      for (const card of cards) {
+        const targetId = card.dataset.folderId;
+        if (!targetId || targetId === activeDragId) continue;
+        const rect = card.getBoundingClientRect();
+        if (
+          e.clientX >= rect.left &&
+          e.clientX <= rect.right &&
+          e.clientY >= rect.top &&
+          e.clientY <= rect.bottom
+        ) {
+          lastSwapAtRef.current = now;
+          onReorderFolder(activeDragId, targetId);
+          break;
+        }
+      }
+    };
+
+    const handlePointerUp = () => {
+      clearHoldTimer();
+      pressedRef.current = null;
+      if (draggingFolderId) {
+        setDraggingFolderId(null);
+        setDragCursor(null);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setJiggleMode(false);
+        setDraggingFolderId(null);
+        setDragCursor(null);
+      }
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("pointercancel", handlePointerUp);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerUp);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [draggingFolderId, onReorderFolder]);
+
+  const draggedFolderIdx = draggingFolderId
+    ? folders.findIndex((f) => f.id === draggingFolderId)
+    : -1;
+  const draggedFolder = draggedFolderIdx >= 0 ? folders[draggedFolderIdx] : null;
+  const draggedMeta =
+    draggedFolder && draggedFolderIdx >= 0
+      ? resolveFolderUiMeta(draggedFolder, folderMetaMap, draggedFolderIdx, isSharedMainPage)
+      : null;
+  const draggedTheme = draggedMeta
+    ? activePalette[draggedMeta.colorSlot % activePalette.length] ?? activePalette[0]
+    : activePalette[0];
+
   return (
-    <section className="pt-8 sm:pt-10 pb-8">
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-8 sm:gap-x-8 sm:gap-y-12">
+    <section
+      className="pt-8 sm:pt-10 pb-8"
+      onClick={(e) => {
+        if (jiggleMode && e.target === e.currentTarget) {
+          setJiggleMode(false);
+          setDraggingFolderId(null);
+          setDragCursor(null);
+        }
+      }}
+    >
+      {jiggleMode && (
+        <div className="flex items-center justify-between mb-6 px-4 py-2.5 rounded-2xl bg-[var(--card)] border border-[var(--hair)] shadow-sm">
+          <span className="mono-meta text-[11px] uppercase text-[var(--ink-soft)]">
+            Drag any 3D icon into a new spot · Order saves automatically
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setJiggleMode(false);
+              setDraggingFolderId(null);
+              setDragCursor(null);
+            }}
+            className="px-4 py-1.5 rounded-full bg-[var(--ink)] text-[var(--bg)] mono-meta text-[11px] uppercase cursor-pointer hover:opacity-90"
+          >
+            Done
+          </button>
+        </div>
+      )}
+      <div
+        ref={gridRef}
+        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-8 sm:gap-x-8 sm:gap-y-12"
+      >
         {folders.map((folder, idx) => {
           const meta = resolveFolderUiMeta(folder, folderMetaMap, idx, isSharedMainPage);
           const theme = activePalette[meta.colorSlot % activePalette.length] ?? activePalette[0];
           return (
             <RecordHardwareItem
               key={folder.id}
+              folderId={folder.id}
               name={folder.name}
               by={meta.by}
               iconKey={meta.iconKey}
@@ -305,7 +448,41 @@ export function HardwareGridSection({
               theme={theme}
               animateSpawn={animateSpawn}
               isPlayingFolder={folderHasPlayingTrack(folder)}
-              onClick={() => onSelectFolder(folder.id)}
+              jiggleMode={jiggleMode}
+              isDragging={draggingFolderId === folder.id}
+              onPointerDown={(e) => {
+                if (e.button !== 0 && e.pointerType === "mouse") return;
+                clearHoldTimer();
+                const rect = e.currentTarget.getBoundingClientRect();
+                pressedRef.current = {
+                  id: folder.id,
+                  startX: e.clientX,
+                  startY: e.clientY,
+                  width: rect.width,
+                };
+                if (jiggleMode) {
+                  suppressClickRef.current = true;
+                  setDraggingFolderId(folder.id);
+                  setDragCursor({ x: e.clientX, y: e.clientY, width: rect.width });
+                  return;
+                }
+                holdTimerRef.current = window.setTimeout(() => {
+                  suppressClickRef.current = true;
+                  setJiggleMode(true);
+                  setDraggingFolderId(folder.id);
+                  setDragCursor({ x: e.clientX, y: e.clientY, width: rect.width });
+                }, 200);
+              }}
+              onClick={() => {
+                clearHoldTimer();
+                pressedRef.current = null;
+                if (suppressClickRef.current) {
+                  suppressClickRef.current = false;
+                  return;
+                }
+                if (jiggleMode) return;
+                onSelectFolder(folder.id);
+              }}
             />
           );
         })}
@@ -316,6 +493,30 @@ export function HardwareGridSection({
           onClick={onCreateClick}
         />
       </div>
+
+      {draggedFolder && draggedMeta && dragCursor && (
+        <div
+          className="fixed z-50 pointer-events-none"
+          style={{
+            left: `${dragCursor.x}px`,
+            top: `${dragCursor.y}px`,
+            width: `${dragCursor.width}px`,
+            transform: "translate(-50%, -48%) scale(1.08)",
+            filter: "drop-shadow(0 22px 32px rgba(22, 19, 43, 0.28))",
+          }}
+        >
+          <RecordHardwareItem
+            name={draggedFolder.name}
+            by={draggedMeta.by}
+            iconKey={draggedMeta.iconKey}
+            idx={draggedFolderIdx}
+            theme={draggedTheme}
+            animateSpawn={false}
+            isPlayingFolder={folderHasPlayingTrack(draggedFolder)}
+            onClick={() => {}}
+          />
+        </div>
+      )}
     </section>
   );
 }
