@@ -289,53 +289,43 @@ export function VaultHeader({
             <>
               <button
                 type="button"
-                onClick={() => onSelectProfile("swish")}
-                title="Swish's Vault (Black & Red Theme)"
-                className="icon-btn relative font-semibold text-xs"
+                onClick={() => onSelectProfile(currentUserKey)}
+                title={`${user.name ?? user.email}'s Personal Vault`}
+                className="icon-btn relative font-semibold text-xs uppercase"
                 style={
-                  currentUserKey === "swish" && !isSharedMode
-                    ? {
-                        background: "#0b0a0c",
-                        color: "#ef4444",
-                        borderColor: "#dc2626",
-                        boxShadow: "0 0 0 2px #0b0a0c",
-                      }
-                    : {
-                        background: "#181416",
-                        color: "#ef4444",
-                        borderColor: "rgba(220,38,38,0.45)",
-                      }
+                  currentUserKey === "todo"
+                    ? !isSharedMode
+                      ? {
+                          background: "#111114",
+                          color: "#fafafa",
+                          borderColor: "#111114",
+                          boxShadow: "0 0 0 2px #16132b",
+                        }
+                      : {
+                          background: "linear-gradient(135deg, #ffffff 50%, #d4d4d8 50%)",
+                          color: "#111114",
+                        }
+                    : !isSharedMode
+                      ? {
+                          background: "#0b0a0c",
+                          color: "#ef4444",
+                          borderColor: "#dc2626",
+                          boxShadow: "0 0 0 2px #0b0a0c",
+                        }
+                      : {
+                          background: "#181416",
+                          color: "#ef4444",
+                          borderColor: "rgba(220,38,38,0.45)",
+                        }
                 }
               >
-                S
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onSelectProfile("todo")}
-                title="Todo's Vault (White & Black Theme)"
-                className="icon-btn relative font-semibold text-xs"
-                style={
-                  currentUserKey === "todo" && !isSharedMode
-                    ? {
-                        background: "#111114",
-                        color: "#fafafa",
-                        borderColor: "#111114",
-                        boxShadow: "0 0 0 2px #16132b",
-                      }
-                    : {
-                        background: "linear-gradient(135deg, #ffffff 50%, #d4d4d8 50%)",
-                        color: "#111114",
-                      }
-                }
-              >
-                T
+                {(user.name || user.email || "V").trim().charAt(0).toUpperCase()}
               </button>
 
               <button
                 type="button"
                 onClick={onSignOut}
-                title={`Sign out (${user.name})`}
+                title={`Sign out (${user.name ?? user.email})`}
                 className="icon-btn"
               >
                 <StudioIcon name="sign-out" />

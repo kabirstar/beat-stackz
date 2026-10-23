@@ -662,13 +662,14 @@ export function AuthModal({
       maxWidthClass="max-w-sm"
       onClose={user ? onClose : undefined}
     >
-      <form onSubmit={onSubmit} className="p-5 space-y-3">
+      <form onSubmit={onSubmit} autoComplete="off" className="p-5 space-y-3">
         {authMode === "signup" && (
           <input
             type="text"
             value={authName}
             onChange={(e) => onChangeName(e.target.value)}
             placeholder="Artist / Producer Name"
+            autoComplete="off"
             className="w-full px-3.5 py-2 rounded-xl bg-[var(--card)] border border-[var(--hair)] text-xs text-[var(--ink)]"
           />
         )}
@@ -677,6 +678,7 @@ export function AuthModal({
           value={authEmail}
           onChange={(e) => onChangeEmail(e.target.value)}
           placeholder="Email"
+          autoComplete="off"
           className="w-full px-3.5 py-2 rounded-xl bg-[var(--card)] border border-[var(--hair)] text-xs text-[var(--ink)]"
         />
         <input
@@ -684,6 +686,7 @@ export function AuthModal({
           value={authPassword}
           onChange={(e) => onChangePassword(e.target.value)}
           placeholder="Password"
+          autoComplete="new-password"
           className="w-full px-3.5 py-2 rounded-xl bg-[var(--card)] border border-[var(--hair)] text-xs text-[var(--ink)]"
         />
         {authError && <p className="text-xs text-red-700">{authError}</p>}
