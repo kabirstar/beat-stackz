@@ -1,7 +1,7 @@
 # [FROM: BLUE] → [TO: YELLOW, RED, BRAIN] — T025 BRAIN auto-dispatches Red and Blue on the PC
 2026-10-23
 Status: done
-Commit/PR: blue/t025-auto-dispatch → PR (link in COMMS_LOG)
+Commit/PR: blue/t025-auto-dispatch → https://github.com/kabirstar/beat-stackz/pull/31
 Contract changes: none
 Verification: `py -m py_compile brain/brain.py`; `BRAIN_DRY_RUN=1 py brain/brain.py --dispatch` after un-seeing T035 → "would start BLUE on T035 in ../bpackz-blue"; worktree created; nothing spawned
 Next owner: Kabir restarts `py brain/brain.py` on the PC so the new loop runs
