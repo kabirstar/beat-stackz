@@ -10,6 +10,7 @@ import {
 } from "./components/StudioFileSection.tsx";
 import { HardwareGridSection, StudioIcon } from "./components/StudioPrimitives.tsx";
 import { VaultHeader } from "./components/VaultHeader.tsx";
+import { VaultGateScreen, VAULT_GATE_SESSION_KEY } from "./components/VaultGateScreen.tsx";
 import {
   AuthModal,
   CollaboratorsModal,
@@ -36,6 +37,7 @@ import {
   resolveFileOwnerName,
   resolveFolderUiMeta,
   savePersistedUiMeta,
+  sortVaultFolders,
   SWISH_BLACK_RED_PALETTE,
   TODO_MONOCHROME_PALETTE,
   WAVEFORM_BARS,
@@ -48,6 +50,10 @@ import {
 export { formatBytes, parseStudioFileDisplay };
 
 export function App() {
+  const [vaultGateUnlocked, setVaultGateUnlocked] = useState<boolean>(() => {
+    if (typeof window === "undefined" || !window.sessionStorage) return false;
+    return window.sessionStorage.getItem(VAULT_GATE_SESSION_KEY) === "1";
+  });
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -152,12 +158,7 @@ export function App() {
           rootListing = await api.files.listChildren(vaultId);
         }
         const meta = loadPersistedUiMeta();
-        const sortByOrder = (list: Folder[]) =>
-          [...list].sort(
-            (a, b) =>
-              resolveFolderUiMeta(a, meta.folderMeta, 0).order -
-              resolveFolderUiMeta(b, meta.folderMeta, 0).order,
-          );
+        const sortByOrder = (list: Folder[]) => sortVaultFolders(list, meta.folderMeta);
 
         const sortedRoots = sortByOrder(rootListing.folders);
         setRootFolders(sortedRoots);
@@ -1150,6 +1151,20 @@ export function App() {
     setAuthModalOpen(true);
     showToast("Signed out");
   };
+
+  if (!vaultGateUnlocked && !publicShareToken) {
+    return (
+      <VaultGateScreen
+        onUnlock={() => {
+          if (typeof window !== "undefined" && window.sessionStorage) {
+            window.sessionStorage.setItem(VAULT_GATE_SESSION_KEY, "1");
+          }
+          setVaultGateUnlocked(true);
+          setAnimateSpawn(true);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">

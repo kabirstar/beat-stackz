@@ -1,4 +1,11 @@
-import type { FileItem, Folder, User, VaultMember } from "@bpackz/shared";
+import {
+  DEFAULT_FOLDERS,
+  type FileItem,
+  type Folder,
+  type FolderKind,
+  type User,
+  type VaultMember,
+} from "@bpackz/shared";
 
 export interface HardwareThemeSlot {
   name: string;
@@ -226,6 +233,36 @@ const DEFAULT_SUB_META: Record<string, FolderUiMeta> = {
   "album covers": { by: "cover art & sleeves", colorSlot: 4, iconKey: "sub_covers", order: 4 },
 };
 
+// ADR 0002 / T026b: Key 3D hardware icons & order by `folder.kind` first (in DEFAULT_FOLDERS order)
+const DEFAULT_KIND_ORDER = new Map<FolderKind, number>();
+DEFAULT_FOLDERS.forEach((root, rootIdx) => {
+  DEFAULT_KIND_ORDER.set(root.kind, rootIdx);
+  root.children.forEach((child, childIdx) => {
+    DEFAULT_KIND_ORDER.set(child.kind, childIdx);
+  });
+});
+
+export const DEFAULT_KIND_META: Record<FolderKind, FolderUiMeta> = {
+  beats: { ...DEFAULT_ROOT_META.beats, order: DEFAULT_KIND_ORDER.get("beats") ?? 0 },
+  presets: { ...DEFAULT_ROOT_META.presets, order: DEFAULT_KIND_ORDER.get("presets") ?? 1 },
+  "presets/plugin": { ...DEFAULT_SUB_META.plugin, order: DEFAULT_KIND_ORDER.get("presets/plugin") ?? 0 },
+  "presets/vocals": { ...DEFAULT_SUB_META.vocals, order: DEFAULT_KIND_ORDER.get("presets/vocals") ?? 1 },
+  vocals: { ...DEFAULT_ROOT_META.vocals, order: DEFAULT_KIND_ORDER.get("vocals") ?? 2 },
+  "vocals/main": { ...DEFAULT_SUB_META.main, order: DEFAULT_KIND_ORDER.get("vocals/main") ?? 0 },
+  "vocals/adlib": { ...DEFAULT_SUB_META.adlib, order: DEFAULT_KIND_ORDER.get("vocals/adlib") ?? 1 },
+  "vocals/bg": { ...DEFAULT_SUB_META.bg, order: DEFAULT_KIND_ORDER.get("vocals/bg") ?? 2 },
+  songs: { ...DEFAULT_ROOT_META.songs, order: DEFAULT_KIND_ORDER.get("songs") ?? 3 },
+  "songs/demo": { ...DEFAULT_SUB_META.demo, order: DEFAULT_KIND_ORDER.get("songs/demo") ?? 0 },
+  "songs/mix": { ...DEFAULT_SUB_META.mix, order: DEFAULT_KIND_ORDER.get("songs/mix") ?? 1 },
+  "songs/drop": { ...DEFAULT_SUB_META.drop, order: DEFAULT_KIND_ORDER.get("songs/drop") ?? 2 },
+  media: { ...DEFAULT_ROOT_META.media, order: DEFAULT_KIND_ORDER.get("media") ?? 4 },
+  "media/photos": { ...DEFAULT_SUB_META.photos, order: DEFAULT_KIND_ORDER.get("media/photos") ?? 0 },
+  "media/videos": { ...DEFAULT_SUB_META.videos, order: DEFAULT_KIND_ORDER.get("media/videos") ?? 1 },
+  "media/mv": { ...DEFAULT_SUB_META["music video"], order: DEFAULT_KIND_ORDER.get("media/mv") ?? 2 },
+  "media/bts": { ...DEFAULT_SUB_META.bts, order: DEFAULT_KIND_ORDER.get("media/bts") ?? 3 },
+  "media/covers": { ...DEFAULT_SUB_META["album covers"], order: DEFAULT_KIND_ORDER.get("media/covers") ?? 4 },
+};
+
 const UI_META_STORAGE_KEY = "bpackz_vault_ui_meta_v2";
 
 export interface TrashedFileEntry {
@@ -440,6 +477,11 @@ export function resolveFolderUiMeta(
   };
   const custom = customMetaMap[folder.id];
   if (custom) return applySharedIcon(custom);
+  // T026b: Key by folder.kind first so renaming a default folder keeps its 3D icon
+  if (folder.kind !== null && DEFAULT_KIND_META[folder.kind]) {
+    return applySharedIcon(DEFAULT_KIND_META[folder.kind]);
+  }
+  // Fallback to folder.name only when folder.kind is null
   const lower = folder.name.trim().toLowerCase();
   if (folder.parentId === null && DEFAULT_ROOT_META[lower]) {
     return applySharedIcon(DEFAULT_ROOT_META[lower]);
@@ -452,6 +494,41 @@ export function resolveFolderUiMeta(
     colorSlot: fallbackIndex % 5,
     iconKey: "beats",
     order: 100 + fallbackIndex,
+  });
+}
+
+// T026b: Sort defaults first in DEFAULT_FOLDERS order, then user folders by name (while respecting custom jiggle order)
+export function sortVaultFolders(
+  list: Folder[],
+  customMetaMap: Record<string, FolderUiMeta> = {},
+): Folder[] {
+  return [...list].sort((a, b) => {
+    const customA = customMetaMap[a.id];
+    const customB = customMetaMap[b.id];
+    if (customA && customB) {
+      return customA.order - customB.order;
+    }
+    const aKindOrder = a.kind !== null ? DEFAULT_KIND_ORDER.get(a.kind) : undefined;
+    const bKindOrder = b.kind !== null ? DEFAULT_KIND_ORDER.get(b.kind) : undefined;
+    const aIsDefault = aKindOrder !== undefined;
+    const bIsDefault = bKindOrder !== undefined;
+    if (aIsDefault && bIsDefault) {
+      return aKindOrder - bKindOrder;
+    }
+    if (aIsDefault && !bIsDefault) return -1;
+    if (!aIsDefault && bIsDefault) return 1;
+
+    const aLower = a.name.trim().toLowerCase();
+    const bLower = b.name.trim().toLowerCase();
+    const aFallback = a.parentId === null ? DEFAULT_ROOT_META[aLower] : DEFAULT_SUB_META[aLower];
+    const bFallback = b.parentId === null ? DEFAULT_ROOT_META[bLower] : DEFAULT_SUB_META[bLower];
+    if (aFallback && bFallback) {
+      return aFallback.order - bFallback.order;
+    }
+    if (aFallback && !bFallback) return -1;
+    if (!aFallback && bFallback) return 1;
+
+    return a.name.localeCompare(b.name);
   });
 }
 
