@@ -32,7 +32,7 @@ That creates the channel and a webhook and saves the channel id and webhook URL
 to `.env` (an older `.env` without the id still works: the loop finds the
 channel by name).
 
-`#brain-updates` is two-way (T044, Swish 2026-10-23): Kabir (`prodbylush808`)
+`#brain-updates` is two-way (T046, Swish 2026-10-23): Kabir (`prodbylush808`)
 and Swish (`mysterious_cheetah_19465`) can prompt BRAIN there and the whole
 reply comes back in that channel. Anyone else posting there, including the
 agents' webhooks, is ignored. The loop polls both channels itself and keeps its
