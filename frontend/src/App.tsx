@@ -106,8 +106,9 @@ export function App() {
   const [publicShareError, setPublicShareError] = useState<string | null>(null);
 
   const [playingFile, setPlayingFile] = useState<FileItem | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
   const [waveformBars, setWaveformBars] = useState<number[]>(WAVEFORM_BARS);
-  const [playProgress, setPlayProgress] = useState(38);
+  const [playProgress, setPlayProgress] = useState(0);
   const [loopEnabled, setLoopEnabled] = useState(false);
 
   const [toast, setToast] = useState<string | null>(null);
@@ -658,7 +659,11 @@ export function App() {
       const vault = await api.vaults.create({ name });
       const otherEmail =
         currentUserKey === "swish" ? "todo@bpackz.studio" : "swish@bpackz.studio";
-      await api.vaults.invite(vault.id, { email: otherEmail, role: "editor" });
+      try {
+        await api.vaults.invite(vault.id, { email: otherEmail, role: "editor" });
+      } catch {
+        // Partner account may not be registered yet on a fresh deployment
+      }
 
       const nextMeta: PersistedUiMeta = {
         ...uiMeta,
@@ -719,6 +724,40 @@ export function App() {
       const updated = await api.vaults.rename(activeVaultId, { name: nextName.trim() });
       setVaults((prev) => prev.map((v) => (v.id === updated.id ? updated : v)));
       showToast(`Renamed Shared Vault to "${updated.name}"`);
+    } catch (err) {
+      if (err instanceof BpackzApiError) showToast(err.message);
+    }
+  };
+
+  const handleRenameActiveFolder = async () => {
+    const target = currentSubFolder ?? currentRootFolder;
+    if (!activeVaultId || !target) return;
+    const nextName =
+      typeof window !== "undefined" && typeof window.prompt === "function"
+        ? window.prompt("Rename folder:", target.name)
+        : null;
+    if (!nextName || !nextName.trim() || nextName.trim() === target.name) return;
+    try {
+      const updated = await api.folders.update(activeVaultId, target.id, {
+        name: nextName.trim(),
+        ifUpdatedAt: target.updatedAt,
+      });
+      await loadVaultContents(activeVaultId);
+      showToast(`Renamed folder to "${updated.name}"`);
+    } catch (err) {
+      if (err instanceof BpackzApiError) showToast(err.message);
+    }
+  };
+
+  const handleTrashActiveFolder = async () => {
+    const target = currentSubFolder ?? currentRootFolder;
+    if (!activeVaultId || !target) return;
+    try {
+      await api.folders.trash(activeVaultId, target.id);
+      if (currentSubFolder) setSubId(null);
+      else setRootId(null);
+      await loadVaultContents(activeVaultId);
+      showToast(`Moved folder "${target.name}" to Trash`);
     } catch (err) {
       if (err instanceof BpackzApiError) showToast(err.message);
     }
@@ -913,11 +952,21 @@ export function App() {
       return;
     }
     if (playingFile?.id === file.id) {
-      audioRef.current?.pause();
-      setPlayingFile(null);
+      if (audioRef.current) {
+        if (audioRef.current.paused) {
+          void audioRef.current.play().catch(() => {});
+          setIsPaused(false);
+        } else {
+          audioRef.current.pause();
+          setIsPaused(true);
+        }
+      } else {
+        setIsPaused((p) => !p);
+      }
       return;
     }
     setPlayingFile(file);
+    setIsPaused(false);
     setPlayProgress(0);
     try {
       const { url } = await api.files.downloadUrl(activeVaultId, file.id, {
@@ -999,13 +1048,46 @@ export function App() {
         });
       }
 
-      await runMultipartUpload(
-        sharedVault.id,
-        destFolder.id,
-        file.name,
-        file.size,
-        file.mime,
-      );
+      if (file.sha256 && file.sha256.length === 64) {
+        const init = await api.uploads.create(sharedVault.id, {
+          folderId: destFolder.id,
+          name: file.name,
+          size: Math.max(1, file.size),
+          mime: file.mime,
+          sha256: file.sha256,
+        });
+        if (!init.dedup) {
+          await api.uploads.abort(sharedVault.id, init.uploadId, init.key).catch(() => {});
+          let sourceBlob: Blob | undefined;
+          if (activeVaultId) {
+            try {
+              const dl = await api.files.downloadUrl(activeVaultId, file.id, {
+                disposition: "inline",
+              });
+              const resp = await fetch(dl.url);
+              if (resp.ok) sourceBlob = await resp.blob();
+            } catch {
+              // fallback if download fetch fails
+            }
+          }
+          await runMultipartUpload(
+            sharedVault.id,
+            destFolder.id,
+            file.name,
+            file.size,
+            file.mime,
+            sourceBlob,
+          );
+        }
+      } else {
+        await runMultipartUpload(
+          sharedVault.id,
+          destFolder.id,
+          file.name,
+          file.size,
+          file.mime,
+        );
+      }
 
       if (activeVaultId === sharedVault.id) await loadVaultContents(sharedVault.id);
       setActivePopoverFile(null);
@@ -1102,13 +1184,33 @@ export function App() {
   const handleRestoreFromTrash = async (entry: TrashedFileEntry) => {
     if (!activeVaultId) return;
     try {
-      await runMultipartUpload(
-        activeVaultId,
-        entry.file.folderId,
-        entry.file.name,
-        entry.file.size,
-        entry.file.mime,
-      );
+      if (entry.file.sha256 && entry.file.sha256.length === 64) {
+        const init = await api.uploads.create(activeVaultId, {
+          folderId: entry.file.folderId,
+          name: entry.file.name,
+          size: Math.max(1, entry.file.size),
+          mime: entry.file.mime,
+          sha256: entry.file.sha256,
+        });
+        if (!init.dedup) {
+          await api.uploads.abort(activeVaultId, init.uploadId, init.key).catch(() => {});
+          await runMultipartUpload(
+            activeVaultId,
+            entry.file.folderId,
+            entry.file.name,
+            entry.file.size,
+            entry.file.mime,
+          );
+        }
+      } else {
+        await runMultipartUpload(
+          activeVaultId,
+          entry.file.folderId,
+          entry.file.name,
+          entry.file.size,
+          entry.file.mime,
+        );
+      }
       const nextMeta: PersistedUiMeta = {
         ...uiMeta,
         trashedByVault: {
@@ -1294,9 +1396,33 @@ export function App() {
             )}
 
             <div className="min-w-0">
-              <h1 className="display-heading text-3xl sm:text-5xl md:text-7xl text-[var(--ink)] truncate">
-                {titleText}
-              </h1>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <h1 className="display-heading text-3xl sm:text-5xl md:text-7xl text-[var(--ink)] truncate">
+                  {titleText}
+                </h1>
+                {currentRootFolder && !viewingTrash && !visionBoardOpen && (
+                  <div className="inline-flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => void handleRenameActiveFolder()}
+                      title="Rename Folder"
+                      className="px-2 py-1 rounded-full bg-[var(--card)] border border-[var(--hair)] hover:border-[var(--ink)] mono-meta text-[9px] uppercase text-[var(--ink-soft)] hover:text-[var(--ink)] cursor-pointer"
+                    >
+                      Rename
+                    </button>
+                    {(currentSubFolder ?? currentRootFolder)?.kind === null && (
+                      <button
+                        type="button"
+                        onClick={() => void handleTrashActiveFolder()}
+                        title="Trash Custom Folder"
+                        className="px-2 py-1 rounded-full bg-[var(--card)] border border-[var(--hair)] hover:border-red-600 mono-meta text-[9px] uppercase text-red-700 cursor-pointer"
+                      >
+                        Trash
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
               <div className="flex flex-wrap items-center gap-2.5 mt-2">
                 {isSharedMode ? (
                   <button
@@ -1711,11 +1837,25 @@ export function App() {
       {playingFile && (
         <BottomTransportPlayer
           playingFile={playingFile}
+          isPaused={isPaused}
           waveformBars={waveformBars}
           playProgress={playProgress}
           loopEnabled={loopEnabled}
           vaultMembers={vaultMembers}
           currentUser={user}
+          onTogglePause={() => {
+            if (audioRef.current) {
+              if (audioRef.current.paused) {
+                void audioRef.current.play().catch(() => {});
+                setIsPaused(false);
+              } else {
+                audioRef.current.pause();
+                setIsPaused(true);
+              }
+            } else {
+              setIsPaused((p) => !p);
+            }
+          }}
           onToggleLoop={() => setLoopEnabled((v) => !v)}
           onSeek={(pct) => {
             setPlayProgress(pct);

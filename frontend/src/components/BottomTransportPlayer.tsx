@@ -6,11 +6,13 @@ import { StudioIcon } from "./StudioPrimitives.tsx";
 
 export function BottomTransportPlayer({
   playingFile,
+  isPaused = false,
   waveformBars,
   playProgress,
   loopEnabled,
   vaultMembers,
   currentUser,
+  onTogglePause,
   onToggleLoop,
   onSeek,
   onShare,
@@ -18,11 +20,13 @@ export function BottomTransportPlayer({
   onClose,
 }: {
   playingFile: FileItem;
+  isPaused?: boolean;
   waveformBars: number[];
   playProgress: number;
   loopEnabled: boolean;
   vaultMembers?: VaultMember[];
   currentUser?: User | null;
+  onTogglePause?: () => void;
   onToggleLoop: () => void;
   onSeek: (pct: number) => void;
   onShare: (file: FileItem) => void;
@@ -73,11 +77,11 @@ export function BottomTransportPlayer({
 
           <button
             type="button"
-            onClick={onClose}
-            title="Pause"
+            onClick={onTogglePause ?? onClose}
+            title={isPaused ? "Play" : "Pause"}
             className="icon-btn icon-btn-active w-9 h-9"
           >
-            <StudioIcon name="pause" />
+            <StudioIcon name={isPaused ? "play" : "pause"} />
           </button>
         </div>
 
