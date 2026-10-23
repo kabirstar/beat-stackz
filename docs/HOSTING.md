@@ -12,7 +12,8 @@ the accounts and secrets below, because they are billed to and owned by him.
 | **Domain** | any registrar (a Shopify-registered domain works; only its DNS is used) | the domain name, and DNS managed in Cloudflare (change nameservers to Cloudflare's) |
 | **Cloudflare account** | cloudflare.com, free plan | nothing yet |
 | **R2 bucket** `bpackz` | Cloudflare → R2 → Create bucket (location: automatic) | the account id shown on the R2 page |
-| **R2 API token** | R2 → Manage R2 API Tokens → Create: permission *Object Read & Write*, scoped to bucket `bpackz` | Access Key ID + Secret Access Key (shown once) |
+| **R2 bucket** `bpackz-backups` | same; then Settings → Object lifecycle rules → delete objects after 14 days | nothing (nightly `pg_dump` files land here, §5) |
+| **R2 API token** | R2 → Manage R2 API Tokens → Create: permission *Object Read & Write*, scoped to **both** buckets `bpackz` and `bpackz-backups` | Access Key ID + Secret Access Key (shown once) |
 | **Hetzner account** | hetzner.com/cloud | nothing yet |
 | **Server** | Cloud → New project → Add server: Ubuntu 24.04, **CX23** (2 vCPU / 4 GB / 40 GB), Falkenstein or Ashburn, add your SSH key | the server's IPv4 |
 | **Coolify** | on the server: `curl -fsSL https://cdn.coollabs.io/coolify/install.sh \| bash` | Coolify URL + admin login (keep it; Blue gets a deploy key later) |
@@ -102,9 +103,19 @@ revoke, trash. Then open `https://app.<domain>` and sign up for real.
 
 ## 5. Operations (minimal, add when needed)
 
-- **Backups**: Postgres is the only state besides R2. Coolify can schedule
-  `pg_dump` to an S3 target; point it at a second R2 bucket. Do this before
-  inviting anyone outside the team.
+- **Backups** (T044): Postgres is the only state besides R2. The `backup`
+  service in `infra/docker-compose.hosted.yml` (image `infra/backup/Dockerfile`,
+  script `infra/backup/backup.sh`) runs `pg_dump | gzip` every 24 h and uploads
+  `bpackz-<UTC timestamp>.sql.gz` to `s3://$BACKUP_BUCKET`. Set `BACKUP_BUCKET=bpackz-backups`
+  in Coolify's env; the R2 token must cover that bucket too. Retention is the
+  bucket's 14-day lifecycle rule (§0), not code. The container logs
+  `backup ok: <file> (<bytes>)` or `backup FAILED`; glance at it in Coolify.
+  Run one on demand: `docker compose --project-directory . -f infra/docker-compose.hosted.yml run --rm backup once`.
+  **Restore** (tested locally 2026-10-23): download the file, then
+  `gunzip -c <file> | docker compose exec -T postgres psql -U bpackz -d bpackz`
+  into an empty database (`dropdb`/`createdb bpackz` first, or restore into a
+  scratch db to inspect). Stop `api` and `worker` while restoring.
+  Local check: `docker compose -f infra/docker-compose.yml --profile backup run --rm backup once`.
 - **Logs**: Coolify shows container logs; the worker logs every verification.
 - **Scaling**: CX23 is fine for a few hundred users. Uploads bypass the server
   entirely, so disk and bandwidth stay flat; CPU is the worker's ffmpeg pass.
