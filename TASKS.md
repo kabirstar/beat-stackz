@@ -161,3 +161,8 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: comms/blue/T009-*.md with item → route; shared + mocks updated for accepted items
       verify: pnpm -F @bpackz/shared test
       handoff: comms/brain/T009-feature-gap-check.md
+- [ ] T019 [RED] presign-only S3 client honouring S3_PUBLIC_ENDPOINT (upload/share getSignedUrl only; rest stays internal)
+      paths: backend/**  depends: T034 (done, #32)  assigned-by: BRAIN
+      deliverable: storage.presign per comms/blue/T034-public-s3-endpoint.md + one unit test; PR from red/<topic>
+      verify: pnpm -F api test; compose up → browser upload/download via localhost:9000
+      handoff: comms/brain/T019-presign-public-endpoint.md
