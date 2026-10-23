@@ -43,7 +43,7 @@ test('HTTP vault/folder/file permissions, concurrency, pagination, trash and aud
   };
   const signup = async () => {
     const response = await request('/auth/sign-up/email', '', 'POST', {
-      name: 'Vault Test', email: `${randomUUID()}@example.com`, password: randomUUID(),
+      name: 'Vault Test', email: `${randomUUID()}@example.com`, password: randomUUID(), inviteCode: 'dev',
     });
     const data = await expect(response, 200);
     userIds.push(data.user.id);

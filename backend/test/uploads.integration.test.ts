@@ -46,7 +46,7 @@ test('upload HTTP endpoints enforce ownership, integrity, recovery, dedup scope 
     return data;
   };
   const signup = async () => {
-    const response = await request('/auth/sign-up/email', '', 'POST', { name: 'Upload test', email: `${randomUUID()}@example.com`, password: randomUUID() });
+    const response = await request('/auth/sign-up/email', '', 'POST', { name: 'Upload test', email: `${randomUUID()}@example.com`, password: randomUUID(), inviteCode: 'dev' });
     const data = await expect(response, 200);
     userIds.push(data.user.id);
     const cookie = response.headers.getSetCookie().map((v) => v.split(';')[0]).join('; ');
