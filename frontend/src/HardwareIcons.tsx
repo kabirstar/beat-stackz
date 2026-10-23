@@ -102,6 +102,21 @@ export function MiniFolderSvg({ iconKey }: { iconKey: string }) {
           <circle cx="12" cy="12" r="2.5" />
         </svg>
       );
+    case "vision_board":
+      return (
+        <svg
+          className="w-4 h-4 shrink-0"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        >
+          <rect x="3" y="3" width="8" height="8" rx="1.5" />
+          <rect x="13" y="4" width="8" height="7" rx="1.5" />
+          <rect x="4" y="13" width="7" height="8" rx="1.5" />
+          <path d="M14 15h6M14 18h4" />
+        </svg>
+      );
     case "media":
     case "sub_video":
     case "sub_mv":
@@ -140,6 +155,108 @@ export function HardwareObject3D({
   code: string;
 }) {
   switch (iconKey) {
+    case "vision_board":
+      return (
+        <InHardwareBox>
+          <div
+            className="flex items-center justify-between mb-1 px-1 py-0.5 rounded-xs border border-white/10"
+            style={{
+              background: "var(--chassis-edge)",
+              transform: "translateZ(6px)",
+            }}
+          >
+            <span
+              className="mono-meta text-[5.5px] uppercase tracking-widest"
+              style={{ color: "var(--stamp-color)" }}
+            >
+              {code} · VISION
+            </span>
+            <span
+              className="w-2 h-2 rounded-full rec-dot"
+              style={{ background: "var(--accent-primary)" }}
+            />
+          </div>
+
+          <div
+            className="relative flex-1 w-full rounded-lg border border-white/15 p-1.5 overflow-visible"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(255,255,255,0.22) 1px, transparent 1px) 0 0 / 6px 6px, var(--chassis-mid)",
+              transformStyle: "preserve-3d",
+            }}
+          >
+            {/* Floating Yellow Sticky Note (Top-Left) */}
+            <div
+              className="mic-capsule-3d absolute top-1 left-1 w-8 h-8 rounded-xs p-1 flex flex-col justify-between border border-black/20"
+              style={{
+                background: "#fef08a",
+                transform: "translateZ(14px) rotateZ(-6deg)",
+                boxShadow: "-3px 5px 0 rgba(0,0,0,0.45)",
+              }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-red-600 mx-auto -mt-0.5" />
+              <div className="w-full h-0.5 bg-black/45 rounded-full" />
+              <div className="w-3/4 h-0.5 bg-black/35 rounded-full" />
+              <span className="mono-meta text-[4.5px] text-black/75 font-bold">HOOK</span>
+            </div>
+
+            {/* Floating Coral Sticky Note (Top-Right) */}
+            <div
+              className="mic-capsule-3d absolute top-1.5 right-1 w-7 h-7 rounded-xs p-1 flex flex-col justify-between border border-black/20"
+              style={{
+                background: "#fecdd3",
+                animationDelay: "-0.9s",
+                transform: "translateZ(11px) rotateZ(7deg)",
+                boxShadow: "-3px 5px 0 rgba(0,0,0,0.4)",
+              }}
+            >
+              <div className="w-full h-0.5 bg-black/45 rounded-full" />
+              <div className="w-2/3 h-0.5 bg-black/35 rounded-full" />
+              <span className="mono-meta text-[4.5px] text-black/75 font-bold">808</span>
+            </div>
+
+            {/* Pinned Song / Waveform Card (Bottom-Center) */}
+            <div
+              className=" absolute bottom-1 left-1.5 right-1.5 h-6 rounded-sm px-1.5 py-0.5 flex items-center justify-between border"
+              style={{
+                background: "var(--chassis-bg)",
+                borderColor: "var(--accent-primary)",
+                transform: "translateZ(16px)",
+                boxShadow: "-3px 5px 0 var(--chassis-edge)",
+              }}
+            >
+              <span
+                className="w-2.5 h-2.5 rounded-full flex items-center justify-center text-[5px]"
+                style={{
+                  background: "var(--accent-primary)",
+                  color: "var(--knob-ink)",
+                }}
+              >
+                ▶
+              </span>
+              <div className="flex items-end gap-0.5 h-2.5">
+                <span className="w-0.5 h-1.5 bg-white/80" />
+                <span
+                  className="w-0.5 h-2.5"
+                  style={{ background: "var(--accent-primary)" }}
+                />
+                <span className="w-0.5 h-1 bg-white/70" />
+                <span
+                  className="w-0.5 h-2"
+                  style={{ background: "var(--accent-secondary)" }}
+                />
+                <span className="w-0.5 h-1.5 bg-white/80" />
+              </div>
+              <span
+                className="mono-meta text-[4.5px]"
+                style={{ color: "var(--stamp-color)" }}
+              >
+                +3💬
+              </span>
+            </div>
+          </div>
+        </InHardwareBox>
+      );
     case "beats": {
       const padDelays = [
         0, 0.3, 0.7, 1.1, 0.5, 0.15, 0.95, 0.4, 1.3, 0.6, 0.2, 0.85, 0.45, 1.05,

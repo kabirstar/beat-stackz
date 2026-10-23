@@ -115,6 +115,13 @@ export const DEFAULT_VAULT_TAXONOMY: {
       { slug: "covers", name: "album covers", desc: "cover art & sleeves", colorSlot: 4 },
     ],
   },
+  {
+    slug: "vision_board",
+    name: "vision board",
+    desc: "notes · songs · threads",
+    colorSlot: 0,
+    subfolders: [],
+  },
 ];
 
 export function ensureVaultHasTaxonomy(store: Store, vaultId: string, creatorId: string) {

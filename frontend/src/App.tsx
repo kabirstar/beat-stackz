@@ -19,6 +19,7 @@ import {
   PublicShareLandingModal,
   ShareContextSheet,
 } from "./components/VaultModals.tsx";
+import { VisionBoardCanvas } from "./components/VisionBoardCanvas.tsx";
 import { UserAvatarBadge } from "./HardwareIcons.tsx";
 import {
   computeBlobSha256,
@@ -27,6 +28,7 @@ import {
   parseStudioFileDisplay,
 } from "./utils/format.ts";
 import {
+  createDefaultVisionBoardState,
   describeFileMeta,
   generateRandomSharedPalette,
   getOrCreateSharedVaultPalette,
@@ -40,6 +42,7 @@ import {
   type HardwareThemeSlot,
   type PersistedUiMeta,
   type TrashedFileEntry,
+  type VisionBoardVaultState,
 } from "./vaultTheme.ts";
 
 export { formatBytes, parseStudioFileDisplay };
@@ -252,11 +255,50 @@ export function App() {
     [currentSubfolders, subId],
   );
 
+  const viewingVisionBoard = useMemo(() => {
+    if (!currentRootFolder || viewingTrash) return false;
+    const meta = resolveFolderUiMeta(currentRootFolder, uiMeta.folderMeta, 0);
+    return (
+      currentRootFolder.name.trim().toLowerCase() === "vision board" ||
+      meta.iconKey === "vision_board"
+    );
+  }, [currentRootFolder, viewingTrash, uiMeta.folderMeta]);
+
   const viewingFiles = Boolean(
-    forceFilesView ||
-      (currentRootFolder && currentSubfolders.length === 0) ||
-      (currentRootFolder && currentSubFolder),
+    !viewingVisionBoard &&
+      (forceFilesView ||
+        (currentRootFolder && currentSubfolders.length === 0) ||
+        (currentRootFolder && currentSubFolder)),
   );
+
+  const activeVisionBoardState: VisionBoardVaultState = useMemo(() => {
+    const vKey = activeVaultId ?? "default";
+    return uiMeta.visionBoards?.[vKey] ?? createDefaultVisionBoardState();
+  }, [activeVaultId, uiMeta.visionBoards]);
+
+  const handleUpdateVisionBoard = useCallback(
+    (nextBoard: VisionBoardVaultState) => {
+      const vKey = activeVaultId ?? "default";
+      const nextMeta: PersistedUiMeta = {
+        ...uiMeta,
+        visionBoards: {
+          ...uiMeta.visionBoards,
+          [vKey]: nextBoard,
+        },
+      };
+      savePersistedUiMeta(nextMeta);
+      setUiMeta(nextMeta);
+    },
+    [activeVaultId, uiMeta],
+  );
+
+  const allVaultFilesFlat = useMemo(() => {
+    const out: FileItem[] = [];
+    for (const list of Object.values(filesByFolder)) {
+      for (const f of list) out.push(f);
+    }
+    return out;
+  }, [filesByFolder]);
 
   const activeFolderId = currentSubFolder?.id ?? currentRootFolder?.id ?? null;
 
@@ -539,7 +581,7 @@ export function App() {
       savePersistedUiMeta(nextMeta);
       setUiMeta(nextMeta);
 
-      for (const rName of ["beats", "presets", "vocals", "songs", "media"]) {
+      for (const rName of ["beats", "presets", "vocals", "songs", "media", "vision board"]) {
         await api.folders.create(vault.id, { name: rName, parentId: null });
       }
 
@@ -706,6 +748,28 @@ export function App() {
     if (!activeVaultId) return;
     const targetFolderId = activeFolderId ?? rootFolders[0]?.id ?? null;
 
+    const pinFileToVisionBoardIfActive = (uploadedFile: FileItem) => {
+      if (!viewingVisionBoard) return;
+      const offset = (activeVisionBoardState.fileNodes.length % 4) * 50;
+      handleUpdateVisionBoard({
+        ...activeVisionBoardState,
+        fileNodes: [
+          ...activeVisionBoardState.fileNodes,
+          {
+            id: `vb_fn_${Date.now()}`,
+            fileId: uploadedFile.id,
+            fileName: uploadedFile.name,
+            fileSize: uploadedFile.size,
+            fileMime: uploadedFile.mime,
+            addedBy: user?.name ?? "Swish",
+            x: 160 + offset,
+            y: 220 + offset,
+            comments: [],
+          },
+        ],
+      });
+    };
+
     try {
       if (files && files.length > 0) {
         let lastUploaded: FileItem | null = null;
@@ -718,12 +782,15 @@ export function App() {
             f.type || "audio/wav",
             f,
           );
+          pinFileToVisionBoardIfActive(lastUploaded);
         }
         await loadVaultContents(activeVaultId);
         showToast(
-          lastUploaded?.status === "processing"
-            ? `Uploaded ${files.length} file${files.length > 1 ? "s" : ""} · verifying integrity...`
-            : `Uploaded ${files.length} master file${files.length > 1 ? "s" : ""}`,
+          viewingVisionBoard
+            ? `Pinned "${lastUploaded?.name ?? "song"}" to Vision Board`
+            : lastUploaded?.status === "processing"
+              ? `Uploaded ${files.length} file${files.length > 1 ? "s" : ""} · verifying integrity...`
+              : `Uploaded ${files.length} master file${files.length > 1 ? "s" : ""}`,
         );
       } else {
         const sampleName = `${currentUserKey}_take_${Math.floor(100 + Math.random() * 899)}.wav`;
@@ -734,11 +801,14 @@ export function App() {
           38_400_000,
           "audio/wav",
         );
+        pinFileToVisionBoardIfActive(uploaded);
         await loadVaultContents(activeVaultId);
         showToast(
-          uploaded.status === "processing"
-            ? `Uploaded "${sampleName}" · verifying integrity...`
-            : `Uploaded "${sampleName}"`,
+          viewingVisionBoard
+            ? `Uploaded & pinned "${sampleName}" to Vision Board`
+            : uploaded.status === "processing"
+              ? `Uploaded "${sampleName}" · verifying integrity...`
+              : `Uploaded "${sampleName}"`,
         );
       }
       setPlusMenuOpen(false);
@@ -1233,7 +1303,7 @@ export function App() {
         )}
 
         {/* LEVEL 2: Spawning 3D Subfolder Studio Hardware Icons */}
-        {currentRootFolder && !viewingFiles && !viewingTrash && (
+        {currentRootFolder && !viewingFiles && !viewingVisionBoard && !viewingTrash && (
           <HardwareGridSection
             folders={visibleSubs}
             folderMetaMap={uiMeta.folderMeta}
@@ -1243,6 +1313,43 @@ export function App() {
             folderHasPlayingTrack={folderHasPlayingTrack}
             onSelectFolder={handleOpenSub}
             onCreateClick={() => setCreatingFolder(true)}
+          />
+        )}
+
+        {/* COLLAB VISION BOARD: Figma-Style Infinite Scroll Note & Song Board */}
+        {viewingVisionBoard && !viewingTrash && (
+          <VisionBoardCanvas
+            boardState={activeVisionBoardState}
+            vaultFiles={allVaultFilesFlat}
+            currentUserName={user?.name ?? "Swish"}
+            playingFileId={playingFile?.id ?? null}
+            playProgress={playProgress}
+            accentTheme={parentFolderTheme}
+            onUpdateBoard={handleUpdateVisionBoard}
+            onTogglePlayFile={(fileId, fallbackName, fallbackSize) => {
+              const found = allVaultFilesFlat.find((f) => f.id === fileId);
+              if (found) {
+                void handleTogglePlay(found);
+              } else {
+                const nowIso = new Date().toISOString();
+                void handleTogglePlay({
+                  id: fileId,
+                  vaultId: activeVaultId ?? "v_shared",
+                  folderId: currentRootFolder?.id ?? null,
+                  name: fallbackName,
+                  status: "ready",
+                  size: fallbackSize,
+                  mime: "audio/wav",
+                  sha256: "a".repeat(64),
+                  durationMs: 180_000,
+                  hasWaveform: true,
+                  createdBy: user?.id ?? "u_me",
+                  createdAt: nowIso,
+                  updatedAt: nowIso,
+                });
+              }
+            }}
+            onUploadSongToBoard={() => fileInputRef.current?.click()}
           />
         )}
 
