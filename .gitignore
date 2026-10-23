@@ -8,3 +8,6 @@ red-checkout/
 .discord_state.json
 .claude/settings.local.json
 .discord_state*.json
+.brain_dispatch.json
+brain/logs/
+__pycache__/
