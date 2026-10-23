@@ -185,3 +185,13 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: comms/blue/T009-*.md with item → route; shared + mocks updated for accepted items
       verify: pnpm -F @bpackz/shared test
       handoff: comms/brain/T009-feature-gap-check.md
+- [ ] T081 [RED] enforce invite code at signup (ADR 0003, Better Auth before-hook)
+      paths: backend/**  depends: PR #55 (shared SignUpBody)  assigned-by: BRAIN
+      deliverable: wrong code 403 / missing 400 / INVITE_CODE required in prod, optional in dev; audit auth.signup_rejected; code never stored
+      verify: pnpm -F api test; drizzle-kit check
+      handoff: comms/brain/T081-invite-code-signup-hook.md
+- [ ] T082 [YELLOW] split T026b into its own PR; vault door sends inviteCode to the API, no passcode in the bundle
+      paths: frontend/**  depends: none (split) / T081 + Coolify INVITE_CODE (door live)  assigned-by: BRAIN
+      deliverable: PR yellow/t026b (icons + sort) mergeable today; PR #45 reworked per comms/blue/T080-invite-code.md § YELLOW
+      verify: pnpm -F web typecheck && pnpm -F web test && pnpm lint && pnpm -F web build
+      handoff: comms/brain/T082-door-sends-invite-code.md
