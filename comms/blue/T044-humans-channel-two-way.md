@@ -1,7 +1,7 @@
 # [FROM: BLUE] → [TO: KABIR, BRAIN] — T044 #brain-updates is two-way for Kabir and Swish
 2026-10-23
 Status: done (PR open; Kabir restarts `brain.py` after merge)
-Commit/PR: blue/t044 → PR (see COMMS_LOG line)
+Commit/PR: blue/t044 → PR #50
 Contract changes: none
 Paths: brain/brain.py, brain/setup_updates.py, brain/README.md, .claude/agents/brain.md (prompt wording)
 
