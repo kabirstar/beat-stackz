@@ -1,0 +1,12 @@
+# Never copy host installs or local state into images (Windows pnpm junctions break Linux builds)
+**/node_modules
+**/dist
+**/.turbo
+.git
+red-checkout
+bpackz-*
+brain/logs
+.env
+*.local
+.claude
+**/__pycache__
