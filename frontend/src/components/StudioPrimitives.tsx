@@ -409,7 +409,7 @@ export function HardwareGridSection({
 
   return (
     <section
-      className="pt-8 sm:pt-10 pb-8"
+      className="pt-5 sm:pt-10 pb-6 sm:pb-8"
       onClick={(e) => {
         if (jiggleMode && e.target === e.currentTarget) {
           setJiggleMode(false);
@@ -438,7 +438,7 @@ export function HardwareGridSection({
       )}
       <div
         ref={gridRef}
-        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-8 sm:gap-x-8 sm:gap-y-12"
+        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-3.5 gap-y-6 sm:gap-x-8 sm:gap-y-12"
       >
         {folders.map((folder, idx) => {
           const meta = resolveFolderUiMeta(folder, folderMetaMap, idx, isSharedMainPage);

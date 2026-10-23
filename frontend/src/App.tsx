@@ -1362,12 +1362,23 @@ export function App() {
         onSelectProfile={() => void handleSelectProfile()}
         onSignOut={() => void handleSignOut()}
         onOpenAuthModal={() => setAuthModalOpen(true)}
+        viewingVisionBoard={viewingVisionBoard}
+        trashedCount={trashedList.length}
+        onToggleVisionBoard={() => {
+          setViewingTrash(false);
+          setVisionBoardOpen((v) => !v);
+        }}
+        onToggleTrash={() => {
+          setVisionBoardOpen(false);
+          setViewingTrash((v) => !v);
+        }}
+        onOpenPlusMenu={() => setPlusMenuOpen((o) => !o)}
       />
 
       {toast && (
         <div
           className={`fixed left-4 right-4 sm:left-auto sm:right-6 ${
-            playingFile ? "bottom-24" : "bottom-6"
+            playingFile ? "bottom-36 sm:bottom-24" : "bottom-20 sm:bottom-6"
           } z-50 px-4 py-2.5 rounded-full bg-[var(--ink)] text-[var(--bg)] mono-meta text-[11px] uppercase text-center sm:text-left shadow-xl`}
         >
           {toast}
@@ -1375,21 +1386,21 @@ export function App() {
       )}
 
       <main
-        className={`flex-1 px-4 sm:px-6 md:px-12 ${canGoBack ? "sm:pl-20" : ""} pt-6 sm:pt-10 ${
+        className={`flex-1 px-4 sm:px-6 md:px-12 ${canGoBack ? "sm:pl-20" : ""} pt-4 sm:pt-10 ${
           playingFile
-            ? "pb-[calc(7.5rem+env(safe-area-inset-bottom))]"
-            : "pb-[calc(5.5rem+env(safe-area-inset-bottom))]"
+            ? "pb-[calc(10rem+env(safe-area-inset-bottom))] sm:pb-[calc(7.5rem+env(safe-area-inset-bottom))]"
+            : "pb-[calc(6.25rem+env(safe-area-inset-bottom))] sm:pb-[calc(5.5rem+env(safe-area-inset-bottom))]"
         } max-w-6xl w-full mx-auto`}
       >
         {/* Hero Workspace Title Bar */}
-        <div className="flex items-end justify-between gap-3 pb-5 sm:pb-6 border-b border-[var(--hair)] relative">
+        <div className="flex items-end justify-between gap-3 pb-4 sm:pb-6 border-b border-[var(--hair)] relative">
           <div className="flex items-center gap-3 min-w-0">
             {canGoBack && (
               <button
                 type="button"
                 onClick={handleBack}
                 title="Back"
-                className="icon-btn shrink-0 w-10 h-10"
+                className="hidden sm:inline-flex icon-btn shrink-0 w-10 h-10"
               >
                 <StudioIcon name="back" className="w-5 h-5" />
               </button>
@@ -1460,7 +1471,7 @@ export function App() {
             </div>
           </div>
 
-          {/* Right Workspace Pure Icon Toolbar */}
+          {/* Right Workspace Pure Icon Toolbar — De-cluttered on iPhone (actions live in Bottom Thumb Dock) */}
           <div className="flex items-center gap-2 relative">
             <button
               type="button"
@@ -1469,7 +1480,7 @@ export function App() {
                 setVisionBoardOpen((v) => !v);
               }}
               title="Collab Vision Board"
-              className={`px-3 py-1.5 rounded-full border mono-meta text-[10px] uppercase tracking-wider transition-all cursor-pointer ${
+              className={`hidden sm:inline-flex px-3 py-1.5 rounded-full border mono-meta text-[10px] uppercase tracking-wider transition-all cursor-pointer ${
                 viewingVisionBoard
                   ? "bg-[var(--ink)] text-[var(--bg)] border-[var(--ink)]"
                   : "bg-[var(--card)] text-[var(--ink)] border-[var(--hair)] hover:border-[var(--ink)]"
@@ -1486,7 +1497,7 @@ export function App() {
                   window.requestAnimationFrame(() => setAnimateSpawn(true));
                 }}
                 title="Replay 3D Icon Spawn Animation"
-                className="icon-btn"
+                className="hidden sm:inline-flex icon-btn"
               >
                 <StudioIcon name="replay" />
               </button>
@@ -1519,7 +1530,7 @@ export function App() {
                 type="button"
                 onClick={() => setViewingTrash((v) => !v)}
                 title={`30-Day Trash (${trashedList.length})`}
-                className={`icon-btn relative ${viewingTrash ? "icon-btn-active" : ""}`}
+                className={`hidden sm:inline-flex icon-btn relative ${viewingTrash ? "icon-btn-active" : ""}`}
               >
                 <StudioIcon name="trash" />
                 {trashedList.length > 0 && (
@@ -1534,7 +1545,7 @@ export function App() {
               type="button"
               onClick={() => setPlusMenuOpen((o) => !o)}
               title="Add / Create..."
-              className="icon-btn icon-btn-active"
+              className="hidden sm:inline-flex icon-btn icon-btn-active"
             >
               <StudioIcon name="plus" />
             </button>

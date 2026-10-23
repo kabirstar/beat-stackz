@@ -40,7 +40,7 @@ export function PlusActionMenu({
       title: "Upload Track / Stem",
       subtitle: "Presigned S3 multipart upload",
       onClick: onUploadFile,
-      show: hasRootFolder || viewingFiles,
+      show: true,
     },
     {
       icon: "user-plus" as const,
@@ -54,7 +54,7 @@ export function PlusActionMenu({
   return (
     <>
       {onClose && <div className="fixed inset-0 z-40" onClick={onClose} />}
-      <div className="absolute right-0 top-12 z-50 w-60 rounded-2xl bg-[#e4e0d8]/95 backdrop-blur-xl border border-[var(--ink)]/20 shadow-2xl p-1.5 popover-sheet">
+      <div className="fixed left-3 right-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] sm:absolute sm:left-auto sm:right-0 sm:bottom-auto sm:top-12 z-50 sm:w-64 rounded-2xl bg-[#e4e0d8]/98 backdrop-blur-xl border border-[var(--ink)]/25 shadow-2xl p-2 sm:p-1.5 popover-sheet">
         {items
           .filter((item) => item.show)
           .map((item) => (
