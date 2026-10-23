@@ -57,6 +57,13 @@
       "when": 1792726255187,
       "tag": "0007_misty_lorna_dane",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792732826080,
+      "tag": "0008_powerful_groot",
+      "breakpoints": true
     }
   ]
 }

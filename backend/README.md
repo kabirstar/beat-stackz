@@ -284,3 +284,34 @@ Run API integration checks with `TEST_DATABASE_URL` ending in `_test`,
 `RUN_STORAGE_INTEGRATION=1` and the S3 env configured. The sharing suite provisions
 and removes its own database/bucket. See `comms/red/T017-members-shares-purge.md`
 for the current review checkpoint and test evidence.
+
+
+## Default folder taxonomy (T026a / ADR 0002)
+
+New personal and shared vaults get the shared `DEFAULT_FOLDERS` tree in the same
+transaction as vault creation: five roots and thirteen children, with stable
+`kind` slugs and the creating user as `createdBy`. One `vault.seed_folders` audit
+covers the seed operation. User-created folders keep `kind: null`; the request
+schemas never accept a kind. Rename/move/trash retain the stored kind, and reads
+never recreate defaults. Every folder response includes `kind`.
+
+Migration `0008_powerful_groot.sql` adds the nullable column and CHECK constraint,
+then backfills active vaults. Existing matching folders retain their ids, names,
+kind (null for legacy folders), timestamps and deletion state; missing children
+can be seeded under a matching live root. Trashed roots are skipped with their
+subtree. Active file name collisions are skipped too. Only newly inserted rows
+get default kinds; a changed vault receives one system backfill audit. Migration
+runs transactionally and takes write locks while checking folder/file names.
+
+Apply through `pnpm -F api db:migrate` or API container startup after review.
+To verify on Docker PostgreSQL without touching application data:
+
+```powershell
+$env:TEST_DATABASE_URL='postgres://bpackz:bpackz@localhost:5432/bpackz_test'
+node --env-file=infra/.env.example --test --test-concurrency=1 backend/test/taxonomy.integration.test.ts backend/test/migration.integration.test.ts
+```
+
+Both checks use/drop their own temporary databases. For example, rename the
+seeded `beats` folder to `Type beats` through the existing folder PATCH route;
+the response still has `kind: "beats"`. Custom folders, including client attempts
+to submit `kind`, return `kind: null`. UI icon mapping/sorting is Yellow's T026b.

@@ -4,6 +4,7 @@ import { HTTPException } from 'hono/http-exception';
 import { ApiError, Id, fileRoutes, folderRoutes, vaultRoutes } from '@bpackz/shared';
 import { and, asc, eq, gt, isNull, sql, type SQL } from 'drizzle-orm';
 import { createMemberRoutes } from './member-routes.ts';
+import { seedDefaultFolders } from './default-folders.ts';
 import { createShareRoutes } from './share-routes.ts';
 import { fileAccess } from './share-data.ts';
 import { createUploadRoutes } from './upload-routes.ts';
@@ -53,6 +54,7 @@ export function createVaultRoutes(auth: Auth, db: Database, webOrigin: string, s
     const result = await db.transaction(async (tx) => {
       const [created] = await tx.insert(vaults).values({ id: randomUUID(), kind: 'shared', name: input.name, createdBy: c.get('userId') }).returning();
       await tx.insert(vaultMembers).values({ vaultId: created.id, userId: c.get('userId'), role: 'owner' });
+      await seedDefaultFolders(tx, created.id, c.get('userId'));
       await audit(tx, c.get('userId'), created.id, 'vaults', created.id, 'vault.create');
       await audit(tx, c.get('userId'), created.id, 'vault_members', c.get('userId'), 'member.add');
       return vaultRoutes.create.response.parse(vaultOut(created, 'owner'));
