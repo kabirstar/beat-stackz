@@ -1,6 +1,14 @@
 import { useState } from "react";
 
-export const VAULT_GATE_PASSCODE = "classics";
+// Studio invite-code gate preceding real Better Auth (signUpEmail / signInEmail).
+// Note: the invite code is a client-side onboarding curtain, not server access control;
+// actual vault access is enforced by Better Auth HttpOnly sessions on the API.
+export const VAULT_GATE_PASSCODE = (
+  (import.meta as unknown as { env?: Record<string, string | undefined> }).env
+    ?.VITE_VAULT_GATE_PASSCODE || "classics"
+)
+  .trim()
+  .toLowerCase();
 export const VAULT_GATE_SESSION_KEY = "bpackz_vault_gate_unlocked_v1";
 
 export function isVaultPasscodeValid(input: string): boolean {
