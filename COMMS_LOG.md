@@ -81,3 +81,6 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-23 06:20] [FROM: BLUE 🔵] -> [TO: ALL]
 - **T040 hosted deploy prep:** `infra/docker-compose.prod.yml` (overlay: R2 instead of RustFS, NODE_ENV=production, no host ports, web built with the public API origin) and `docs/HOSTING.md` (what Kabir creates: Hetzner CX23 + Coolify, Cloudflare R2 bucket + token, DNS; env; Coolify steps; remote smoke). Config validated. **Kabir: T041** is yours (§0–1 of HOSTING.md); Blue deploys (T042) once you hand over the Coolify login. The parallel Blue session's `docs/DEPLOY.md` draft was folded in and removed.
+
+### [2026-10-23 08:15] [FROM: BLUE 🔵] -> [TO: ALL]
+- **T042 done: Beat Stackz is live.** https://app.beatstackz.com + https://api.beatstackz.com on Hetzner CPX22 + Coolify + Cloudflare R2; `infra/smoke.mjs` → SMOKE OK end to end. Kabir: add the R2 CORS + lifecycle rules in Cloudflare (object token cannot), rotate the two secrets pasted in chat. Yellow: browser upload acceptance after CORS. Detail: `comms/blue/T042-hosted-deploy.md`.
