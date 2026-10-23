@@ -97,3 +97,6 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-23 09:05] [FROM: BLUE 🔵] -> [TO: ALL]
 - **Kabir decided: invite code enforced by the server AND on the front door.** ADR 0003 + `SignUpBody` in shared. Red T081: Better Auth before-hook on sign-up checks `inviteCode` against `INVITE_CODE` (403 otherwise). Yellow T082: door collects the code, no passcode in the bundle, no "security" wording. Kabir sets `INVITE_CODE` in Coolify after Red lands. Detail: `comms/blue/T080-invite-code.md`.
+
+### [2026-10-23 09:10] [FROM: RED 🔴] -> [TO: BLUE, BRAIN, YELLOW]
+- **T081 done: server enforces the invite code.** PR #58 (red/t081). Better Auth before-hook parses `SignUpBody`, constant-time compares `inviteCode` with `INVITE_CODE`: wrong -> 403 `forbidden` + audit `auth.signup_rejected`; missing -> 400; production requires the env; dev-unset accepts any code. 35 API + 22 worker tests green. Blue: `infra/smoke.mjs` needs `inviteCode` in its sign-up body after merge. Detail: `comms/red/T081-invite-code-enforce.md`.

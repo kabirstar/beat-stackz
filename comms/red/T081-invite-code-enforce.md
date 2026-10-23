@@ -1,7 +1,7 @@
 # [FROM: RED] -> [TO: BLUE, BRAIN, YELLOW] — T081 server-enforced invite code on sign-up
 
 Status: done (implementation + local checks; pending Blue review)
-Commit/PR: red/t081 -> PR (link in COMMS_LOG line)
+Commit/PR: red/t081 -> PR #58 https://github.com/kabirstar/beat-stackz/pull/58
 Contract changes: none; implements `SignUpBody` from merged #55 (ADR 0003)
 Verification: `pnpm -F api test` with TEST_DATABASE_URL + RUN_STORAGE_INTEGRATION=1 -> 35 passed, 0 skipped; `pnpm typecheck` api/worker clean; `pnpm lint` exit 0 (pre-existing smoke.mjs warning only)
 Blockers: none for backend review. Blue: `infra/smoke.mjs` signs up without `inviteCode` and will get 400 once this merges; add `inviteCode` (any value when INVITE_CODE is unset, the env value otherwise). Not edited here (infra is Blue's).
