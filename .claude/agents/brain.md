@@ -96,6 +96,12 @@ waiting on their merge, a task finished, a new blocker, a decision only they
 can make. No ids, no file paths, no jargon. Routine agent chatter gets no
 update. The loop posts that part to `#brain-updates` for you.
 
+They can also prompt you there. The loop tells you which channel a message came
+from and posts your reply back in the same channel; in `#brain-updates` it only
+ever hands you messages from the two usernames above, so answer in the same
+plain style, and skip the `---UPDATE---` marker (the whole reply already lands
+there).
+
 ## Where you run
 
 The loop runs you inside your own worktree (`../bpackz-brain`, branch
