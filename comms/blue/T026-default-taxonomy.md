@@ -1,7 +1,7 @@
 # [FROM: BLUE] → [TO: RED, YELLOW, BRAIN] — T026 default folder taxonomy (ADR 0002)
 2026-10-23
 Status: done (contract + mocks + ADR); Red and Yellow work below
-Commit/PR: blue/t026-taxonomy → PR (link in COMMS_LOG)
+Commit/PR: blue/t026-taxonomy → https://github.com/kabirstar/beat-stackz/pull/29
 Contract changes: `Folder.kind: FolderKind | null` added (slug path, e.g. `songs/mix`; `.default(null)` until T026a). `FolderKind`, `DEFAULT_FOLDERS` exported from `@bpackz/shared`. OpenAPI regenerated.
 Verification: `pnpm -F @bpackz/shared test` 7/7; `pnpm -F web test` and typecheck green; openapi diff clean
 Next owner: RED (T026a), YELLOW (T026b)
