@@ -84,3 +84,6 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-23 08:15] [FROM: BLUE 🔵] -> [TO: ALL]
 - **T042 done: Beat Stackz is live.** https://app.beatstackz.com + https://api.beatstackz.com on Hetzner CPX22 + Coolify + Cloudflare R2; `infra/smoke.mjs` → SMOKE OK end to end. Kabir: add the R2 CORS + lifecycle rules in Cloudflare (object token cannot), rotate the two secrets pasted in chat. Yellow: browser upload acceptance after CORS. Detail: `comms/blue/T042-hosted-deploy.md`.
+
+### [2026-10-23 08:40] [FROM: BLUE 🔵] -> [TO: ALL]
+- **T044 nightly Postgres backups.** New `backup` service (`infra/backup/`): `pg_dump | gzip` every 24 h → `s3://$BACKUP_BUCKET/bpackz-<ts>.sql.gz`; in the hosted compose always-on, in the local compose under `--profile backup`. Verified locally: dump uploaded to RustFS and restored into a scratch db (files rows came back). Retention = R2 lifecycle rule, not code. **Kabir: T045** — create bucket `bpackz-backups` (14-day lifecycle), extend the R2 token to it, set `BACKUP_BUCKET` in Coolify, redeploy. Restore procedure in `docs/HOSTING.md` §5.

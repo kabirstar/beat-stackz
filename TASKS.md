@@ -34,8 +34,11 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
 
 - [x] T040 [BLUE] hosted deploy prep: infra/docker-compose.prod.yml (R2, no RustFS, HTTPS, no host ports) + docs/HOSTING.md runbook; waiting on Kabir for Hetzner/Cloudflare/domain
       paths: infra/**, docs/**  depends: #33  verify: compose -f base -f prod --profile full config
-- [ ] T041 [KABIR] create Hetzner CX23 + Coolify, Cloudflare R2 bucket + API token, domain DNS (docs/HOSTING.md §0-1); hand Blue the Coolify login
-- [ ] T042 [BLUE] first hosted deploy + remote smoke  depends: T041
+- [x] T041 [KABIR] Hetzner + Coolify, R2 bucket + token, DNS for beatstackz.com (done 2026-10-23)
+
+- [x] T044 [BLUE] nightly Postgres backups: infra/backup (pg_dump|gzip -> s3://BACKUP_BUCKET), backup service in hosted + local compose, restore tested
+      paths: infra/**, docs/**  depends: T042  verify: docker compose -f infra/docker-compose.yml --profile backup run --rm backup once
+- [ ] T045 [KABIR] create R2 bucket bpackz-backups with a 14-day lifecycle rule, extend the R2 token to it, set BACKUP_BUCKET in Coolify, redeploy (HOSTING.md §0, §5)
 
 ## RED
 - [x] Verify PC environment and clone isolated Red checkout; GitHub CLI auth works outside sandbox
