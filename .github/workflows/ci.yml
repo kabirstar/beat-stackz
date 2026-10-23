@@ -51,7 +51,11 @@ jobs:
       - run: pnpm -F @bpackz/shared build # others import its dist
       - run: pnpm typecheck
       - run: pnpm lint
-      - run: pnpm test
+      - run: pnpm -r --filter '!worker' --if-present run test # worker needs ffmpeg + audiowaveform: see below
+      - name: Worker tests (in its image, which has ffmpeg + audiowaveform)
+        run: |
+          docker build -f worker/Dockerfile --target test -t bpackz-worker:test .
+          docker run --rm --network host -e TEST_DATABASE_URL -e RUN_STORAGE_INTEGRATION -e S3_ENDPOINT -e S3_REGION -e S3_BUCKET -e S3_ACCESS_KEY -e S3_SECRET_KEY -e S3_FORCE_PATH_STYLE bpackz-worker:test
       - run: pnpm -r --if-present run db:check # drizzle-kit check in backend
       - name: OpenAPI is in sync with shared schemas
         run: |

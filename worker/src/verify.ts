@@ -6,6 +6,7 @@ import type { Database, Transaction } from '../../backend/src/db/index.ts';
 import { auditLog, blobs, files, jobs, uploads, vaults } from '../../backend/src/db/schema.ts';
 import type { Storage } from '../../backend/src/storage.ts';
 import { lockVaults, nextVersion } from '../../backend/src/vault-data.ts';
+import { startAudio, type AudioMetadata } from './audio.ts';
 
 type Job = typeof jobs.$inferSelect;
 async function auditJob(tx: Transaction, job: Job, action: string) {
@@ -38,7 +39,9 @@ export async function verifyOne(db: Database, storage: Storage, signal?: AbortSi
           return true;
         }
         const { cleanup: _cleanup, ...receipt } = job.payload;
-        await tx.update(jobs).set({ state: outcome, payload: receipt, lastError: error, attempts: job.attempts + 1 }).where(eq(jobs.id, job.id));
+        await tx.update(jobs).set({ state: receipt.audioPending ? 'queued' : outcome, payload: receipt,
+          lastError: error ?? (receipt.audioAttempts ? 'audio_analysis_failed' : null), attempts: job.attempts + 1,
+          runAfter: new Date(Date.now() + (receipt.audioPending ? 5000 * 2 ** (receipt.audioAttempts ?? 0) : 0)) }).where(eq(jobs.id, job.id));
         await auditJob(tx, job, 'job.verify_cleanup');
         return true;
       }
@@ -48,18 +51,29 @@ export async function verifyOne(db: Database, storage: Storage, signal?: AbortSi
       let digest = '';
       let size = 0;
       let failure: string | null = null;
+      let audio: AudioMetadata | null = null;
+      let audioError = false;
       try {
         const object = await client.send(new GetObjectCommand({ Bucket, Key: source.blob.s3Key }), { abortSignal: signal });
         if (!(object.Body instanceof Readable)) throw new Error('Missing object stream');
         const hash = createHash('sha256');
+        const analysis = source.blob.waveform ? null : startAudio(signal);
         try {
           for await (const chunk of object.Body) {
             signal?.throwIfAborted();
             size += chunk.length;
             if (size > source.blob.size) { failure = 'size_mismatch'; break; }
             hash.update(chunk);
+            await analysis?.write(chunk);
           }
-        } finally { object.Body.destroy(); }
+        } catch (error) {
+          analysis?.cancel();
+          throw error;
+        } finally {
+          object.Body.destroy();
+          try { audio = await analysis?.finish() ?? null; }
+          catch { signal?.throwIfAborted(); audioError = true; }
+        }
         digest = hash.digest('hex');
         if (size !== source.blob.size) failure = 'size_mismatch';
         else if (digest !== job.payload.claimedSha256) failure = 'hash_mismatch';
@@ -69,6 +83,11 @@ export async function verifyOne(db: Database, storage: Storage, signal?: AbortSi
         else { await retry(tx, job, 'storage_read_failed'); return true; }
       }
       signal?.throwIfAborted();
+      const payload = { ...job.payload };
+      if (audioError) payload.audioAttempts = (payload.audioAttempts ?? 0) + 1;
+      else delete payload.audioAttempts;
+      payload.audioPending = !failure && audioError && (payload.audioAttempts ?? 0) < 3;
+      const audioRetryAt = new Date(Date.now() + (payload.audioPending ? 5000 * 2 ** (payload.audioAttempts ?? 0) : 0));
 
       const [location] = await tx.select({ vaultId: files.vaultId }).from(files).where(eq(files.id, job.fileId));
       if (!location) throw new Error('Verification file is missing');
@@ -81,11 +100,12 @@ export async function verifyOne(db: Database, storage: Storage, signal?: AbortSi
       // A requeued receipt for an already verified file must not change references or delete its shared object.
       if (source.blob.verifiedAt) {
         if (failure || source.blob.sha256 !== digest) throw new Error('Previously verified object changed');
-        await tx.update(jobs).set({ state: 'done', attempts: job.attempts + 1, lastError: null }).where(eq(jobs.id, job.id));
+        if (audio) await tx.update(blobs).set(audio).where(and(eq(blobs.id, source.blob.id), sql`${blobs.waveform} is null`));
+        await tx.update(jobs).set({ state: payload.audioPending ? 'queued' : 'done', payload, runAfter: audioRetryAt,
+          attempts: job.attempts + 1, lastError: audioError ? 'audio_analysis_failed' : null }).where(eq(jobs.id, job.id));
         await auditJob(tx, job, 'job.verify_replayed');
         return true;
       }
-      const payload = { ...job.payload };
       let targetId = current.blobId;
       if (failure) {
         payload.cleanup = { key: source.blob.s3Key, outcome: 'failed', error: failure };
@@ -103,12 +123,14 @@ export async function verifyOne(db: Database, storage: Storage, signal?: AbortSi
           await tx.update(blobs).set({ sha256: digest, verifiedAt: new Date() }).where(eq(blobs.id, source.blob.id));
         }
       }
+      if (!failure && audio) await tx.update(blobs).set(audio).where(and(eq(blobs.id, targetId), sql`${blobs.waveform} is null`));
       // Commit the decision/cleanup receipt before deleting bytes; retries can then finish without re-hashing a deleted key.
       await tx.update(files).set({ status: failure ? 'failed' : 'ready', blobId: targetId, updatedAt: nextVersion(current.updatedAt) }).where(eq(files.id, current.id));
-      await tx.update(jobs).set({ state: payload.cleanup ? 'queued' : 'done', payload, attempts: job.attempts + 1,
-        lastError: failure, runAfter: new Date() }).where(eq(jobs.id, job.id));
+      await tx.update(jobs).set({ state: payload.cleanup || payload.audioPending ? 'queued' : 'done', payload, attempts: job.attempts + 1,
+        lastError: failure ?? (audioError ? 'audio_analysis_failed' : null), runAfter: payload.cleanup ? new Date() : audioRetryAt }).where(eq(jobs.id, job.id));
       await tx.insert(auditLog).values({ vaultId: current.vaultId, targetType: 'files', targetId: current.id,
-        action: failure ? 'file.verify_failed' : 'file.verified', meta: { jobId: String(job.id), dedup: targetId !== source.blob.id, error: failure } });
+        action: failure ? 'file.verify_failed' : 'file.verified', meta: { jobId: String(job.id), dedup: targetId !== source.blob.id,
+          error: failure, audioError, hasWaveform: !failure && Boolean(audio) } });
       return true;
     });
   } catch (error) {

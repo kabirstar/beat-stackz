@@ -2,8 +2,10 @@ import { setTimeout } from 'node:timers/promises';
 import { createDatabase } from '../../backend/src/db/index.ts';
 import { createStorage } from '../../backend/src/storage.ts';
 import { expireOne, verifyOne } from './verify.ts';
+import { checkAudioTools } from './audio.ts';
 
 if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required');
+checkAudioTools();
 const storage = createStorage();
 const db = createDatabase(process.env.DATABASE_URL);
 const stop = new AbortController();

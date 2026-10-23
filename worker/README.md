@@ -1,8 +1,10 @@
-# Upload verification worker
+# Upload verification and waveform worker
 
 Node 24 process using the existing API database/storage helpers and installed AWS
-SDK/Drizzle dependencies. No queue service, ffmpeg, waveform processing or new env
-keys. The API still never reads file bytes.
+SDK/Drizzle dependencies. Requires ffmpeg/ffprobe and BBC audiowaveform on PATH;
+the Docker image supplies FFmpeg 5.1 (Debian security updates) and audiowaveform
+1.10.2. Startup fails clearly if a tool is missing. No new env keys or queue
+service. The API still never reads file bytes.
 
 From the repository root, with the ignored `.env` already configured:
 
@@ -21,6 +23,31 @@ upload intent's saved claim. Matching bytes become `ready`, and the existing
 download route returns a five-minute signed GET. Wrong hashes, wrong sizes or
 missing objects become `failed`; the user re-uploads. No file bytes are buffered
 as a whole or written to disk.
+
+The same S3 stream feeds ffprobe and ffmpeg with backpressure while being hashed.
+ffmpeg decodes the first audio stream to mono 8 kHz signed 16-bit PCM in a pipe;
+BBC audiowaveform produces 8-bit JSON v2 at 256 samples per pixel (31.25 pairs/s).
+Original bytes are never replaced or re-encoded in storage. Only after successful
+verification do duration and peaks commit on the canonical blob, together with
+the verification audit. ffprobe supplies duration where available; otherwise the
+decoded sample count supplies it. File extension and client MIME are not trusted.
+The existing waveform route returns the shared camelCase response: 409 before
+verification, 404 without peaks, 403 for non-members, 401 without a session.
+
+Non-audio stays ready without peaks. Audio-tool errors also preserve verified
+downloads and retry the same job twice (10 s then 20 s); after three failed audio
+attempts the job is done with `last_error=audio_analysis_failed`. Receipt and refs
+remain intact. Requeue the existing verify job after fixing the tool/format, never
+insert a second one. Already-verified files without peaks can likewise be requeued;
+this release does not scan/backfill all older files. Integrity failures never save
+peaks. Late dedup retains existing canonical peaks or fills them if absent.
+
+All media subprocesses run without a shell, with only the pipe protocol enabled
+(no nested file/network URLs), one ffmpeg decoding thread, a ten-minute processing
+deadline, six-hour decoded-audio ceiling and 8 MiB JSON output cap. Reaching a limit
+leaves the original downloadable without peaks after the bounded retries. Formats
+requiring seekable input may not yield peaks; WAV, MP3 and FLAC are integration-tested.
+Shutdown kills active children and rolls back the current transaction.
 
 Each process handles one job at a time. It holds a job row with `FOR UPDATE SKIP
 LOCKED` during streaming; other processes skip that row. A killed process rolls
@@ -66,23 +93,33 @@ active S3 I/O, rolls back incomplete work, interrupts idle sleep and closes the 
 ## Verification
 
 ```powershell
-$env:TEST_DATABASE_URL = 'postgres://bpackz:bpackz@localhost:5432/bpackz_test'
-$env:RUN_STORAGE_INTEGRATION = '1'
-pnpm -F worker test
+docker build -f worker/Dockerfile --target test -t bpackz-worker:t016-test .
+docker run --rm --network infra_default --env-file infra/.env.example `
+  -e TEST_DATABASE_URL=postgres://bpackz:bpackz@postgres:5432/bpackz_test `
+  -e RUN_STORAGE_INTEGRATION=1 -e S3_ENDPOINT=http://rustfs:9000 bpackz-worker:t016-test
 pnpm -F worker typecheck
 ```
 
 The test requires a `_test` database URL and a role allowed to create databases.
-It creates/drops its own unique database and RustFS bucket. Ten checks include
+It creates/drops its own unique database and RustFS bucket. Sixteen checks include
 real HTTP signup/upload/verification/download, mismatch/missing bytes, concurrent
 dedup, database rollback after object deletion, transient failure backoff, a killed
-child worker, moves/trash during streaming, expiry, and lifecycle configuration.
+child worker, moves/trash during streaming, expiry, and lifecycle configuration;
+real WAV/MP3/FLAC peaks and duration, one S3 GET, authenticated waveform reads,
+non-audio, audio-tool failure recovery/cap, metadata rollback, cancellation and
+canonical peaks after concurrent dedup. No skips with the command above. For host
+tests, install all three tools and set the two test flags plus S3 env, then run
+`pnpm -F worker test`. The Docker test target contains test fixtures/migrations;
+the default production target does not.
 Without the two test flags it reports a skip, not a verified integration pass.
 
 ## Container
 
 ```powershell
-docker build -f worker/Dockerfile -t bpackz-worker:t015 .
+docker build -f worker/Dockerfile -t bpackz-worker:t016 .
+docker run --rm --network infra_default --env-file .env `
+  -e DATABASE_URL=postgres://bpackz:bpackz@postgres:5432/bpackz `
+  -e S3_ENDPOINT=http://rustfs:9000 bpackz-worker:t016
 ```
 
 The image runs unprivileged and copies only explicit source/package files; `.env`

@@ -156,6 +156,8 @@ export const jobs = pgTable('jobs', {
   payload: jsonb('payload').$type<{
     claimedSha256: string;
     uploadRequestHash: string;
+    audioAttempts?: number;
+    audioPending?: boolean;
     cleanup?: { key: string; outcome: 'done' | 'failed'; error: string | null };
   }>().notNull(),
 }, (table) => [
