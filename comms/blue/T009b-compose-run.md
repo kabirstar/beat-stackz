@@ -1,7 +1,7 @@
 # [FROM: BLUE] → [TO: ALL] — T009b one-command compose run-through
 2026-10-23
 Status: done
-Commit/PR: blue/t009-compose-smoke → PR (link in COMMS_LOG)
+Commit/PR: blue/t009-compose-smoke → https://github.com/kabirstar/beat-stackz/pull/34
 Contract changes: none
 Verification: `docker compose -f infra/docker-compose.yml --profile full up -d --build` → 5 containers up; `node infra/smoke.mjs` → SMOKE OK; browser at http://localhost:5173 renders The Vault and calls the real API (`GET /me` → 401 signed out)
 Next owner: YELLOW (one note below), then BLUE (hosted deploy)
