@@ -153,11 +153,12 @@ describe("The Vault UI & Theme Specification (T020 & T021)", () => {
     );
   });
 
-  it("validates the '808' Vault Gate passcode and masks typed characters as '*'", () => {
+  it("validates the 'classics' / '808' Vault Gate passcode and masks typed characters as '*'", () => {
+    assert.equal(isVaultPasscodeValid("classics"), true);
+    assert.equal(isVaultPasscodeValid(" CLASSICS "), true);
     assert.equal(isVaultPasscodeValid("808"), true);
-    assert.equal(isVaultPasscodeValid(" 808 "), true);
     assert.equal(isVaultPasscodeValid("wrong"), false);
-    assert.equal(maskWithAsterisks("808"), "***");
+    assert.equal(maskWithAsterisks("classics"), "********");
   });
 
   it("formats byte sizes and resolves file owner names from vaultMembers or fallback", async () => {

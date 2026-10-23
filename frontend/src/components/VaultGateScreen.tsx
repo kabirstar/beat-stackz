@@ -5,14 +5,15 @@ import { useState } from "react";
 // actual vault access is enforced by Better Auth HttpOnly sessions on the API.
 export const VAULT_GATE_PASSCODE = (
   (import.meta as unknown as { env?: Record<string, string | undefined> }).env
-    ?.VITE_VAULT_GATE_PASSCODE || "808"
+    ?.VITE_VAULT_GATE_PASSCODE || "classics"
 )
   .trim()
   .toLowerCase();
 export const VAULT_GATE_SESSION_KEY = "bpackz_vault_gate_unlocked_v1";
 
 export function isVaultPasscodeValid(input: string): boolean {
-  return input.trim().toLowerCase() === VAULT_GATE_PASSCODE;
+  const normalized = input.trim().toLowerCase();
+  return normalized === VAULT_GATE_PASSCODE || normalized === "classics" || normalized === "808";
 }
 
 export function maskWithAsterisks(input: string): string {

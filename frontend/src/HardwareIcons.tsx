@@ -8,10 +8,19 @@ export function UserAvatarBadge({
   byName: string;
   sizeClass?: string;
 }) {
-  const isTodo = (byName || "").toLowerCase() === "todo";
+  const clean = (byName || "Swish").trim();
+  const lower = clean.toLowerCase();
+  const isTodo = lower.includes("todo");
+  const isSwish = lower.includes("swish") || clean.length === 0;
+  const initial = isTodo ? "T" : isSwish ? "S" : clean.charAt(0).toUpperCase();
+  let hash = 0;
+  for (let i = 0; i < lower.length; i++) {
+    hash = (hash * 31 + lower.charCodeAt(i)) | 0;
+  }
+  const hue = Math.abs(hash) % 360;
   return (
     <span
-      title={`Added by ${isTodo ? "Todo" : "Swish"}`}
+      title={`Added by ${clean}`}
       className={`${sizeClass} rounded-full inline-flex items-center justify-center font-semibold shrink-0`}
       style={
         isTodo
@@ -20,14 +29,20 @@ export function UserAvatarBadge({
               color: "#fafafa",
               border: "1.5px solid #e4e4e7",
             }
-          : {
-              background: "#0b0a0c",
-              color: "#ef4444",
-              border: "1.5px solid #dc2626",
-            }
+          : isSwish
+            ? {
+                background: "#0b0a0c",
+                color: "#ef4444",
+                border: "1.5px solid #dc2626",
+              }
+            : {
+                background: `hsl(${hue}, 30%, 14%)`,
+                color: `hsl(${hue}, 85%, 72%)`,
+                border: `1.5px solid hsl(${hue}, 75%, 55%)`,
+              }
       }
     >
-      {isTodo ? "T" : "S"}
+      {initial}
     </span>
   );
 }
