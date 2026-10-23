@@ -1,79 +1,182 @@
-# [FROM: YELLOW] → [TO: BLUE, RED, BRAIN (Swish's PC Claude Agent)] — T027 Local Server Spin-Up & Cross-Device Sync Guide
+# Beat Stackz (`BPACKZ`) — Complete Context & From-Scratch Runbook for Swish's Claude Agent
 
-Status: handoff / ready to run
-Branch with latest UI (`VisionBoardCanvas` + `3D Jiggle Mode` + `PR #25` features): `origin/yellow/t025-bridge-and-autodispatch` (or `origin/main` + merge `origin/yellow/t025-bridge-and-autodispatch`)
-Target: Swish's PC (`http://localhost:5173` web + `http://localhost:4000` api + Postgres 17 + RustFS S3)
+> **Give this entire `.md` file to Swish's Claude agent on the PC.** It contains full project context, repository layout, multi-agent ownership rules, exact commands to spin up the app from scratch (Docker + Postgres 17 + RustFS S3 + Hono API + React 19 UI), cross-device sync setup, and the remaining backend tasks.
 
 ---
 
-## 1. Quick Copy-Paste Commands for Swish's Claude Agent (PC)
+## 1. What Beat Stackz (`BPACKZ`) Is
 
-Run these commands from the repo root (`BPACKZ`) on Swish's PC to pull the latest UI + backend, spin up Postgres 17 & RustFS in Docker, migrate the DB, create the S3 bucket, and launch the live website:
+**Beat Stackz ("The Vault")** is a collaborative studio file vault for artists and producers (**Swish** and **Todo / Kabir**):
+- **Private Personal Vaults**: Each user has a private studio space with their own signature 3D hardware palette:
+  - **Swish**: Stealth Matte Obsidian Black chassis with Crimson Red studio accents (`SWISH_PALETTE`).
+  - **Todo**: Architectural Chalk White & Matte Carbon Monochrome hardware (`TODO_PALETTE`).
+- **Shared Collab Vaults (`Swish × Todo`)**: Google-Drive-style co-owned vaults (`owner` / `editor` / `viewer`) with a 5-slot rainbow main screen (`SHARED_MAIN_PALETTE`) and persistent randomized HSL hardware palettes for subfolders.
+- **3D Studio Hardware Folder Taxonomy**:
+  - Instead of generic folders, every root category and subfolder renders as a **bespoke CSS 3D animated studio or rap-culture object** (`beats` MPC Drum Sampler, `presets` Synth Rotary Knobs, `vocals` Aston Spirit Condenser Mic with pop filter & shockmount, `songs` Twin Open-Reel Master Tape, `media` Cinema Camera, `vision board` 3D Studio Moodboard, plus 15 custom 3D icons like Diamond Grillz, Cuban Link Chain, Roland TR-808, Lamborghini Huracán, Goyard Trunk, Twin Turntables, etc.).
+  - **iOS-Style Hold-and-Drag Jiggle Mode**: Users can press-and-hold (or drag) any 3D folder icon to enter Jiggle Mode and rearrange their folders on the main screen or inside subfolders.
+- **Collab Vault Vision Board**:
+  - Clicking the `vision board` 3D icon opens a **Figma-style infinite pan/zoom dotted-grid canvas** (`55%`–`165%` zoom) where collaborators can drop & drag **Sticky Notes** (`Canary`, `Coral`, `Mint`, `Lavender`), pin existing vault songs or upload new songs directly onto the board, play audio inline, and leave **threaded timestamped comments** on each song card.
+- **Separated Studio Track Cards & Bottom Transport Player**:
+  - Locked typography: **Panchang Wide + Satoshi** for display/folder headings (`data-font-pair="panchang"`) and **Studio Mono** for file titles (`data-file-font="mono"`).
+  - Separated tactile cards with parent-folder color spines, `44×44px` mobile play tiles, format badges (`WAV`, `MP3`, `FXP`, `MOV`), interactive mini-waveforms, Apple/Spotify-style Share Sheet (`/s/:token` public share links + 1-tap send to Shared Vault), and 30-day soft-delete Trash recovery.
+- **Scope Rule (`AGENTS.md`)**: File vault and studio collaboration only. **No payments, no marketplace, no public catalog.**
 
+---
+
+## 2. Monorepo Stack & Team Ownership (`AGENTS.md`)
+
+| Layer | Tech Stack | Directory | Owner Agent |
+|---|---|---|---|
+| **Monorepo** | `pnpm` workspaces + Turborepo (Node >= 24) | Root | **Blue** (Claude on PC) |
+| **Shared Contract** | Zod route contracts + generated TS API client + OpenAPI | `shared/**` | **Blue** (Claude on PC) |
+| **Infra & Docs** | Docker Compose (`postgres:17`, `rustfs/rustfs`), CI, ADRs | `infra/**`, `docs/**` | **Blue** (Claude on PC) |
+| **BRAIN Loop** | Discord orchestrator (`#beat-stackz-hq`) + `.claude/agents` | `brain/**`, `comms/brain/**` | **BRAIN / Blue** (PC) |
+| **Backend API** | Hono on Node 24 (`:4000`) + Drizzle ORM + Better Auth + AWS SDK v3 S3 | `backend/**` | **Red** (Astra / Claude on PC) |
+| **Background Worker** | Upload verification (`SHA-256` / magic bytes) + `ffmpeg` / `audiowaveform` | `worker/**` | **Red** (Astra / Claude on PC) |
+| **Frontend Web App** | Vite + React 19 + TypeScript + Tailwind v4 (`:5173`) | `frontend/**` | **Yellow** (Antigravity on Mac) |
+
+### Key Architectural Rules
+1. **The API Contract is the Handoff (`shared/src/api/*.ts`)**: Every route is defined as a Zod request/response pair in `@bpackz/shared`. Backend validates with it; Frontend calls the typed `createClient()` from `@bpackz/shared`.
+2. **API Never Proxies File Bytes**: Uploads use presigned S3 multipart URLs (`64 MiB` parts, browser -> RustFS/R2 bucket). Downloads and audio streaming use 5-minute presigned S3 `GET` URLs.
+3. **Security & Audit Log**: Every file/folder route checks vault membership (`vault_members`), uses soft delete (`deleted_at` with 30-day purge), and writes an `audit_log` row in the same DB transaction.
+4. **Git Worktrees on the PC**: If Blue, Red, and BRAIN run on the same PC, each works in its own git worktree (`../bpackz-red`, `../bpackz-brain`, and root checkout for Blue) so branches never collide.
+
+---
+
+## 3. How to Run Beat Stackz From Scratch on Swish's PC
+
+### Prerequisites on Swish's PC
+1. **Git**
+2. **Node.js 24+** (`node -v` should show `v24.x.x`)
+3. **pnpm 10+** (`corepack enable && corepack prepare pnpm@10.34.7 --activate` or `npm i -g pnpm`)
+4. **Docker Desktop** (must be running for Postgres 17 + RustFS S3)
+
+---
+
+### Step-by-Step Setup (Copy & Run in Terminal)
+
+#### Step 1: Clone the Repo & Checkout the Latest Branch
+If the repo is not cloned yet:
 ```bash
-# 1. Fetch latest branches and merge Yellow's latest UI branch into main (or check it out directly)
+git clone https://github.com/kabirstar/beat-stackz.git BPACKZ
+cd BPACKZ
+```
+If the repo is already cloned on Swish's PC, pull the latest changes and merge Yellow's latest UI branch (`origin/yellow/t025-bridge-and-autodispatch`) into your working branch:
+```bash
 git fetch --all
 git checkout yellow/t025-bridge-and-autodispatch
 git pull origin yellow/t025-bridge-and-autodispatch
+```
+*(Or if on `main`: `git checkout main && git pull origin main && git merge origin/yellow/t025-bridge-and-autodispatch`)*
 
-# 2. Ensure .env exists at the repo root
+#### Step 2: Create `.env` at the Repo Root
+```bash
 cp -n infra/.env.example .env
+```
+Verify `.env` contains:
+```env
+DATABASE_URL=postgres://bpackz:bpackz@localhost:5432/bpackz
 
-# 3. Start local Postgres 17 (:5432) and RustFS S3 (:9000 / :9001) in Docker
-docker compose -f infra/docker-compose.yml up -d postgres rustfs
+S3_ENDPOINT=http://localhost:9000
+S3_REGION=us-east-1
+S3_BUCKET=bpackz
+S3_ACCESS_KEY=bpackz
+S3_SECRET_KEY=bpackz-secret
+S3_FORCE_PATH_STYLE=true
 
-# 4. Install workspace dependencies & build the @bpackz/shared contract package
-pnpm install
-pnpm -F @bpackz/shared build
+BETTER_AUTH_SECRET=change-me-32-chars-minimum-random-string
+BETTER_AUTH_URL=http://localhost:4000
 
-# 5. Run Postgres Drizzle migrations & initialize the RustFS "bpackz" S3 bucket
-pnpm -F api db:migrate
-pnpm -F api storage:setup
-
-# 6. Start the live Backend API (:4000), Worker, and Frontend Web App (:5173 in live mode)
-# Terminal A — Live API Server (Port 4000):
-pnpm -F api dev
-
-# Terminal B — Audio/Upload Worker:
-pnpm -F worker dev
-
-# Terminal C — Frontend Website connected to Live API (Port 5173):
-pnpm -F web dev:live
+WEB_ORIGIN=http://localhost:5173
+API_ORIGIN=http://localhost:4000
 ```
 
-> **Note on `dev:live` vs `dev:mock`:**
-> - `pnpm -F web dev:live` sets `VITE_MOCK=false`, which points the React app at `http://localhost:4000`, auto-signs in / registers `swish@bpackz.studio`, and auto-seeds the default 6 root 3D folders (`beats`, `presets`, `vocals`, `songs`, `media`, `vision board`) + subfolders into Postgres on first load.
-> - `pnpm -F web dev` (or `pnpm -F web dev:mock`) runs in standalone MSW mock mode (`VITE_MOCK=true`) if Docker is not running.
+#### Step 3: Start Postgres 17 (`:5432`) and RustFS S3 (`:9000` / `:9001`) in Docker
+```bash
+docker compose -f infra/docker-compose.yml up -d postgres rustfs
+```
+Wait ~5 seconds for `postgres` to report healthy (`docker compose -f infra/docker-compose.yml ps`).
+
+#### Step 4: Install Dependencies & Build `@bpackz/shared`
+```bash
+pnpm install
+pnpm -F @bpackz/shared build
+```
+
+#### Step 5: Run Postgres Database Migrations & Initialize the S3 Bucket
+```bash
+pnpm -F api db:migrate
+pnpm -F api storage:setup
+```
+
+#### Step 6: Launch the Live Stack
+Open 3 terminals (or run via background tasks):
+
+- **Terminal 1 — Backend API (`http://localhost:4000`)**:
+  ```bash
+  pnpm -F api dev
+  ```
+- **Terminal 2 — Background Upload/Audio Worker**:
+  ```bash
+  pnpm -F worker dev
+  ```
+- **Terminal 3 — Frontend Web App in Live API Mode (`http://localhost:5173`)**:
+  ```bash
+  pnpm -F web dev:live
+  ```
+  Now open **`http://localhost:5173`** in your browser!
+
+> **Want to preview the UI immediately without Docker running?**
+> Run `pnpm -F web dev:mock` (or `pnpm -F web dev`). This launches the frontend on `http://localhost:5173` backed by Mock Service Worker (`frontend/src/mocks/handlers.ts`) pre-loaded with Swish & Todo vaults, sample tracks, 3D folders, and the Vision Board.
 
 ---
 
-## 2. Do Documents & Files Save Between Both Devices If Both Run Locally?
+## 4. How Cross-Device Saving Works (Swish's PC <-> Kabir's Mac)
 
-### Short Answer
-- **If both machines run separate `localhost` servers (`localhost` on Swish's PC and `localhost` on Kabir's Mac):** **No.** Each device writes to its own isolated Docker volumes (`pgdata` for Postgres and `blobs` for RustFS) on its own hard drive. Git syncs **code**, not local database rows or S3 audio blobs.
-- **If Kabir's Mac connects to Swish's PC server over Tailscale (or LAN / Cloudflare Tunnel) — OR once deployed to Hetzner + R2:** **Yes, 100% live sync.** Because Swish's PC is already the always-on machine, both devices can share Swish's PC server with zero cloud cost right now.
+### Why Two Separate `localhost` Servers Don't Share Data Automatically
+- When Swish runs `localhost` on his PC and Kabir runs `localhost` on his Mac, each computer writes to its own local Docker volumes (`pgdata` + `blobs`). GitHub only syncs **source code**, not database rows or uploaded audio files.
 
-### How to Make Both Devices Share the Same Saved Files Right Now (Tailscale — 2 Minutes)
-1. Install **Tailscale** on Swish's PC and Kabir's Mac (same Tailnet) and note Swish's PC Tailscale IP (e.g. `100.x.y.z`).
-2. On Swish's PC, update `.env`:
+### How to Make Documents & Songs Save Across Both Devices Right Now (Tailscale — Free, 2 Mins)
+Since Swish's PC is running the local server (`postgres`, `rustfs`, `api`, `web`), both machines can share Swish's PC server over **Tailscale** (or local Wi-Fi):
+
+1. Install **Tailscale** on both Swish's PC and Kabir's Mac (signed into the same Tailnet) and copy Swish's PC Tailscale IP (e.g. `100.x.y.z`).
+2. On Swish's PC, update `.env` so presigned S3 URLs and CORS accept the Tailscale IP:
    ```env
    WEB_ORIGIN=http://100.x.y.z:5173
    API_ORIGIN=http://100.x.y.z:4000
    BETTER_AUTH_URL=http://100.x.y.z:4000
    S3_ENDPOINT=http://100.x.y.z:9000
    ```
-3. Run Vite with `--host 0.0.0.0`:
+3. Restart `pnpm -F api dev`, and start the frontend exposed on all interfaces:
    ```bash
    VITE_MOCK=false VITE_API_ORIGIN=http://100.x.y.z:4000 pnpm -F web dev:live -- --host 0.0.0.0
    ```
-4. Now both Swish (on PC) and Kabir/Todo (on Mac at `http://100.x.y.z:5173`) hit the **exact same Postgres DB and RustFS S3 bucket**, so every uploaded track, folder, shared vault, invite, and share link saves and syncs between both devices immediately.
+4. Kabir opens `http://100.x.y.z:5173` on his Mac, and Swish opens `http://100.x.y.z:5173` on his PC. Both devices now read and write to the **exact same Postgres database and RustFS S3 bucket**!
 
-### What Saves in Postgres/S3 vs. Browser `localStorage` Right Now
-| Data Type | Where It Saves (`dev:live`) | Syncs Across Devices When Sharing Server? |
-|---|---|---|
-| **Users, Vaults, Shared Vaults & Members** | Postgres (`users`, `vaults`, `vault_members`) | **Yes** |
-| **Folders & Subfolders (`beats`, `vocals`, etc.)** | Postgres (`folders`) | **Yes** |
-| **Uploaded Audio / Video / Preset Files** | RustFS S3 (`blobs`) + Postgres (`files`) | **Yes** |
-| **Public Share Links (`/s/:token`) & 30-Day Trash** | Postgres (`shares`, `files.deleted_at`) | **Yes** |
-| **Custom 3D Icon Color/Type & Jiggle Order** | Browser `localStorage` (`bpackz_the_vault_ui_meta_v2`) | Per-browser until Blue/Red add `ui_meta` column to `folders` |
-| **Vision Board Sticky Notes & Song Pins** | Browser `localStorage` (`bpackz_the_vault_vision_boards_v1`) | Per-browser until Blue/Red add `vision_board_json` to `vaults` |
+---
+
+## 5. Current Frontend Architecture (`frontend/src/`)
+
+Yellow refactored the frontend into clean, modular components with zero duplication:
+
+- `frontend/src/App.tsx`: Main state orchestrator, live API / MSW session bootstrap, default vault folder taxonomy seeding, and keyboard/navigation handlers.
+- `frontend/src/HardwareIcons.tsx`: 22 sculpted CSS 3D animated studio hardware & rap culture icons (`HardwareObject3D`, `RecordHardwareItem`, `MiniFolderSvg`).
+- `frontend/src/vaultTheme.ts`: Theme palettes (`SWISH_PALETTE`, `TODO_PALETTE`, `SHARED_MAIN_PALETTE`, `generateRandomSharedPalette`) + Vision Board state types (`VisionBoardNote`, `VisionBoardFileNode`, `VisionBoardVaultState`).
+- `frontend/src/components/StudioPrimitives.tsx`: `UserAvatarBadge`, `CollaboratorAvatarStack`, and `HardwareGridSection` (with iOS hold-and-drag 3D icon `jiggleMode` reordering).
+- `frontend/src/components/VaultHeader.tsx`: Sticky studio header, Back/Home navigation, top folder icon dock, Shared Vaults dropdown menu, search input, profile switchers (`S` / `T`), and `+` creation menu.
+- `frontend/src/components/StudioFileSection.tsx`: Separated tactile `StudioTrackCard` rows/grid, mobile subfolder pill bar, collaborator filter chips, and 30-day Trash recovery view.
+- `frontend/src/components/VaultModals.tsx`: Apple/Spotify Share & Context Sheet (`SharePopoverModal`), Collaborators & Invites modal (`MembersModal`), New 3D Folder modal (`CreateFolderModal`), and New Shared Vault modal (`CreateSharedVaultModal`).
+- `frontend/src/components/BottomTransportPlayer.tsx`: Persistent bottom audio player with live HTML5 `<audio>` streaming, interactive waveform scrubber, and loop toggle.
+- `frontend/src/components/VisionBoardCanvas.tsx`: Figma-style infinite pan/zoom dotted-grid canvas with draggable sticky notes, pinned/uploaded song cards, inline audio preview, and threaded timestamped comments.
+
+---
+
+## 6. Next Tasks for Swish's Claude Agent (Blue & Red on PC)
+
+1. **Merge `origin/yellow/t025-bridge-and-autodispatch` into `main`**:
+   - Run CI checks (`pnpm typecheck && pnpm lint && pnpm test && pnpm -F @bpackz/shared build`) and merge Yellow's branch so `main` has the Vision Board, 3D Jiggle Reordering, and live API seeding.
+2. **Persist Vision Board & Custom 3D Icon Metadata in Postgres (Optional Enhancement)**:
+   - Currently, **Vaults, Folders, Uploaded Files, Invites, Share Links, and Trash** are persisted in Postgres + RustFS S3, while **Vision Board sticky notes/pins** (`bpackz_the_vault_vision_boards_v1`) and **custom 3D icon colors/jiggle order** (`bpackz_the_vault_ui_meta_v2`) are stored in browser `localStorage`.
+   - Blue (`shared/`) + Red (`backend/`) can add a JSONB metadata field on `vaults` / `folders` so Vision Board notes and custom 3D icon layouts also sync across browsers via Postgres.
+3. **Apply `T025` Daemon Upgrade to `brain/brain.py` (`comms/yellow/T025-brain-auto-dispatch-pc.md`)**:
+   - Update `brain/brain.py` so when BRAIN outputs `→ BLUE:` or `→ RED:` delegations in `#beat-stackz-hq`, `brain.py` automatically spawns a non-interactive `claude -p --permission-mode acceptEdits` worker in Blue's or Red's worktree on the PC.
