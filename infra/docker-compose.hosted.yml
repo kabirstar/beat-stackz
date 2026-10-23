@@ -71,7 +71,7 @@ services:
       S3_REGION: ${S3_REGION:-auto}
       S3_ACCESS_KEY: ${S3_ACCESS_KEY}
       S3_SECRET_KEY: ${S3_SECRET_KEY}
-      BACKUP_BUCKET: ${BACKUP_BUCKET:?second R2 bucket for pg_dump files}
+      BACKUP_BUCKET: ${BACKUP_BUCKET:-bpackz-backups} # must exist in R2 and be covered by the token (HOSTING §0)
     depends_on: { postgres: { condition: service_healthy } }
     restart: unless-stopped
 
