@@ -129,3 +129,8 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: comms/blue/T009-*.md with item → route; shared + mocks updated for accepted items
       verify: pnpm -F @bpackz/shared test
       handoff: comms/brain/T009-feature-gap-check.md
+- [ ] T025 [BLUE] brain.py auto-spawns `claude -p` in Blue's/Red's PC worktree on `→ BLUE:` / `→ RED:`; review + merge PR #28 (bridge polls #brain-updates)
+      paths: brain/**, .claude/**; review on PR #28  depends: none  assigned-by: BRAIN (Kabir's ask, relayed by Yellow; Kabir/Swish may veto in #brain-updates)
+      deliverable: delegation lines in BRAIN's reply launch one non-interactive run per task id in ROOT or ../bpackz-red; loop survives a timeout; ensure_worktree force-resets. Yellow stays manual (Mac)
+      verify: dry run with a `→ RED: T0xx` reply starts exactly one claude -p in ../bpackz-red; a Kabir reply in #brain-updates wakes the loop
+      handoff: comms/brain/T025-brain-auto-dispatch.md
