@@ -79,6 +79,11 @@ deploy fails loudly instead of serving insecure cookies.
    for manual `docker compose -f base -f prod --profile full` runs. (Learned on
    the first deploy, 2026-10-23. `docker compose config` output cannot be
    committed instead: it bakes in absolute paths.)
+   Coolify runs compose with `--project-directory <repo root> -f infra/docker-compose.hosted.yml`,
+   so build contexts in that file are `.` (repo root), not `..`. The equivalent
+   manual command is `docker compose --project-directory . -f infra/docker-compose.hosted.yml up -d --build`.
+   Early tell for a path mistake in the deploy log: "Dockerfile not found for
+   service X at ../backend/Dockerfile, skipping ARG injection".
 3. Environment: paste section 2. Mark `BETTER_AUTH_SECRET`, `S3_SECRET_KEY`,
    `POSTGRES_PASSWORD` as secrets.
 4. Domains: `web` → `https://app.<domain>` (port 80); `api` → `https://api.<domain>` (port 4000).
