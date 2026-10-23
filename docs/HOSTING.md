@@ -13,7 +13,7 @@ the accounts and secrets below, because they are billed to and owned by him.
 | **Cloudflare account** | cloudflare.com, free plan | nothing yet |
 | **R2 bucket** `bpackz` | Cloudflare → R2 → Create bucket (location: automatic) | the account id shown on the R2 page |
 | **R2 bucket** `bpackz-backups` | same; then Settings → Object lifecycle rules → delete objects after 14 days | nothing (nightly `pg_dump` files land here, §5) |
-| **R2 API token** | R2 → Manage R2 API Tokens → Create: permission *Object Read & Write*, scoped to **both** buckets `bpackz` and `bpackz-backups` | Access Key ID + Secret Access Key (shown once) |
+| **R2 API token** | R2 → Manage R2 API Tokens → Create: permission *Object Read & Write*, scoped to **both** buckets `bpackz` and `bpackz-backups`. (Enough for the app and backups. The one-time `storage:setup` in step 3.6 needs *Admin Read & Write*; either use that, or do step 3.6 by hand in the dashboard.) | Access Key ID + Secret Access Key (shown once) |
 | **Hetzner account** | hetzner.com/cloud | nothing yet |
 | **Server** | Cloud → New project → Add server: Ubuntu 24.04, **CX23** (2 vCPU / 4 GB / 40 GB), Falkenstein or Ashburn, add your SSH key | the server's IPv4 |
 | **Coolify** | on the server: `curl -fsSL https://cdn.coollabs.io/coolify/install.sh \| bash` | Coolify URL + admin login (keep it; Blue gets a deploy key later) |
@@ -52,7 +52,8 @@ S3_BUCKET=bpackz
 S3_ACCESS_KEY=<R2 access key id>
 S3_SECRET_KEY=<R2 secret>
 S3_FORCE_PATH_STYLE=true
-# S3_PUBLIC_ENDPOINT unset: R2 presigned URLs are browser-reachable as is
+S3_PUBLIC_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com   # same as S3_ENDPOINT for R2. Coolify
+# refuses to delete a variable the compose file references, so set it explicitly rather than leaving it unset.
 
 BETTER_AUTH_SECRET=<64 hex chars: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))">
 BETTER_AUTH_URL=https://api.<domain>
@@ -78,14 +79,26 @@ deploy fails loudly instead of serving insecure cookies.
    for manual `docker compose -f base -f prod --profile full` runs. (Learned on
    the first deploy, 2026-10-23. `docker compose config` output cannot be
    committed instead: it bakes in absolute paths.)
+   Coolify runs compose with `--project-directory <repo root> -f infra/docker-compose.hosted.yml`,
+   so build contexts in that file are `.` (repo root), not `..`. The equivalent
+   manual command is `docker compose --project-directory . -f infra/docker-compose.hosted.yml up -d --build`.
+   Early tell for a path mistake in the deploy log: "Dockerfile not found for
+   service X at ../backend/Dockerfile, skipping ARG injection".
 3. Environment: paste section 2. Mark `BETTER_AUTH_SECRET`, `S3_SECRET_KEY`,
    `POSTGRES_PASSWORD` as secrets.
 4. Domains: `web` → `https://app.<domain>` (port 80); `api` → `https://api.<domain>` (port 4000).
+   Coolify also adds `www.app.<domain>` / `www.api.<domain>` entries by itself; they
+   have no DNS and only produce certificate warnings. Removing them needs the
+   Coolify admin password, so Kabir deletes them (or ignores the warnings).
    Coolify's Traefik issues Let's Encrypt certificates automatically.
 5. Deploy. The API container runs migrations at start (`db:migrate` in its CMD).
-6. One-time bucket setup (CORS for `WEB_ORIGIN`, multipart cleanup lifecycle),
-   from the Coolify terminal on the `api` container:
-   `pnpm -F api storage:setup`
+6. One-time bucket setup (CORS for `WEB_ORIGIN`, multipart cleanup lifecycle).
+   Either from the Coolify terminal on the `api` container, `pnpm -F api storage:setup`
+   (needs an *Admin Read & Write* token; an *Object Read & Write* token gets 403 on
+   GetBucketCors / PutBucketLifecycle), or by hand in Cloudflare → R2 → bucket →
+   Settings: a CORS rule allowing `PUT, GET, HEAD` from `https://app.<domain>`, all
+   headers, exposing `ETag`; and a lifecycle rule aborting incomplete multipart
+   uploads after 1 day. This is what the first deploy did (2026-10-23).
 7. Auto-deploy: enable the GitHub webhook in Coolify so every merge to `main`
    redeploys. CI already gates `main`.
 
