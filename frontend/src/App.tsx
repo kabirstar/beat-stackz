@@ -59,8 +59,8 @@ export function App() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [authName, setAuthName] = useState("");
-  const [authEmail, setAuthEmail] = useState("swish@bpackz.studio");
-  const [authPassword, setAuthPassword] = useState("password1234");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
   const [authError, setAuthError] = useState<string | null>(null);
 
   const [vaults, setVaults] = useState<Vault[]>([]);
@@ -195,17 +195,7 @@ export function App() {
     async (preferredMode?: "personal" | "shared") => {
       setAuthLoading(true);
       try {
-        let me: User;
-        try {
-          const res = await api.auth.me();
-          me = res.user;
-        } catch {
-          const signedIn = await api.auth.signInEmail({
-            email: "swish@bpackz.studio",
-            password: "password1234",
-          });
-          me = signedIn.user;
-        }
+        const { user: me } = await api.auth.me();
         setUser(me);
         const { items: myVaults } = await api.vaults.list();
         setVaults(myVaults);
@@ -239,6 +229,7 @@ export function App() {
         }
       } catch {
         setUser(null);
+        setAuthModalOpen(true);
       } finally {
         setAuthLoading(false);
       }
@@ -497,20 +488,16 @@ export function App() {
     setAnimateSpawn(spawn);
   };
 
-  const handleSelectProfile = async (targetKey: "swish" | "todo") => {
-    const email = targetKey === "todo" ? "todo@bpackz.studio" : "swish@bpackz.studio";
-    try {
-      await api.auth.signInEmail({ email, password: "password1234" });
-      resetNavigation(true);
-      await bootstrapSession("personal");
-      showToast(
-        targetKey === "todo"
-          ? "Todo's Vault · White & Black Theme"
-          : "Swish's Vault · Black & Red Theme",
-      );
-    } catch (err) {
-      if (err instanceof BpackzApiError) showToast(err.message);
+  const handleSelectProfile = async () => {
+    const personal = vaults.find((v) => v.kind === "personal") ?? vaults[0] ?? null;
+    if (!personal) {
+      setAuthModalOpen(true);
+      return;
     }
+    setActiveVaultId(personal.id);
+    resetNavigation(true);
+    await loadVaultContents(personal.id);
+    showToast(`${user?.name ?? "My"} Vault`);
   };
 
   const handleSwitchSpecificSharedVault = async (vaultId: string) => {
@@ -1148,6 +1135,15 @@ export function App() {
   const handleSignOut = async () => {
     await api.auth.signOut();
     setUser(null);
+    setVaults([]);
+    setActiveVaultId(null);
+    setRootFolders([]);
+    setSubfoldersByRoot({});
+    setFilesByFolder({});
+    setAuthName("");
+    setAuthEmail("");
+    setAuthPassword("");
+    setAuthError(null);
     setAuthModalOpen(true);
     showToast("Signed out");
   };
@@ -1226,7 +1222,7 @@ export function App() {
         }}
         onChangeNewSharedVaultName={setNewSharedVaultName}
         onCreateSharedVault={() => void handleConfirmCreateSharedVault()}
-        onSelectProfile={(key) => void handleSelectProfile(key)}
+        onSelectProfile={() => void handleSelectProfile()}
         onSignOut={() => void handleSignOut()}
         onOpenAuthModal={() => setAuthModalOpen(true)}
       />
