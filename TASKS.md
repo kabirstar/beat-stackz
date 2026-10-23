@@ -181,3 +181,8 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: comms/blue/T009-*.md with item → route; shared + mocks updated for accepted items
       verify: pnpm -F @bpackz/shared test
       handoff: comms/brain/T009-feature-gap-check.md
+- [ ] T044 [BLUE] make #brain-updates two-way: Kabir/Swish prompt BRAIN there, BRAIN replies + posts updates there
+      paths: brain/**, .claude/agents/brain.md  depends: none  assigned-by: BRAIN (asked by Swish 2026-10-23)
+      deliverable: loop polls #brain-updates too; answers only prodbylush808 / mysterious_cheetah_19465 there via the updates webhook; hq unchanged
+      verify: human message in #brain-updates → BRAIN reply in #brain-updates within a minute; agent post there → no reply
+      handoff: comms/brain/T044-humans-channel-two-way.md
