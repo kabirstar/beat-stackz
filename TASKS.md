@@ -181,3 +181,8 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: comms/blue/T009-*.md with item → route; shared + mocks updated for accepted items
       verify: pnpm -F @bpackz/shared test
       handoff: comms/brain/T009-feature-gap-check.md
+- [ ] T043 [BLUE] review Yellow's T026b + T028 on yellow/t026b-vault-gate (open the PR if Yellow hasn't; T028 'classics' gate held for Kabir/Swish decision)
+      paths: review only  depends: none  assigned-by: BRAIN
+      deliverable: GitHub review; merge T026b on green CI; T028 landing gate only after Kabir/Swish say yes
+      verify: gh pr view <n> --repo kabirstar/beat-stackz --json reviews,state shows BLUE's review
+      handoff: comms/brain/T043-review-yellow-t026b-t028.md
