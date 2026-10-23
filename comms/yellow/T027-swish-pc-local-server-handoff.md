@@ -171,12 +171,99 @@ Yellow refactored the frontend into clean, modular components with zero duplicat
 
 ---
 
-## 6. Next Tasks for Swish's Claude Agent (Blue & Red on PC)
+## 6. Discord Communication Bridge & Multi-Agent Task Setup
 
-1. **Merge `origin/yellow/t025-bridge-and-autodispatch` into `main`**:
-   - Run CI checks (`pnpm typecheck && pnpm lint && pnpm test && pnpm -F @bpackz/shared build`) and merge Yellow's branch so `main` has the Vision Board, 3D Jiggle Reordering, and live API seeding.
-2. **Persist Vision Board & Custom 3D Icon Metadata in Postgres (Optional Enhancement)**:
-   - Currently, **Vaults, Folders, Uploaded Files, Invites, Share Links, and Trash** are persisted in Postgres + RustFS S3, while **Vision Board sticky notes/pins** (`bpackz_the_vault_vision_boards_v1`) and **custom 3D icon colors/jiggle order** (`bpackz_the_vault_ui_meta_v2`) are stored in browser `localStorage`.
-   - Blue (`shared/`) + Red (`backend/`) can add a JSONB metadata field on `vaults` / `folders` so Vision Board notes and custom 3D icon layouts also sync across browsers via Postgres.
-3. **Apply `T025` Daemon Upgrade to `brain/brain.py` (`comms/yellow/T025-brain-auto-dispatch-pc.md`)**:
-   - Update `brain/brain.py` so when BRAIN outputs `→ BLUE:` or `→ RED:` delegations in `#beat-stackz-hq`, `brain.py` automatically spawns a non-interactive `claude -p --permission-mode acceptEdits` worker in Blue's or Red's worktree on the PC.
+Swish's Claude agent can directly read and post to the team's Discord channels (`#beat-stackz-hq` and `#brain-updates`), coordinate with **BRAIN**, **Yellow**, **Blue**, and **Red**, and pick up or delegate work via `TASKS.md` and `comms/`.
+
+### A. Discord Channels & Human Authority
+- **`#beat-stackz-hq`**: Main multi-agent engineering channel where humans (**Kabir/Todo** and **Swish**) and agents (**BRAIN**, **Yellow**, **Blue**, **Red**) communicate.
+- **`#brain-updates`**: Plain-English milestone channel for Kabir and Swish only (posted automatically by `brain/brain.py` whenever a reply includes `---UPDATE---`).
+- **Recognized Humans (Equal Authority)**:
+  - **Kabir (Todo / Lush)**: Discord username `prodbylush808`
+  - **Swish**: Discord username `mysterious_cheetah_19465`
+
+### B. Required Discord Keys in `.env` (Never Commit `.env`)
+Ensure the root `.env` on Swish's PC includes the Discord credentials (ask Kabir if you need the token/webhook values copied into `.env`):
+```env
+DISCORD_BOT_TOKEN=<discord-bot-token>
+DISCORD_CHANNEL_ID=<beat-stackz-hq-channel-id>
+DISCORD_WEBHOOK_URL=<beat-stackz-hq-webhook-url>
+DISCORD_UPDATES_WEBHOOK_URL=<brain-updates-webhook-url>
+```
+*(One-time helper to create `#brain-updates` + its webhook if not yet created: `py brain/setup_updates.py`)*
+
+### C. Using the 2-Way Discord Bridge (`comms/yellow/discord_bridge.py`)
+Any agent (`BLUE`, `RED`, `YELLOW`, `BRAIN`) can read or post to `#beat-stackz-hq` using `comms/yellow/discord_bridge.py`:
+
+```bash
+# 1. Read the latest messages in #beat-stackz-hq
+python3 comms/yellow/discord_bridge.py read
+
+# 2. Check only new unread messages since last poll
+python3 comms/yellow/discord_bridge.py poll
+
+# 3. Block and wait until a new message arrives for your agent (used by background loops)
+python3 comms/yellow/discord_bridge.py wait BLUE
+
+# 4. Post a message to #beat-stackz-hq as BLUE, RED, YELLOW, or BRAIN
+python3 comms/yellow/discord_bridge.py send BLUE "PR #25 merged and local server is up on :4000"
+```
+
+### D. Running the `BRAIN` Coordinator Loop on the PC (`brain/brain.py`)
+**BRAIN** (`.claude/agents/brain.md`) is the front-door orchestrator on the PC:
+- **Start the continuous Discord listener**:
+  ```bash
+  py brain/brain.py
+  ```
+- **Test a single question without waiting on Discord**:
+  ```bash
+  py brain/brain.py --once "What is everyone working on right now?"
+  ```
+- **How `brain.py` isolates its workspace**:
+  - `brain/brain.py` automatically creates and uses its own git worktree at `../bpackz-brain` on branch `brain-main` (synced to `origin/main` before every turn and copying `.env` + `.claude/settings.local.json` from the root repo).
+  - Red also runs in its own git worktree (`git worktree add ../bpackz-red red/<topic>`), while Blue uses the main checkout (`BPACKZ`), so agents on the same PC never overwrite each other's working trees.
+- **How BRAIN delegates & learns (`.claude/skills/`)**:
+  - `.claude/skills/brain-delegate/SKILL.md`: Writes `comms/brain/<task-id>-<slug>.md`, updates `## BRAIN` in `TASKS.md`, and pings the target agent in `#beat-stackz-hq`.
+  - `.claude/skills/brain-spawn-agent/SKILL.md`: Spins up purpose-built subagents under `.claude/agents/<name>.md` and records dated lessons in `.claude/skills/<name>/SKILL.md`.
+
+### E. How `TASKS.md` and `comms/` Handoffs Work
+To prevent merge conflicts across agents working in parallel:
+
+1. **`TASKS.md` (One Section Per Owner)**:
+   - Sections: `## KABIR & SWISH`, `## BLUE`, `## RED`, `## YELLOW`, `## BRAIN`.
+   - **Rule**: Only edit your own agent's section in `TASKS.md`.
+   - **Format**:
+     ```markdown
+     - [ ] T017 [RED] vault members + share links + trash purge per shared contract
+           paths: backend/**, worker/**  depends: T013
+           deliverable: vaults.members/invite/removeMember; shares.*; 30-day purge job
+           verify: pnpm -F api test
+     ```
+
+2. **`comms/<sender>/<task-id>-<slug>.md` (One Handoff File Per Task)**:
+   - **Rule**: Never edit a shared log file (`COMMS_LOG.md` is legacy/read-only to avoid git conflicts). Always create a new file inside **your own color folder** (`comms/blue/`, `comms/red/`, `comms/yellow/`, or `comms/brain/`).
+   - **Format**:
+     ```markdown
+     # [FROM: BLUE] → [TO: RED, YELLOW] — T027 Local Server & Vision Board Persistence
+     Status: done | blocked | question
+     Commit/PR: blue/vision-board-schema → PR #26
+     Contract changes: none | describe
+     Verification: `pnpm -F @bpackz/shared test` → passed
+     Blockers: none
+     Next owner: RED (implement migration)
+     ```
+   - After pushing your branch and handoff file, post a 1-line ping in `#beat-stackz-hq` via `python3 comms/yellow/discord_bridge.py send <COLOR> "<summary>"`.
+
+---
+
+## 7. Next Tasks for Swish's Claude Agent (Blue & Red on PC)
+
+1. **Merge `origin/yellow/t025-bridge-and-autodispatch` into `main` & Spin Up the Local Stack**:
+   - Run CI checks (`pnpm typecheck && pnpm lint && pnpm test && pnpm -F @bpackz/shared build`), merge Yellow's branch, and start Postgres + RustFS + API (`:4000`) + Web (`:5173`) using Section 3 above.
+2. **Review & Complete Open Backend Tasks in `TASKS.md`**:
+   - **PR #23 (`T015` [RED] Verification Worker)**: Blue review & merge Red's upload hash/magic-byte verification worker (`red/worker`).
+   - **`T017` [RED] Vault Members + Share Links + 30-Day Trash Purge**: Complete backend routes for `vaults.members`, `vaults.invite`, `vaults.removeMember`, `shares.*`, `?token=` on download/waveform, and the 30-day purge job.
+3. **Apply `T025` Auto-Dispatch Upgrade to `brain/brain.py` (`comms/yellow/T025-brain-auto-dispatch-pc.md`)**:
+   - Update `brain/brain.py` so when BRAIN outputs `→ BLUE:` or `→ RED:` delegations in `#beat-stackz-hq`, `brain.py` automatically spawns a non-interactive `claude -p --permission-mode acceptEdits` worker in Blue's (`ROOT`) or Red's (`../bpackz-red`) worktree on the PC.
+4. **Persist Vision Board & Custom 3D Icon Metadata in Postgres (Optional Enhancement)**:
+   - Add a JSONB metadata column on `vaults` / `folders` so Vision Board sticky notes/song pins (`VisionBoardVaultState`) and custom 3D icon colors/jiggle sort order (`FolderUiMeta`) sync across devices via Postgres alongside files and folders.
