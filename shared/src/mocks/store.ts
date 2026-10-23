@@ -18,6 +18,8 @@ export interface Store {
   files: FileItem[];
   shares: ShareRow[];
   uploads: UploadRow[];
+  /** Soft-deleted rows live here, not in `folders`/`files`, so every live lookup stays unchanged. */
+  trash: { folders: (Folder & { deletedAt: string })[]; files: (FileItem & { deletedAt: string })[] };
 }
 
 let seq = 0;
@@ -77,5 +79,6 @@ export function seed(): Store {
     files,
     shares: [],
     uploads: [],
+    trash: { folders: [], files: [] },
   };
 }

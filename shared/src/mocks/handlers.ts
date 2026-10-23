@@ -145,9 +145,30 @@ export function createHandlers(store: Store = seed()): HttpHandler[] {
       const denied = editor(f.vaultId);
       if (denied) return denied;
       const gone = new Set(descendants(f.id));
+      const t = now();
+      store.trash.folders.push(...store.folders.filter((x) => gone.has(x.id)).map((x) => ({ ...x, deletedAt: t })));
+      store.trash.files.push(...store.files.filter((x) => !!x.folderId && gone.has(x.folderId)).map((x) => ({ ...x, deletedAt: t })));
       store.folders = store.folders.filter((x) => !gone.has(x.id));
       store.files = store.files.filter((x) => !x.folderId || !gone.has(x.folderId));
       return { status: 204 };
+    }),
+    mock(routes.folders.restore, store, ({ params }) => {
+      const f = store.trash.folders.find((x) => x.id === params.folderId && x.vaultId === params.vaultId);
+      if (!f) return err(404, "not_found");
+      const denied = editor(f.vaultId);
+      if (denied) return denied;
+      if (f.parentId && !store.folders.some((x) => x.id === f.parentId)) return err(409, "conflict", "parent is in trash");
+      if (collides(f.vaultId, f.parentId, f.name)) return err(409, "conflict");
+      // bring back the folder plus the descendants trashed with it (same deletedAt); anything trashed earlier stays in trash
+      const kin = store.trash.folders.filter((x) => x.deletedAt === f.deletedAt);
+      const sub = (id: string): string[] => [id, ...kin.filter((x) => x.parentId === id).flatMap((x) => sub(x.id))];
+      const back = new Set(sub(f.id));
+      const withIt = (x: { deletedAt: string; folderId?: string | null; id: string }) => x.deletedAt === f.deletedAt && back.has(x.folderId ?? x.id);
+      store.folders.push(...store.trash.folders.filter((x) => back.has(x.id)).map(({ deletedAt: _d, ...x }) => x));
+      store.files.push(...store.trash.files.filter(withIt).map(({ deletedAt: _d, ...x }) => x));
+      store.trash.folders = store.trash.folders.filter((x) => !back.has(x.id));
+      store.trash.files = store.trash.files.filter((x) => !withIt(x));
+      return { body: store.folders.find((x) => x.id === f.id) };
     }),
 
     mock(routes.files.listChildren, store, ({ params, query }) => {
@@ -187,7 +208,33 @@ export function createHandlers(store: Store = seed()): HttpHandler[] {
       const denied = editor(f.vaultId);
       if (denied) return denied;
       store.files = store.files.filter((x) => x !== f);
+      store.trash.files.push({ ...f, deletedAt: now() });
       return { status: 204 };
+    }),
+    mock(routes.files.listTrash, store, ({ params }) => {
+      const denied = member(params.vaultId!);
+      if (denied) return denied;
+      const live = (parentId: string | null) => !parentId || store.folders.some((x) => x.id === parentId);
+      const newest = (a: { deletedAt: string }, b: { deletedAt: string }) => b.deletedAt.localeCompare(a.deletedAt);
+      return {
+        body: {
+          folders: store.trash.folders.filter((f) => f.vaultId === params.vaultId && live(f.parentId)).sort(newest),
+          files: store.trash.files.filter((f) => f.vaultId === params.vaultId && live(f.folderId)).sort(newest),
+          nextCursor: null,
+        },
+      };
+    }),
+    mock(routes.files.restore, store, ({ params }) => {
+      const f = store.trash.files.find((x) => x.id === params.fileId && x.vaultId === params.vaultId);
+      if (!f) return err(404, "not_found");
+      const denied = editor(f.vaultId);
+      if (denied) return denied;
+      if (f.folderId && !store.folders.some((x) => x.id === f.folderId)) return err(409, "conflict", "parent is in trash");
+      if (collides(f.vaultId, f.folderId, f.name)) return err(409, "conflict");
+      const { deletedAt: _d, ...file } = f;
+      store.files.push(file);
+      store.trash.files = store.trash.files.filter((x) => x !== f);
+      return { body: file };
     }),
     mock(routes.files.downloadUrl, store, ({ params, query }) => {
       const f = store.files.find((x) => x.id === params.fileId && x.vaultId === params.vaultId);

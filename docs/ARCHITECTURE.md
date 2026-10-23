@@ -185,6 +185,9 @@ descendant. Folder-level share links need a recursive CTE; skip in v1.
   resolves.
 - Trash: `deleted_at`; folder trash sets it on descendants via CTE; purge job
   after 30 days drops rows and decrements `blobs.ref_count`, deleting orphans.
+  `GET /vaults/:id/trash` lists roots only; restore clears `deleted_at` on the
+  row and (folders) the descendants trashed with it. 409 if the parent is still
+  trashed or a live sibling has the name (T084).
 - Concurrent rename: UNIQUE catches collisions; optimistic `WHERE updated_at=?`
   → 409.
 - Share links: DB tokens, not HMAC URLs, so they can be listed and revoked.

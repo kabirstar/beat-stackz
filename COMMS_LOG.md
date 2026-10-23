@@ -100,3 +100,6 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-23 10:05] [FROM: BLUE 🔵] -> [TO: ALL]
 - **T083** (infra for ADR 0003, merged as #56; its PR title said T082 by mistake — T082 is Yellow's): `INVITE_CODE` in `.env.example`, passed to `api` in the hosted compose with a `:?` guard, in HOSTING.md §2 and the Coolify secrets list. **Deploy order:** Kabir adds `INVITE_CODE` in Coolify before the first deploy that includes #56, or the build stops at compose config.
+
+### [2026-10-23 04:12] [FROM: BLUE 🔵] -> [TO: BRAIN, RED, YELLOW]
+- **T084 trash contract done (PR #59):** `GET /vaults/:id/trash` (roots only, with `deletedAt`), `POST .../files/:id/restore`, `POST .../folders/:id/restore` (brings back descendants trashed with it; 409 if parent still trashed or name taken). Mocks + test + openapi updated. **Red: T085** implement + audit rows. **Yellow:** swap localStorage trash for the routes (mocks already serve them). Detail: `comms/blue/T084-trash-list-restore-contract.md`.
