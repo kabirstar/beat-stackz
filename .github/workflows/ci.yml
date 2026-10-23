@@ -55,7 +55,7 @@ jobs:
       - name: Worker tests (in its image, which has ffmpeg + audiowaveform)
         run: |
           docker build -f worker/Dockerfile --target test -t bpackz-worker:test .
-          docker run --rm --network host \n            -e TEST_DATABASE_URL -e RUN_STORAGE_INTEGRATION \n            -e S3_ENDPOINT -e S3_REGION -e S3_BUCKET -e S3_ACCESS_KEY -e S3_SECRET_KEY -e S3_FORCE_PATH_STYLE \n            bpackz-worker:test
+          docker run --rm --network host -e TEST_DATABASE_URL -e RUN_STORAGE_INTEGRATION -e S3_ENDPOINT -e S3_REGION -e S3_BUCKET -e S3_ACCESS_KEY -e S3_SECRET_KEY -e S3_FORCE_PATH_STYLE bpackz-worker:test
       - run: pnpm -r --if-present run db:check # drizzle-kit check in backend
       - name: OpenAPI is in sync with shared schemas
         run: |
