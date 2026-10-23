@@ -98,6 +98,7 @@ export const folders = pgTable('folders', {
 }, (table) => [
   uniqueIndex('folders_active_name_idx').on(table.vaultId, sql`coalesce(${table.parentId}, '')`, table.name).where(sql`${table.deletedAt} is null`),
   index('folders_parent_idx').on(table.vaultId, table.parentId),
+  index('folders_deleted_idx').on(table.deletedAt).where(sql`${table.deletedAt} is not null`),
 ]);
 
 export const blobs = pgTable('blobs', {
@@ -110,7 +111,7 @@ export const blobs = pgTable('blobs', {
   durationMs: integer('duration_ms'),
   waveform: jsonb('waveform'),
   refCount: integer('ref_count').notNull().default(0),
-});
+}, (table) => [index('blobs_orphan_idx').on(table.id).where(sql`${table.refCount} = 0`)]);
 
 export const files = pgTable('files', {
   id: text('id').primaryKey(),
@@ -126,6 +127,7 @@ export const files = pgTable('files', {
 }, (table) => [
   uniqueIndex('files_active_name_idx').on(table.vaultId, sql`coalesce(${table.folderId}, '')`, table.name).where(sql`${table.deletedAt} is null`),
   index('files_folder_idx').on(table.vaultId, table.folderId, table.id),
+  index('files_deleted_idx').on(table.deletedAt).where(sql`${table.deletedAt} is not null`),
   check('files_status_check', sql`${table.status} in ('processing', 'ready', 'failed')`),
 ]);
 
@@ -164,4 +166,21 @@ export const jobs = pgTable('jobs', {
   check('jobs_state_check', sql`${table.state} in ('queued', 'running', 'done', 'failed')`),
   uniqueIndex('jobs_file_kind_idx').on(table.fileId, table.kind),
   index('jobs_pending_idx').on(table.state, table.runAfter),
+]);
+
+export const shares = pgTable('shares', {
+  id: text('id').primaryKey(),
+  fileId: text('file_id').notNull().references(() => files.id, { onDelete: 'cascade' }),
+  granteeUserId: text('grantee_user_id').references(() => users.id, { onDelete: 'cascade' }),
+  tokenHash: text('token_hash').unique(),
+  role: text('role').notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  createdBy: text('created_by').notNull().references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  revokedAt: timestamp('revoked_at', { withTimezone: true }),
+}, (table) => [
+  index('shares_file_idx').on(table.fileId),
+  check('shares_role_check', sql`${table.role} in ('view', 'edit')`),
+  check('shares_grant_check', sql`(${table.granteeUserId} is null) <> (${table.tokenHash} is null)`),
+  check('shares_link_role_check', sql`${table.tokenHash} is null or ${table.role} = 'view'`),
 ]);

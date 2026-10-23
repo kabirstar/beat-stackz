@@ -43,6 +43,20 @@
       "when": 1792633826791,
       "tag": "0005_upload-integrity",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792726172177,
+      "tag": "0006_wet_wild_pack",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792726255187,
+      "tag": "0007_misty_lorna_dane",
+      "breakpoints": true
     }
   ]
 }

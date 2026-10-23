@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { Hono } from 'hono';
+import { fileAccess } from './share-data.ts';
 import { bodyLimit } from 'hono/body-limit';
 import { fileRoutes, uploadRoutes, PART_SIZE, type Body } from '@bpackz/shared';
 import { and, eq, isNotNull, isNull, sql } from 'drizzle-orm';
@@ -57,7 +58,7 @@ export function createUploadRoutes(db: Database, storage: Storage) {
           .innerJoin(files, and(eq(files.blobId, blobs.id), eq(files.status, 'ready'), isNull(files.deletedAt)))
           .innerJoin(vaultMembers, and(eq(vaultMembers.vaultId, files.vaultId), eq(vaultMembers.userId, c.get('userId'))))
           .innerJoin(vaults, and(eq(vaults.id, files.vaultId), isNull(vaults.deletedAt)))
-          .where(and(eq(blobs.sha256, input.sha256), isNotNull(blobs.verifiedAt))).limit(1);
+          .where(and(eq(blobs.sha256, input.sha256), isNotNull(blobs.verifiedAt))).limit(1).for('update', { of: blobs });
         const id = randomUUID();
         if (existing) {
           if (existing.blob.size !== input.size) fail(409, 'Size does not match verified content');
@@ -196,26 +197,26 @@ export function createUploadRoutes(db: Database, storage: Storage) {
     const { vaultId, fileId } = parse(fileRoutes.downloadUrl.params, c.req.param());
     const query = parse(fileRoutes.downloadUrl.query, c.req.query());
     const result = await db.transaction(async (tx) => {
-      await member(tx, vaultId, c.get('userId'));
-      const current = await file(tx, vaultId, fileId);
+      const { current, expiresAt } = await fileAccess(tx, vaultId, fileId, c.get('userId'), false, query.token);
       if (current.status !== 'ready') fail(409, 'File verification is not complete');
       const [blob] = await tx.select({ key: blobs.s3Key, verifiedAt: blobs.verifiedAt }).from(blobs)
         .innerJoin(files, eq(files.blobId, blobs.id)).where(eq(files.id, fileId));
       if (!blob.verifiedAt) fail(409, 'File verification is not complete');
+      const expiresIn = expiresAt ? Math.min(TTL_SECONDS, Math.floor((expiresAt.getTime() - Date.now()) / 1000)) : TTL_SECONDS;
+      if (expiresIn < 1) fail(404, 'Share expired');
       const filename = encodeURIComponent(current.name).replace(/['()*]/g, (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`);
       const url = await getSignedUrl(client, new GetObjectCommand({ Bucket, Key: blob.key,
-        ResponseContentDisposition: `${query.disposition}; filename*=UTF-8''${filename}` }), { expiresIn: TTL_SECONDS });
-      await audit(tx, c.get('userId'), vaultId, 'files', fileId, 'file.download');
-      return fileRoutes.downloadUrl.response.parse({ url, expiresAt: new Date(Date.now() + TTL_SECONDS * 1000).toISOString() });
+        ResponseContentDisposition: `${query.disposition}; filename*=UTF-8''${filename}` }), { expiresIn });
+      await audit(tx, c.get('userId') || null, vaultId, 'files', fileId, 'file.download');
+      return fileRoutes.downloadUrl.response.parse({ url, expiresAt: new Date(Date.now() + expiresIn * 1000).toISOString() });
     });
     return c.json(result);
   });
   app.get('/:vaultId/files/:fileId/waveform', async (c) => {
     const { vaultId, fileId } = parse(fileRoutes.waveform.params, c.req.param());
-    parse(fileRoutes.waveform.query, c.req.query());
+    const query = parse(fileRoutes.waveform.query, c.req.query());
     const result = await db.transaction(async (tx) => {
-      await member(tx, vaultId, c.get('userId'));
-      const current = await file(tx, vaultId, fileId);
+      const { current } = await fileAccess(tx, vaultId, fileId, c.get('userId'), false, query.token);
       if (current.status !== 'ready') fail(409, 'File verification is not complete');
       const [blob] = await tx.select({ waveform: blobs.waveform, verifiedAt: blobs.verifiedAt }).from(blobs)
         .innerJoin(files, eq(files.blobId, blobs.id)).where(eq(files.id, fileId));

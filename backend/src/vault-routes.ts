@@ -3,6 +3,9 @@ import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { ApiError, Id, fileRoutes, folderRoutes, vaultRoutes } from '@bpackz/shared';
 import { and, asc, eq, gt, isNull, sql, type SQL } from 'drizzle-orm';
+import { createMemberRoutes } from './member-routes.ts';
+import { createShareRoutes } from './share-routes.ts';
+import { fileAccess } from './share-data.ts';
 import { createUploadRoutes } from './upload-routes.ts';
 import type { Storage } from './storage.ts';
 import { fail, parse, body, atParent, folderOut, vaultOut, fileSelection, fileOut, nextVersion, lockVaults, member, folder, file, availableName, audit, subtree } from './vault-data.ts';
@@ -26,7 +29,13 @@ export function createVaultRoutes(auth: Auth, db: Database, webOrigin: string, s
       if ((origin && origin !== webOrigin) || (!origin && context.req.header('Sec-Fetch-Site') === 'cross-site')) fail(403, 'Untrusted origin');
     }
     const session = await auth.api.getSession({ headers: context.req.raw.headers });
-    if (!session) fail(401, 'Sign in required');
+    const tokenRead = context.req.method === 'GET' && /^\/vaults\/[^/]+\/files\/[^/]+\/(?:download|waveform)$/.test(context.req.path) && context.req.query('token') !== undefined;
+    if (!session) {
+      if (!tokenRead) fail(401, 'Sign in required');
+      context.set('userId', '');
+      await next();
+      return;
+    }
     const [active] = await db.select({ id: users.id }).from(users).where(and(eq(users.id, session.user.id), isNull(users.deletedAt)));
     if (!active) fail(403, 'Account unavailable');
     context.set('userId', active.id);
@@ -165,8 +174,8 @@ export function createVaultRoutes(auth: Auth, db: Database, webOrigin: string, s
   app.get('/:vaultId/files/:fileId', async (c) => {
     const { vaultId, fileId } = parse(fileRoutes.get.params, c.req.param());
     const result = await db.transaction(async (tx) => {
-      await member(tx, vaultId, c.get('userId'));
-      return fileRoutes.get.response.parse(fileOut(await file(tx, vaultId, fileId)));
+      const access = await fileAccess(tx, vaultId, fileId, c.get('userId'));
+      return fileRoutes.get.response.parse(fileOut(access.current));
     });
     return c.json(result);
   });
@@ -176,9 +185,10 @@ export function createVaultRoutes(auth: Auth, db: Database, webOrigin: string, s
     const result = await db.transaction(async (tx) => {
       const destination = input.toVaultId ?? vaultId;
       await lockVaults(tx, [vaultId, destination]);
-      await member(tx, vaultId, c.get('userId'), true);
+      const access = await fileAccess(tx, vaultId, fileId, c.get('userId'), true);
+      if (input.folderId !== undefined || input.toVaultId !== undefined) await member(tx, vaultId, c.get('userId'), true);
       if (destination !== vaultId) await member(tx, destination, c.get('userId'), true);
-      const current = await file(tx, vaultId, fileId);
+      const current = access.current;
       if (current.updatedAt.getTime() !== Date.parse(input.ifUpdatedAt)) fail(409, 'File changed; refresh before retrying');
       const folderId = input.folderId === undefined ? (input.toVaultId ? null : current.folderId) : input.folderId;
       if (folderId !== null) await folder(tx, destination, folderId);
@@ -195,13 +205,14 @@ export function createVaultRoutes(auth: Auth, db: Database, webOrigin: string, s
     const { vaultId, fileId } = parse(fileRoutes.trash.params, c.req.param());
     await db.transaction(async (tx) => {
       await lockVaults(tx, [vaultId]);
-      await member(tx, vaultId, c.get('userId'), true);
-      const current = await file(tx, vaultId, fileId);
+      const { current } = await fileAccess(tx, vaultId, fileId, c.get('userId'), true);
       await tx.update(files).set({ deletedAt: new Date(), updatedAt: nextVersion(current.updatedAt) }).where(eq(files.id, fileId));
       await audit(tx, c.get('userId'), vaultId, 'files', fileId, 'file.trash');
     });
     return c.body(null, 204);
   });
+  app.route('/', createMemberRoutes(db));
+  app.route('/', createShareRoutes(db, webOrigin));
   if (storage) app.route('/', createUploadRoutes(db, storage));
   return app;
 }

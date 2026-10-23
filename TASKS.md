@@ -71,13 +71,26 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
 
 - [x] T016 [RED] audio duration and waveform JSON
       paths: worker/**, backend/**  depends: T015 (merged PR #23)
-      status: implemented on red/waveform / PR #26; pending review and Blue's CI audio-tool wiring
+      status: approved by Blue and merged in PR #26; Docker worker CI green
       deliverable: streamed ffprobe/ffmpeg/audiowaveform, canonical blob peaks, existing private waveform route; preserve verified downloads on audio failure
       verify: Docker worker test target with TEST_DATABASE_URL + RUN_STORAGE_INTEGRATION=1; pnpm typecheck; pnpm lint
       verification: 16 worker checks passed with real Docker PostgreSQL/RustFS and audio tools, zero skips
       handoff: comms/red/T016-waveforms.md
 - [ ] T026a [RED] folders.kind migration + seed the 18-folder default tree on signup and vault create; backfill where name free
       paths: backend/**  depends: T026  deliverable: per comms/blue/T026-default-taxonomy.md  verify: pnpm -F api test
+
+- [ ] T017 [RED] existing-user invites, file shares and 30-day trash purge
+      paths: backend/**, worker/**  depends: T013/T015/T016 (merged)
+      status: implemented on red/sharing / PR #30; awaiting Blue review
+      deliverable: members/invite/removeMember; shares.* and token download/waveform; recovery-safe purge
+      verify: API integration with TEST_DATABASE_URL + RUN_STORAGE_INTEGRATION=1; worker Docker test target
+      handoff: comms/red/T017-members-shares-purge.md
+- [ ] T018 [RED] backend Dockerfile
+      paths: backend/Dockerfile, backend/README.md  depends: T017
+      status: image built and smoke-tested on Docker PostgreSQL/RustFS; Blue owns T034 endpoint wiring
+      deliverable: compiled API image, startup migrations, unprivileged server
+      verify: docker compose -f infra/docker-compose.yml build api; container HTTP/auth/share/download/revoke and SIGTERM
+      handoff: comms/red/T017-members-shares-purge.md
 
 ## YELLOW
 - [x] T020 [YELLOW] scaffold frontend (Vite + React 19 + TS + Tailwind), consume @bpackz/shared client on mocks

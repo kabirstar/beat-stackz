@@ -73,7 +73,7 @@ export async function availableName(tx: Transaction, vaultId: string, parentId: 
     ne(files.id, exceptId), isNull(files.deletedAt))).limit(1);
   if (existingFolder || existingFile) fail(409, 'Name already exists in this folder');
 }
-export async function audit(tx: Transaction, actorId: string, vaultId: string, targetType: string, targetId: string, action: string) {
+export async function audit(tx: Transaction, actorId: string | null, vaultId: string, targetType: string, targetId: string, action: string) {
   await tx.insert(auditLog).values({ actorId, vaultId, targetType, targetId, action });
 }
 export const subtree = (vaultId: string, folderId: string) => sql`
