@@ -1,4 +1,5 @@
 import { sql } from 'drizzle-orm';
+import type { FolderKind } from '@bpackz/shared';
 import { bigint, boolean, check, index, integer, jsonb, pgTable, primaryKey, text, timestamp, uniqueIndex, type AnyPgColumn } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
@@ -92,6 +93,7 @@ export const folders = pgTable('folders', {
   vaultId: text('vault_id').notNull().references(() => vaults.id, { onDelete: 'cascade' }),
   parentId: text('parent_id').references((): AnyPgColumn => folders.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
+  kind: text('kind').$type<FolderKind>(),
   createdBy: text('created_by').references(() => users.id),
   updatedAt: timestamp('updated_at', { withTimezone: true, precision: 3 }).notNull().defaultNow(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
@@ -99,6 +101,12 @@ export const folders = pgTable('folders', {
   uniqueIndex('folders_active_name_idx').on(table.vaultId, sql`coalesce(${table.parentId}, '')`, table.name).where(sql`${table.deletedAt} is null`),
   index('folders_parent_idx').on(table.vaultId, table.parentId),
   index('folders_deleted_idx').on(table.deletedAt).where(sql`${table.deletedAt} is not null`),
+  check('folders_kind_check', sql`${table.kind} in (
+    'beats', 'presets', 'presets/plugin', 'presets/vocals',
+    'vocals', 'vocals/main', 'vocals/adlib', 'vocals/bg',
+    'songs', 'songs/demo', 'songs/mix', 'songs/drop',
+    'media', 'media/photos', 'media/videos', 'media/mv', 'media/bts', 'media/covers'
+  )`),
 ]);
 
 export const blobs = pgTable('blobs', {

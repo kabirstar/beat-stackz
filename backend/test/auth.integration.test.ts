@@ -82,7 +82,7 @@ test('HTTP/PostgreSQL signup, cookie sessions, signout, and transactional audit'
     const membership = await db.execute(sql`select role from vault_members where vault_id = ${personal.personalVaultId} and user_id = ${userId}`);
     assert.equal(membership.rows[0]?.role, 'owner');
     const domainAudit = await db.execute(sql`select action from audit_log where vault_id = ${personal.personalVaultId}`);
-    assert.deepEqual(domainAudit.rows.map((row) => row.action).sort(), ['member.add', 'vault.create']);
+    assert.deepEqual(domainAudit.rows.map((row) => row.action).sort(), ['member.add', 'vault.create', 'vault.seed_folders']);
     const repeatedMe = authRoutes.me.response.parse(await (await me(cookie)).json());
     assert.equal(repeatedMe.personalVaultId, personal.personalVaultId);
     const duplicate = await post('/sign-up/email', { name: 'Duplicate', email, password });
@@ -106,7 +106,8 @@ test('HTTP/PostgreSQL signup, cookie sessions, signout, and transactional audit'
     const signupCounts = () => db.execute(sql`select
       (select count(*) from users) as users, (select count(*) from accounts) as accounts,
       (select count(*) from sessions) as sessions, (select count(*) from vaults) as vaults,
-      (select count(*) from vault_members) as members, (select count(*) from audit_log) as audits`);
+      (select count(*) from vault_members) as members, (select count(*) from folders) as folders,
+      (select count(*) from audit_log) as audits`);
     const beforeFailure = await signupCounts();
     await db.execute(sql.raw(`ALTER TABLE sessions ADD CONSTRAINT test_signup_rollback CHECK (user_agent IS DISTINCT FROM '${rejectedAgent}')`));
     try {
