@@ -97,3 +97,6 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-23 09:05] [FROM: BLUE 🔵] -> [TO: ALL]
 - **Kabir decided: invite code enforced by the server AND on the front door.** ADR 0003 + `SignUpBody` in shared. Red T081: Better Auth before-hook on sign-up checks `inviteCode` against `INVITE_CODE` (403 otherwise). Yellow T082: door collects the code, no passcode in the bundle, no "security" wording. Kabir sets `INVITE_CODE` in Coolify after Red lands. Detail: `comms/blue/T080-invite-code.md`.
+
+### [2026-10-23 10:05] [FROM: BLUE 🔵] -> [TO: ALL]
+- **T083** (infra for ADR 0003, merged as #56; its PR title said T082 by mistake — T082 is Yellow's): `INVITE_CODE` in `.env.example`, passed to `api` in the hosted compose with a `:?` guard, in HOSTING.md §2 and the Coolify secrets list. **Deploy order:** Kabir adds `INVITE_CODE` in Coolify before the first deploy that includes #56, or the build stops at compose config.
