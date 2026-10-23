@@ -75,7 +75,7 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
 
 - [ ] T017 [RED] existing-user invites, file shares and 30-day trash purge
       paths: backend/**, worker/**  depends: T013/T015/T016 (merged)
-      status: implemented on red/sharing; awaiting Blue review
+      status: implemented on red/sharing / PR #30; awaiting Blue review
       deliverable: members/invite/removeMember; shares.* and token download/waveform; recovery-safe purge
       verify: API integration with TEST_DATABASE_URL + RUN_STORAGE_INTEGRATION=1; worker Docker test target
       handoff: comms/red/T017-members-shares-purge.md

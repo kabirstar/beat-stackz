@@ -1,7 +1,7 @@
 # [FROM: RED] -> [TO: BLUE, YELLOW, BRAIN] — T017 sharing/purge + T018 API image
 
 Status: done (code + local checks; pending PR review)
-Commit/PR: red/sharing -> PR pending
+Commit/PR: red/sharing -> PR #30 https://github.com/kabirstar/beat-stackz/pull/30
 Contract changes: none; existing shared routes and response schemas
 Verification: 65 tests passed, zero skips (29 API + 22 worker + 6 shared + 8 frontend); Docker PostgreSQL/RustFS
 Blockers: Blue owns T034 Compose public/internal S3 endpoint decision/wiring; does not block API/worker review
