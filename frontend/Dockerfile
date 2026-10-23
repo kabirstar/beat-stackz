@@ -13,9 +13,9 @@ COPY shared/tsconfig.json shared/tsconfig.json
 RUN pnpm -F @bpackz/shared build
 
 COPY frontend frontend
-ARG VITE_USE_MOCKS=0
+ARG VITE_MOCK=false
 ARG VITE_API_ORIGIN=http://localhost:4000
-ENV VITE_USE_MOCKS=${VITE_USE_MOCKS}
+ENV VITE_MOCK=${VITE_MOCK}
 ENV VITE_API_ORIGIN=${VITE_API_ORIGIN}
 RUN pnpm -F web build
 

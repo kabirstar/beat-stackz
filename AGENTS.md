@@ -137,10 +137,21 @@ blocked on Red.
 
 ## Local setup (any machine)
 
-Prereqs: Node 24, pnpm, Docker Desktop, ffmpeg (worker only). Python not needed.
+Prereqs: Node 24, pnpm, Docker Desktop, ffmpeg (worker only, dev mode). Python not needed.
+
+One command, everything in containers (T009):
 
 ```bash
-cp infra/.env.example .env
+cp infra/.env.example .env            # then replace BETTER_AUTH_SECRET with 32+ random chars
+docker compose -f infra/docker-compose.yml --profile full up -d --build
+node infra/smoke.mjs                  # signup → upload → worker verify → download → share → trash
+```
+
+Web http://localhost:5173, API http://localhost:4000, bucket console http://localhost:9001.
+
+Dev mode (hot reload, services only in Docker):
+
+```bash
 docker compose -f infra/docker-compose.yml up -d postgres rustfs
 pnpm install
 pnpm -F api db:migrate
