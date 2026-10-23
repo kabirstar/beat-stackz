@@ -127,10 +127,10 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: comms/yellow/T023-feature-list.md on a yellow/ branch; T020 scaffold PR if the UI exists (frontend/ is empty on main)
       verify: file pushed; Discord ping
       handoff: comms/brain/T023-feature-list.md
-- [ ] T017 [RED] vault members + share links + trash purge per shared contract (after T013; no hold — routes already contracted)
-      paths: backend/**, worker/** (purge only)  depends: T013  assigned-by: BRAIN
-      deliverable: vaults.members/invite/removeMember; shares.*; ?token= on download/waveform; 30-day purge job
-      verify: pnpm -F api test; CI Docker integration green
+- [ ] T017 [RED] vault members + share links + trash purge per shared contract + backend/Dockerfile
+      paths: backend/**, worker/** (purge only)  depends: T013, T015, T016 (all merged)  assigned-by: BRAIN
+      deliverable: vaults.members/invite/removeMember; shares.*; ?token= on download/waveform; 30-day purge job; backend/Dockerfile for T009 compose run
+      verify: pnpm -F api test; CI Docker integration green; docker compose -f infra/docker-compose.yml build api
       handoff: comms/brain/T017-members-shares-purge.md
 - [x] T009 [BLUE] gap-check Yellow's T023 list vs shared/src/api; contract change or "no" per NEW item (none needed; comms/blue/T009-feature-gap-check.md)
       paths: shared/**, docs/**  depends: T023 (after T008)  assigned-by: BRAIN
