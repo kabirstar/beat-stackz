@@ -17,10 +17,10 @@ test('configuration rejects missing credentials, example secrets, and unsafe pro
   assert.throws(() => readConfig({ ...environment, BETTER_AUTH_SECRET: 'change-me-32-chars-minimum-random-string' }));
   assert.throws(() => readConfig({ ...environment, WEB_ORIGIN: 'https://web.example/path' }));
   assert.throws(() => readConfig({ ...environment, NODE_ENV: 'production' }));
-  assert.doesNotThrow(() => readConfig({
-    ...environment, NODE_ENV: 'production',
-    BETTER_AUTH_URL: 'https://api.example', WEB_ORIGIN: 'https://web.example',
-  }));
+  const production = { ...environment, NODE_ENV: 'production', BETTER_AUTH_URL: 'https://api.example', WEB_ORIGIN: 'https://web.example' };
+  assert.throws(() => readConfig(production), /INVITE_CODE/, 'production requires an invite code (ADR 0003)');
+  assert.doesNotThrow(() => readConfig({ ...production, INVITE_CODE: 'letmein' }));
+  assert.equal(readConfig(environment).inviteCode, undefined, 'development may leave the invite code unset');
 });
 
 test('real Better Auth handler validates requests before opening a database connection', async () => {
@@ -39,9 +39,16 @@ test('real Better Auth handler validates requests before opening a database conn
     });
     assert.equal(malformed.status, 400);
 
+    const withoutCode = await request('/auth/sign-up/email', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Origin: config.webOrigin },
+      body: JSON.stringify({ name: 'Test', email: 'test@example.com', password: 'valid-test-password' }),
+    });
+    assert.equal(withoutCode.status, 400, 'inviteCode is required by SignUpBody even when INVITE_CODE is unset');
+    assert.equal(ApiError.parse(await withoutCode.json()).error, 'invalid');
+
     const untrusted = await request('/auth/sign-up/email', {
       method: 'POST', headers: { 'Content-Type': 'application/json', Origin: 'https://untrusted.example' },
-      body: JSON.stringify({ name: 'Test', email: 'test@example.com', password: 'valid-test-password' }),
+      body: JSON.stringify({ name: 'Test', email: 'test@example.com', password: 'valid-test-password', inviteCode: 'any' }),
     });
     assert.equal(untrusted.status, 403);
     assert.equal(untrusted.headers.get('Access-Control-Allow-Origin'), null);

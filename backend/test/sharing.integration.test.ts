@@ -48,7 +48,7 @@ test('HTTP membership and share capabilities with PostgreSQL/RustFS', {
   };
   const signup = async () => {
     const email = `${randomUUID()}@example.com`;
-    const response = await request('/auth/sign-up/email', '', 'POST', { name: 'Share test', email, password: randomUUID() });
+    const response = await request('/auth/sign-up/email', '', 'POST', { name: 'Share test', email, password: randomUUID(), inviteCode: 'dev' });
     await expect(response, 200);
     const cookie = response.headers.getSetCookie().map((v) => v.split(';')[0]).join('; ');
     const me = authRoutes.me.response.parse(await expect(await request('/me', cookie), 200));

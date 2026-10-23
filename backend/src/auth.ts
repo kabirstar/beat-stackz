@@ -1,12 +1,18 @@
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { betterAuth } from 'better-auth/minimal';
+import { APIError, createAuthMiddleware } from 'better-auth/api';
 import type { BetterAuthOptions } from 'better-auth';
-import { Id } from '@bpackz/shared';
+import { Id, SignUpBody } from '@bpackz/shared';
 import { DrizzleQueryError } from 'drizzle-orm';
 import { drizzleAdapter } from '@better-auth/drizzle-adapter';
 import type { Config } from './config.ts';
 import type { Database } from './db/index.ts';
 import * as schema from './db/schema.ts';
 import { createPersonalVault } from './personal-vault.ts';
+
+// Hashing first makes the compare constant-time regardless of length difference.
+const digest = (value: string) => createHash('sha256').update(value).digest();
+const sameSecret = (given: string, expected: string) => timingSafeEqual(digest(given), digest(expected));
 
 export function createAuth(db: Database, config: Config) {
   return betterAuth({
@@ -46,6 +52,20 @@ export function createAuth(db: Database, config: Config) {
     secret: config.secret,
     trustedOrigins: [config.webOrigin],
     emailAndPassword: { enabled: true },
+    hooks: {
+      // ADR 0003: the server decides who may sign up. The code is checked here and dropped; it is never stored.
+      before: createAuthMiddleware(async (ctx) => {
+        if (ctx.path !== '/sign-up/email') return;
+        const parsed = SignUpBody.safeParse(ctx.body);
+        if (!parsed.success) throw new APIError('BAD_REQUEST', { error: 'invalid', message: 'Invalid sign-up body' });
+        if (config.inviteCode && !sameSecret(parsed.data.inviteCode, config.inviteCode)) {
+          await db.insert(schema.auditLog).values({ action: 'auth.signup_rejected' });
+          throw new APIError('FORBIDDEN', { error: 'forbidden', message: 'Invite code not recognized' });
+        }
+        const { inviteCode: _dropped, ...body } = ctx.body as Record<string, unknown>;
+        return { context: { body } };
+      }),
+    },
   });
 }
 
