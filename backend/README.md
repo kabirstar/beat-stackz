@@ -190,9 +190,10 @@ The worker aborts stale intents and removes their rows. The bucket lifecycle
 rule installed by storage:setup also aborts orphan multipart uploads after one
 day. Start the worker process explicitly; the API does not run jobs itself.
 
-Download/waveform currently require vault-member sessions. Share-token access
-will arrive with the sharing slice. Metadata/list responses expose status and
-nullable sha256 from the updated shared contract.
+Download/waveform accept vault-member sessions, active direct grants or a valid
+file-specific link token (T017). Metadata/list responses expose status and nullable
+sha256 from the shared contract. Anonymous tokens authorize only download/waveform,
+not vault lists or mutations.
 
 Run the disposable local RustFS check from the repository root (PowerShell):
 
@@ -233,3 +234,45 @@ S3 read; the existing waveform endpoint serves these to vault members. Non-audio
 or unsuccessful waveform processing does not block verified downloads. No
 database migration is required for T015/T016. See worker/README.md for Docker
 commands, processing limits and retry behavior.
+
+
+## Members, share links and API container (T017/T018)
+
+Owners add existing users to shared vaults by email as editor/viewer. Unknown or
+deleted accounts return 404; duplicates return 409. There is no invitation email
+or signup token. Personal vault membership stays private. Members may leave;
+owners may remove members, with the active last-owner check serialized under the
+vault lock. Uploaded files stay in the vault after a member leaves.
+
+Vault editors create/revoke file shares; all members may list active shares. Link
+shares are view-only: 32 random bytes, SHA-256 stored in PostgreSQL, raw URL returned
+once. Direct shares require an existing account; view permits file reads and edit
+also permits file rename/trash, without granting folder/vault/move/upload rights.
+Shares follow the file across vault moves. Expired/revoked links and trashed files
+cannot be resolved or used for new signed URLs. Previously minted S3 URLs remain
+valid until their own expiry (at most five minutes, capped by share expiry).
+Dedup short-circuit remains vault-member-only per ADR 0001; a share is not a hash
+shortcut. All mutations and downloads are audited in the same transaction.
+
+`backend/Dockerfile` installs the existing workspace dependencies, builds shared
+and the API, runs migrations on startup, then execs the compiled server as uid 1000.
+It copies explicit inputs only; no `.env` is embedded. Build from the repository root:
+
+```powershell
+docker compose -f infra/docker-compose.yml build api
+# Or: docker build -f backend/Dockerfile -t bpackz-api:t017 .
+docker run --rm --network infra_default --env-file .env `
+  -e DATABASE_URL=postgres://bpackz:bpackz@postgres:5432/bpackz `
+  -e S3_ENDPOINT=http://rustfs:9000 -p 4000:4000 bpackz-api:t017
+```
+
+The command above proves server-to-storage connectivity; its presigned URLs use
+`rustfs`, which a host browser cannot resolve. Blue owns the Compose environment
+and the public/internal endpoint decision (T034). Full browser Compose acceptance
+must wait for that wiring; do not change `.env` to an internal hostname for a
+host-run API. `WEB_ORIGIN` and `BETTER_AUTH_URL` remain browser-facing origins.
+
+Run API integration checks with `TEST_DATABASE_URL` ending in `_test`,
+`RUN_STORAGE_INTEGRATION=1` and the S3 env configured. The sharing suite provisions
+and removes its own database/bucket. See `comms/red/T017-members-shares-purge.md`
+for the current review checkpoint and test evidence.

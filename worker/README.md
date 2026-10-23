@@ -60,16 +60,16 @@ After hashing, the worker locks the file's current vault before changing file
 metadata. Moved/trashed files retain their location and deletion state. A
 transaction advisory lock on the verified hash serializes simultaneous first
 uploads. Late dedup only occurs after proving possession of matching bytes;
-reference counts change once. Zero-reference superseded blob rows remain for the
-future purge pass, with their redundant S3 objects removed.
+reference counts change once. T017 reclaims zero-reference superseded blob rows; their redundant S3 objects
+may already have been removed by verification cleanup.
 
 File/blob/job/audit changes commit together. Cleanup uses an optional internal
 `jobs.payload.cleanup` receipt before deleting bytes. On a later pass, deletion
 is idempotent and the same job row becomes `done`/`failed`. A crash after S3 delete
 but before SQL commit therefore retries cleanup without re-hashing a missing
 object. The original `claimedSha256` and `uploadRequestHash` remain intact for
-upload-completion replay. Do not delete completed jobs or insert a second verify
-row for a file; `(file_id, kind)` is unique.
+upload-completion replay. Keep completed jobs until the file itself is hard-purged after 30 days of trash;
+do not insert a second verify row for a file; `(file_id, kind)` is unique.
 
 Storage/transaction failures requeue the existing row with sanitized `last_error`
 and exponential backoff from 5 seconds to 5 minutes. Persistent failures remain
@@ -83,8 +83,9 @@ safe to retry. `storage:setup` installs an independent one-day bucket lifecycle
 abort rule for incomplete `blobs/` multipart uploads, preserving other owners'
 rules. This also covers a crash between S3 creation and storing its intent.
 
-When idle the process sleeps 5 seconds: two SELECTs plus transaction BEGIN/COMMIT
-per poll, no S3 calls. Baseline without a worker is zero polling; budget with one
+When idle the process sleeps 5 seconds: verification/expiry use two SELECTs plus
+transaction BEGIN/COMMIT per poll, no S3 calls. T017 adds one empty purge check per
+minute (three indexed SELECTs plus BEGIN/COMMIT, five extra SQL statements/minute). Baseline without a worker is zero polling; budget with one
 worker is at most 12 idle poll pairs/minute (72 SQL statements/minute). The local
 Docker database microbenchmark measured about 2.9 ms per empty poll pair; that is
 not an end-to-end throughput or production load measurement. SIGINT/SIGTERM aborts
@@ -101,13 +102,15 @@ pnpm -F worker typecheck
 ```
 
 The test requires a `_test` database URL and a role allowed to create databases.
-It creates/drops its own unique database and RustFS bucket. Sixteen checks include
+It creates/drops its own unique database and RustFS bucket. Twenty-two checks include
 real HTTP signup/upload/verification/download, mismatch/missing bytes, concurrent
 dedup, database rollback after object deletion, transient failure backoff, a killed
 child worker, moves/trash during streaming, expiry, and lifecycle configuration;
 real WAV/MP3/FLAC peaks and duration, one S3 GET, authenticated waveform reads,
 non-audio, audio-tool failure recovery/cap, metadata rollback, cancellation and
-canonical peaks after concurrent dedup. No skips with the command above. For host
+canonical peaks after concurrent dedup; 30-day retention, shared references,
+leaf-first folder purge, rollback after S3 deletion, concurrent purgers, active-job
+locks and abort recovery. No skips with the command above. For host
 tests, install all three tools and set the two test flags plus S3 env, then run
 `pnpm -F worker test`. The Docker test target contains test fixtures/migrations;
 the default production target does not.
@@ -128,3 +131,26 @@ is not baked in. Blue owns full Compose wiring. Inside the Compose network,
 host-run API/presigns still need a browser-reachable S3 endpoint. The existing
 `worker` Compose service can reference this Dockerfile with those environment
 overrides. Full-stack browser acceptance and hosted R2 are not covered by these tests.
+
+
+## Trash purge (T017)
+
+The existing loop calls `purgeOne` without a new service or timer. With no backlog,
+it checks once per minute; with backlog it removes at most one item per loop,
+after verification and expiry. Files trashed for at least 30 days are hard-deleted,
+releasing exactly one blob reference. File shares and completed upload receipts
+are retained until that hard delete, then cascade with audit entries. An active
+verification job is skipped rather than reversing its job-then-vault lock order.
+
+Folders are removed leaf-first only after the same retention period and only if
+no folders, files or upload intents still point at them. This avoids cascading
+away a live/recent descendant. Zero-reference blobs are locked and checked for
+actual file references before S3 deletion; the row itself remains the retry
+receipt if storage fails or SQL rolls back after deletion. Repeated object deletes
+are idempotent. API dedup locks the source blob before attaching a new reference.
+
+The empty purge microbenchmark in the worker Docker suite measured 2.40 ms per
+check against local Docker PostgreSQL, versus no purge work before T017. This is
+a small idle database measurement, not application throughput or load testing.
+Purge covers file/folder trash and orphan blobs; user/vault account deletion is
+not exposed by the current API and is not added here.

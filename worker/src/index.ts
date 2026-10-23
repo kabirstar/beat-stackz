@@ -3,6 +3,7 @@ import { createDatabase } from '../../backend/src/db/index.ts';
 import { createStorage } from '../../backend/src/storage.ts';
 import { expireOne, verifyOne } from './verify.ts';
 import { checkAudioTools } from './audio.ts';
+import { purgeOne } from './purge.ts';
 
 if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required');
 checkAudioTools();
@@ -13,12 +14,18 @@ const shutdown = () => stop.abort();
 process.once('SIGINT', shutdown);
 process.once('SIGTERM', shutdown);
 console.log('Verification worker started');
+let nextPurgeAt = 0;
 try {
   while (!stop.signal.aborted) {
     let worked = false;
     try {
       worked = await verifyOne(db, storage, stop.signal);
       worked = await expireOne(db, storage, stop.signal) || worked;
+      if (Date.now() >= nextPurgeAt) {
+        const purged = await purgeOne(db, storage, stop.signal);
+        nextPurgeAt = Date.now() + (purged ? 0 : 60_000);
+        worked = purged || worked;
+      }
     } catch {
       if (stop.signal.aborted) break;
       console.error('Worker operation failed; retrying in five seconds');

@@ -1,3 +1,5 @@
+import { HTTPException } from 'hono/http-exception';
+import { createShareLanding } from './share-routes.ts';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { ApiError, authRoutes } from '@bpackz/shared';
@@ -15,6 +17,7 @@ export function createApp(webOrigin = 'http://localhost:5173', auth?: Auth, db?:
   }
 
   const app = new Hono();
+  app.onError((error, context) => error instanceof HTTPException ? error.getResponse() : context.text('Internal server error', 500));
   app.use('*', cors({ origin: webOrigin, credentials: true }));
   // Liveness only: database and storage readiness belong to their integration tasks.
   app.get('/health', (context) => context.json({ status: 'ok' }));
@@ -33,6 +36,7 @@ export function createApp(webOrigin = 'http://localhost:5173', auth?: Auth, db?:
       personalVaultId: personal.vaultId,
     }));
   });
+  if (auth && db) app.route('/', createShareLanding(db));
   if (auth && db) app.route('/vaults', createVaultRoutes(auth, db, webOrigin, storage));
   app.notFound((context) => context.json(ApiError.parse({
     error: 'not_found', message: 'Route not found',
