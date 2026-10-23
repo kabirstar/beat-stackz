@@ -34,12 +34,26 @@ body[data-font-pair="zodiak"] {
 
 body {
   margin: 0;
-  min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--bg);
   color: var(--ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  padding-top: env(safe-area-inset-top);
+}
+
+@media (max-width: 639px), (pointer: coarse) {
+  .icon-btn {
+    width: 42px;
+    height: 42px;
+  }
+
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
 }
 
 .paper-grain {
@@ -506,3 +520,66 @@ body[data-file-font="mono"] {
   animation: lamboCruise 2.4s ease-in-out infinite;
   transform-style: preserve-3d;
 }
+
+@keyframes iosJiggle {
+  0% {
+    transform: rotate(-1.6deg) translate3d(-0.5px, 0.5px, 0);
+  }
+  25% {
+    transform: rotate(0deg) translate3d(0px, -0.8px, 0);
+  }
+  50% {
+    transform: rotate(1.6deg) translate3d(0.5px, 0.5px, 0);
+  }
+  75% {
+    transform: rotate(0deg) translate3d(0px, 0.6px, 0);
+  }
+  100% {
+    transform: rotate(-1.6deg) translate3d(-0.5px, 0.5px, 0);
+  }
+}
+
+.jiggle-mode-card {
+  animation: iosJiggle 0.28s ease-in-out infinite;
+  animation-delay: var(--jiggle-delay, 0ms);
+  cursor: grab !important;
+}
+
+.jiggle-mode-card:active {
+  cursor: grabbing !important;
+}
+
+.jiggle-dragging-card {
+  transform: scale(1.08) translateY(-6px) !important;
+  opacity: 0.92;
+  z-index: 30;
+  filter: drop-shadow(0 18px 28px rgba(22, 19, 43, 0.22));
+  cursor: grabbing !important;
+}
+
+@keyframes vaultGearSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes vaultWheelSlowSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(-360deg);
+  }
+}
+
+.vault-gear-slow-spin {
+  animation: vaultGearSpin 36s linear infinite;
+}
+
+.vault-wheel-slow-spin {
+  animation: vaultWheelSlowSpin 24s linear infinite;
+}
+

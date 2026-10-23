@@ -8,10 +8,19 @@ export function UserAvatarBadge({
   byName: string;
   sizeClass?: string;
 }) {
-  const isTodo = (byName || "").toLowerCase() === "todo";
+  const clean = (byName || "Swish").trim();
+  const lower = clean.toLowerCase();
+  const isTodo = lower.includes("todo");
+  const isSwish = lower.includes("swish") || clean.length === 0;
+  const initial = isTodo ? "T" : isSwish ? "S" : clean.charAt(0).toUpperCase();
+  let hash = 0;
+  for (let i = 0; i < lower.length; i++) {
+    hash = (hash * 31 + lower.charCodeAt(i)) | 0;
+  }
+  const hue = Math.abs(hash) % 360;
   return (
     <span
-      title={`Added by ${isTodo ? "Todo" : "Swish"}`}
+      title={`Added by ${clean}`}
       className={`${sizeClass} rounded-full inline-flex items-center justify-center font-semibold shrink-0`}
       style={
         isTodo
@@ -20,14 +29,20 @@ export function UserAvatarBadge({
               color: "#fafafa",
               border: "1.5px solid #e4e4e7",
             }
-          : {
-              background: "#0b0a0c",
-              color: "#ef4444",
-              border: "1.5px solid #dc2626",
-            }
+          : isSwish
+            ? {
+                background: "#0b0a0c",
+                color: "#ef4444",
+                border: "1.5px solid #dc2626",
+              }
+            : {
+                background: `hsl(${hue}, 30%, 14%)`,
+                color: `hsl(${hue}, 85%, 72%)`,
+                border: `1.5px solid hsl(${hue}, 75%, 55%)`,
+              }
       }
     >
-      {isTodo ? "T" : "S"}
+      {initial}
     </span>
   );
 }
@@ -102,6 +117,20 @@ export function MiniFolderSvg({ iconKey }: { iconKey: string }) {
           <circle cx="12" cy="12" r="2.5" />
         </svg>
       );
+    case "vision_board":
+      return (
+        <svg
+          className="w-4 h-4 shrink-0"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        >
+          <rect x="4" y="4" width="16" height="17" rx="2" />
+          <path d="M8 2v4M12 2v4M16 2v4" strokeLinecap="round" />
+          <path d="M8 10h8M8 14h8M8 18h5" strokeLinecap="round" />
+        </svg>
+      );
     case "media":
     case "sub_video":
     case "sub_mv":
@@ -140,6 +169,185 @@ export function HardwareObject3D({
   code: string;
 }) {
   switch (iconKey) {
+    case "vision_board":
+      return (
+        <div
+          className="w-full h-full flex items-center justify-center relative"
+          style={{ transformStyle: "preserve-3d" }}
+        >
+          {/* Heavy Cardboard Backing Slab of the Legal Pad */}
+          <div
+            className="w-[78%] h-[88%] rounded-xl absolute"
+            style={{
+              background: "linear-gradient(145deg, #451a03 0%, #1c1917 100%)",
+              border: "2px solid rgba(255,255,255,0.18)",
+              transform: "translateZ(-6px) translate(-4px, 5px)",
+              boxShadow: "-8px 12px 22px rgba(0,0,0,0.65)",
+            }}
+          />
+
+          {/* Stacked Paper Edge Thickness */}
+          <div
+            className="w-[78%] h-[86%] rounded-lg absolute"
+            style={{
+              background:
+                "repeating-linear-gradient(180deg, #fde047 0px, #fde047 2px, #ca8a04 2px, #ca8a04 3px)",
+              border: "1.5px solid #854d0e",
+              transform: "translateZ(0px) translate(-2px, 3px)",
+              boxShadow: "-5px 7px 0 #422006",
+            }}
+          />
+
+          {/* Main Ruled Yellow Studio Legal Notepad Sheet */}
+          <div
+            className="w-[78%] h-[86%] rounded-lg relative flex flex-col overflow-visible"
+            style={{
+              background:
+                "linear-gradient(180deg, #fef9c3 0%, #fef08a 60%, #fde047 100%)",
+              border: "1.5px solid #a16207",
+              transform: "translateZ(7px)",
+              transformStyle: "preserve-3d",
+              boxShadow:
+                "-4px 6px 0 #713f12, 0 10px 20px rgba(0,0,0,0.45), inset 0 1px 2px rgba(255,255,255,0.85)",
+            }}
+          >
+            {/* 6 Chrome Wire-O Spiral Binding Rings Across Top Edge */}
+            <div
+              className="absolute -top-2 left-2 right-2 flex items-center justify-between z-30 px-1"
+              style={{ transform: "translateZ(8px)" }}
+            >
+              {[0, 1, 2, 3, 4, 5].map((rIdx) => (
+                <div key={rIdx} className="flex flex-col items-center">
+                  <div
+                    className="w-2 h-3.5 rounded-full"
+                    style={{
+                      background:
+                        "linear-gradient(90deg, #18181b 0%, #ffffff 45%, #52525b 85%, #09090b 100%)",
+                      boxShadow: "0 2px 3px rgba(0,0,0,0.75)",
+                      border: "0.5px solid rgba(255,255,255,0.6)",
+                    }}
+                  />
+                  <div className="w-1.5 h-1 rounded-full bg-stone-900 -mt-0.5" />
+                </div>
+              ))}
+            </div>
+
+            {/* Stitched Burgundy/Obsidian Notepad Header Strip */}
+            <div
+              className="w-full h-5 rounded-t-[6px] px-2 pt-1 flex items-center justify-between border-b-2 border-[#7f1d1d]"
+              style={{
+                background:
+                  "linear-gradient(180deg, #27272a 0%, #09090b 65%, #450a0a 100%)",
+              }}
+            >
+              <span className="mono-meta text-[5px] uppercase tracking-[0.2em] text-amber-200/90 font-bold">
+                {code} · NOTEPAD
+              </span>
+              <span
+                className="w-1.5 h-1.5 rounded-full rec-dot"
+                style={{
+                  background: "var(--accent-primary)",
+                  boxShadow: "0 0 6px var(--accent-primary)",
+                }}
+              />
+            </div>
+
+            {/* Ruled Notepad Body with Red Vertical Margin & Blue Horizontal Lines */}
+            <div
+              className="relative flex-1 w-full px-2.5 py-1.5 flex flex-col justify-between overflow-visible"
+              style={{
+                backgroundImage:
+                  "repeating-linear-gradient(180deg, transparent 0px, transparent 9px, rgba(59, 130, 246, 0.28) 9px, rgba(59, 130, 246, 0.28) 10px)",
+              }}
+            >
+              {/* Double Red Vertical Margin Line on Left */}
+              <div className="pointer-events-none absolute top-0 bottom-0 left-3.5 w-[1.5px] bg-red-500/45" />
+              <div className="pointer-events-none absolute top-0 bottom-0 left-[17px] w-[0.5px] bg-red-500/30" />
+
+              {/* Handwritten Hook / Lyric Lines */}
+              <div className="pl-3 pt-0.5 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="mono-meta text-[5.5px] font-bold tracking-wider text-stone-900 uppercase">
+                    HOOK V2 · 142 BPM
+                  </span>
+                  <span className="px-1 py-0.2 rounded-xs bg-red-600 text-white mono-meta text-[4.5px] font-bold">
+                    808
+                  </span>
+                </div>
+                <div className="w-[88%] h-1 rounded-full bg-stone-800/75" />
+                <div className="w-[70%] h-1 rounded-full bg-stone-800/60" />
+                <div className="w-[82%] h-1 rounded-full bg-stone-800/50" />
+              </div>
+
+              {/* Pinned Coral Sticky Note Tab Sticking Out on Right */}
+              <div
+                className="mic-capsule-3d absolute top-5 -right-2.5 w-8 h-7 rounded-xs p-1 flex flex-col justify-between border border-rose-900/30"
+                style={{
+                  background: "linear-gradient(135deg, #fecdd3 0%, #fda4af 100%)",
+                  transform: "translateZ(10px) rotateZ(8deg)",
+                  boxShadow: "-3px 5px 8px rgba(0,0,0,0.4)",
+                }}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-red-600 mx-auto -mt-0.5" />
+                <div className="w-full h-0.5 bg-rose-950/55 rounded-full" />
+                <span className="mono-meta text-[4.5px] text-rose-950 font-bold">
+                  VERSE
+                </span>
+              </div>
+
+              {/* Bottom Pinned Audio Stem Sticker on the Notepad */}
+              <div
+                className="w-full h-5 rounded-sm px-1.5 flex items-center justify-between border border-stone-900/30"
+                style={{
+                  background: "#18181b",
+                  transform: "translateZ(8px)",
+                  boxShadow: "-2px 4px 6px rgba(0,0,0,0.45)",
+                }}
+              >
+                <span
+                  className="w-2.5 h-2.5 rounded-full flex items-center justify-center text-[5px]"
+                  style={{
+                    background: "var(--accent-primary)",
+                    color: "#ffffff",
+                  }}
+                >
+                  ▶
+                </span>
+                <div className="flex items-end gap-0.5 h-2.5">
+                  <span className="w-0.5 h-1.5 bg-amber-300" />
+                  <span className="w-0.5 h-2.5 bg-red-500" />
+                  <span className="w-0.5 h-1 bg-white/80" />
+                  <span className="w-0.5 h-2 bg-amber-300" />
+                  <span className="w-0.5 h-1.5 bg-white/80" />
+                </div>
+                <span className="mono-meta text-[4.5px] text-amber-200 font-bold">
+                  STEM
+                </span>
+              </div>
+            </div>
+
+            {/* 3D Studio Pen Resting Diagonally Across Notepad */}
+            <div
+              className="pointer-events-none absolute bottom-3 -right-3 w-14 h-2 rounded-full flex items-center overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(180deg, #52525b 0%, #18181b 55%, #09090b 100%)",
+                border: "0.8px solid rgba(255,255,255,0.4)",
+                transform: "translateZ(16px) rotateZ(-28deg)",
+                boxShadow: "-4px 6px 8px rgba(0,0,0,0.65)",
+              }}
+            >
+              <div
+                className="w-2.5 h-full"
+                style={{
+                  background: "linear-gradient(180deg, #fde047 0%, #b45309 100%)",
+                }}
+              />
+              <div className="w-1 h-full bg-red-500" />
+            </div>
+          </div>
+        </div>
+      );
     case "beats": {
       const padDelays = [
         0, 0.3, 0.7, 1.1, 0.5, 0.15, 0.95, 0.4, 1.3, 0.6, 0.2, 0.85, 0.45, 1.05,
@@ -1746,6 +1954,7 @@ export function HardwareObject3D({
 }
 
 export function RecordHardwareItem({
+  folderId,
   name,
   by,
   iconKey,
@@ -1753,8 +1962,12 @@ export function RecordHardwareItem({
   theme,
   animateSpawn,
   isPlayingFolder,
+  jiggleMode = false,
+  isDragging = false,
   onClick,
+  onPointerDown,
 }: {
+  folderId?: string;
   name: string;
   by: string;
   iconKey: string;
@@ -1762,20 +1975,27 @@ export function RecordHardwareItem({
   theme: HardwareThemeSlot;
   animateSpawn: boolean;
   isPlayingFolder: boolean;
+  jiggleMode?: boolean;
+  isDragging?: boolean;
   onClick: () => void;
+  onPointerDown?: (e: React.PointerEvent<HTMLDivElement>) => void;
 }) {
   const code = `0${idx + 1}`;
   const spawnDelayMs = idx * 85;
+  const jiggleDelayMs = (idx % 5) * 45;
 
   return (
     <div
+      data-folder-id={folderId}
+      draggable={false}
+      onDragStart={(e) => e.preventDefault()}
       onClick={onClick}
-      className={`flex flex-col items-center text-center min-w-0 group cursor-pointer ${
-        animateSpawn ? "spawn-active" : ""
-      } ${isPlayingFolder ? "is-playing-folder" : ""}`}
+      onPointerDown={onPointerDown}
       style={
         {
+          touchAction: jiggleMode ? "none" : "manipulation",
           "--spawn-delay": `${spawnDelayMs}ms`,
+          "--jiggle-delay": `${jiggleDelayMs}ms`,
           "--chassis-bg": theme.chassisBg,
           "--chassis-mid": theme.chassisMid,
           "--chassis-edge": theme.chassisEdge,
@@ -1787,15 +2007,32 @@ export function RecordHardwareItem({
           "--stamp-color": theme.stampColor,
         } as CSSProperties
       }
+      className={`relative flex flex-col items-center text-center min-w-0 group cursor-pointer select-none transition-all duration-200 ${
+        animateSpawn && !jiggleMode ? "spawn-active" : ""
+      } ${isPlayingFolder ? "is-playing-folder" : ""} ${
+        jiggleMode && !isDragging ? "jiggle-mode-card" : ""
+      } ${
+        isDragging
+          ? "opacity-30 scale-95 rounded-3xl outline-2 outline-dashed outline-[var(--ink)]/35 bg-[var(--card)]/40"
+          : ""
+      }`}
     >
-      <div className="icon-stage">
+      {jiggleMode && !isDragging && (
+        <div
+          className="absolute top-1 left-2 z-20 w-6 h-6 rounded-full bg-[var(--ink)] text-[var(--bg)] shadow-md flex items-center justify-center mono-meta text-[10px] pointer-events-none"
+          title="Drag to rearrange"
+        >
+          ⋮⋮
+        </div>
+      )}
+      <div className="icon-stage pointer-events-none">
         <div className="icon-shadow" />
         <div className="icon-3d-rig">
           <HardwareObject3D iconKey={iconKey} code={code} />
         </div>
       </div>
 
-      <div className="mt-3 sm:mt-4">
+      <div className="mt-3 sm:mt-4 pointer-events-none">
         <h3 className="record-heading text-base sm:text-lg text-[var(--ink)]">
           {name}
         </h3>

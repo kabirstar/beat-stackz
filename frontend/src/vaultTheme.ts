@@ -1,4 +1,11 @@
-import type { FileItem, Folder, User, VaultMember } from "@bpackz/shared";
+import {
+  DEFAULT_FOLDERS,
+  type FileItem,
+  type Folder,
+  type FolderKind,
+  type User,
+  type VaultMember,
+} from "@bpackz/shared";
 
 export interface HardwareThemeSlot {
   name: string;
@@ -170,6 +177,7 @@ export const WAVEFORM_BARS = [
 ];
 
 export const ICON_TYPES = [
+  { key: "vision_board", label: "Vision Board" },
   { key: "rap_cup", label: "Lean Cup" },
   { key: "rap_chain", label: "Diamond Chain" },
   { key: "rap_money", label: "Cash Stack" },
@@ -190,6 +198,7 @@ export const SHARED_RAP_ICON_MAP: Record<string, string> = {
   vocals: "rap_money",
   songs: "rap_lambo",
   media: "rap_watch",
+  "vision board": "vision_board",
 };
 
 export interface FolderUiMeta {
@@ -205,6 +214,7 @@ const DEFAULT_ROOT_META: Record<string, FolderUiMeta> = {
   vocals: { by: "main · adlib · bg", colorSlot: 2, iconKey: "vocals", order: 2 },
   songs: { by: "demo · mix · drop", colorSlot: 3, iconKey: "songs", order: 3 },
   media: { by: "photos · videos · covers", colorSlot: 4, iconKey: "media", order: 4 },
+  "vision board": { by: "notes · songs · threads", colorSlot: 0, iconKey: "vision_board", order: 5 },
 };
 
 const DEFAULT_SUB_META: Record<string, FolderUiMeta> = {
@@ -223,6 +233,36 @@ const DEFAULT_SUB_META: Record<string, FolderUiMeta> = {
   "album covers": { by: "cover art & sleeves", colorSlot: 4, iconKey: "sub_covers", order: 4 },
 };
 
+// ADR 0002 / T026b: Key 3D hardware icons & order by `folder.kind` first (in DEFAULT_FOLDERS order)
+const DEFAULT_KIND_ORDER = new Map<FolderKind, number>();
+DEFAULT_FOLDERS.forEach((root, rootIdx) => {
+  DEFAULT_KIND_ORDER.set(root.kind, rootIdx);
+  root.children.forEach((child, childIdx) => {
+    DEFAULT_KIND_ORDER.set(child.kind, childIdx);
+  });
+});
+
+export const DEFAULT_KIND_META: Record<FolderKind, FolderUiMeta> = {
+  beats: { ...DEFAULT_ROOT_META.beats, order: DEFAULT_KIND_ORDER.get("beats") ?? 0 },
+  presets: { ...DEFAULT_ROOT_META.presets, order: DEFAULT_KIND_ORDER.get("presets") ?? 1 },
+  "presets/plugin": { ...DEFAULT_SUB_META.plugin, order: DEFAULT_KIND_ORDER.get("presets/plugin") ?? 0 },
+  "presets/vocals": { ...DEFAULT_SUB_META.vocals, order: DEFAULT_KIND_ORDER.get("presets/vocals") ?? 1 },
+  vocals: { ...DEFAULT_ROOT_META.vocals, order: DEFAULT_KIND_ORDER.get("vocals") ?? 2 },
+  "vocals/main": { ...DEFAULT_SUB_META.main, order: DEFAULT_KIND_ORDER.get("vocals/main") ?? 0 },
+  "vocals/adlib": { ...DEFAULT_SUB_META.adlib, order: DEFAULT_KIND_ORDER.get("vocals/adlib") ?? 1 },
+  "vocals/bg": { ...DEFAULT_SUB_META.bg, order: DEFAULT_KIND_ORDER.get("vocals/bg") ?? 2 },
+  songs: { ...DEFAULT_ROOT_META.songs, order: DEFAULT_KIND_ORDER.get("songs") ?? 3 },
+  "songs/demo": { ...DEFAULT_SUB_META.demo, order: DEFAULT_KIND_ORDER.get("songs/demo") ?? 0 },
+  "songs/mix": { ...DEFAULT_SUB_META.mix, order: DEFAULT_KIND_ORDER.get("songs/mix") ?? 1 },
+  "songs/drop": { ...DEFAULT_SUB_META.drop, order: DEFAULT_KIND_ORDER.get("songs/drop") ?? 2 },
+  media: { ...DEFAULT_ROOT_META.media, order: DEFAULT_KIND_ORDER.get("media") ?? 4 },
+  "media/photos": { ...DEFAULT_SUB_META.photos, order: DEFAULT_KIND_ORDER.get("media/photos") ?? 0 },
+  "media/videos": { ...DEFAULT_SUB_META.videos, order: DEFAULT_KIND_ORDER.get("media/videos") ?? 1 },
+  "media/mv": { ...DEFAULT_SUB_META["music video"], order: DEFAULT_KIND_ORDER.get("media/mv") ?? 2 },
+  "media/bts": { ...DEFAULT_SUB_META.bts, order: DEFAULT_KIND_ORDER.get("media/bts") ?? 3 },
+  "media/covers": { ...DEFAULT_SUB_META["album covers"], order: DEFAULT_KIND_ORDER.get("media/covers") ?? 4 },
+};
+
 const UI_META_STORAGE_KEY = "bpackz_vault_ui_meta_v2";
 
 export interface TrashedFileEntry {
@@ -231,11 +271,162 @@ export interface TrashedFileEntry {
   deletedAt: number;
 }
 
+export type StickyColorKey = "canary" | "coral" | "mint" | "lavender";
+
+export const STICKY_NOTE_COLORS: Record<
+  StickyColorKey,
+  { label: string; bg: string; border: string; tagBg: string }
+> = {
+  canary: {
+    label: "Hook / Lyrics",
+    bg: "#fef08a",
+    border: "rgba(161, 98, 7, 0.35)",
+    tagBg: "rgba(161, 98, 7, 0.14)",
+  },
+  coral: {
+    label: "Mix / 808 Note",
+    bg: "#fecdd3",
+    border: "rgba(190, 18, 60, 0.32)",
+    tagBg: "rgba(190, 18, 60, 0.14)",
+  },
+  mint: {
+    label: "Ready / Cleared",
+    bg: "#bbf7d0",
+    border: "rgba(21, 128, 61, 0.32)",
+    tagBg: "rgba(21, 128, 61, 0.14)",
+  },
+  lavender: {
+    label: "Rollout / Visual",
+    bg: "#e9d5ff",
+    border: "rgba(107, 33, 168, 0.32)",
+    tagBg: "rgba(107, 33, 168, 0.14)",
+  },
+};
+
+export interface VisionBoardNote {
+  id: string;
+  text: string;
+  author: string;
+  color: StickyColorKey;
+  x: number;
+  y: number;
+  createdAt: string;
+}
+
+export interface VisionBoardFileComment {
+  id: string;
+  author: string;
+  text: string;
+  timestampTag?: string;
+  createdAt: string;
+}
+
+export interface VisionBoardFileNode {
+  id: string;
+  fileId: string;
+  fileName: string;
+  fileSize: number;
+  fileMime: string | null;
+  addedBy: string;
+  x: number;
+  y: number;
+  comments: VisionBoardFileComment[];
+}
+
+export interface VisionBoardVaultState {
+  notes: VisionBoardNote[];
+  fileNodes: VisionBoardFileNode[];
+}
+
+export function createDefaultVisionBoardState(vaultFiles: FileItem[] = []): VisionBoardVaultState {
+  const defaultFileNodes: VisionBoardFileNode[] = [
+    {
+      id: "vb_file_1",
+      fileId: "fi_sh_b1",
+      fileName: "swish_x_todo_collab_beat.wav",
+      fileSize: 50_000_000,
+      fileMime: "audio/wav",
+      addedBy: "Swish",
+      x: 90,
+      y: 265,
+      comments: [
+        {
+          id: "c_1",
+          author: "Swish",
+          text: "Bring the 808 glide in 2 bars earlier right at 0:24",
+          timestampTag: "0:24",
+          createdAt: "9:20 PM",
+        },
+        {
+          id: "c_2",
+          author: "Todo",
+          text: "Bet, boosted 60Hz on the kick and tucked the synth pad -2dB",
+          timestampTag: "0:48",
+          createdAt: "9:34 PM",
+        },
+      ],
+    },
+    {
+      id: "vb_file_2",
+      fileId: "fi_sh_vm1",
+      fileName: "collab_hook_stems.wav",
+      fileSize: 46_000_000,
+      fileMime: "audio/wav",
+      addedBy: "Todo",
+      x: 500,
+      y: 260,
+      comments: [
+        {
+          id: "c_3",
+          author: "Todo",
+          text: "Dry lead vox + stereo adlib throw lined up to 144 BPM",
+          timestampTag: "1:12",
+          createdAt: "9:50 PM",
+        },
+      ],
+    },
+  ];
+  const existingIds = new Set(vaultFiles.map((f) => f.id));
+  return {
+    notes: [
+      {
+        id: "vb_note_1",
+        text: "HOOK IDEA: Double the main vocal on bar 9 & cut the drums for 1 beat before the 808 drops.",
+        author: "Swish",
+        color: "canary",
+        x: 60,
+        y: 50,
+        createdAt: "Today · 9:15 PM",
+      },
+      {
+        id: "vb_note_2",
+        text: "PRODUCER NOTE: Swapped the distorted spinz 808 for the sub brass patch in the outro.",
+        author: "Todo",
+        color: "coral",
+        x: 370,
+        y: 45,
+        createdAt: "Today · 9:42 PM",
+      },
+      {
+        id: "vb_note_3",
+        text: "TRACKLIST ORDER: 1. Obsidian Intro → 2. Nightfall Master → 3. Late Idea Interlude",
+        author: "Swish",
+        color: "mint",
+        x: 700,
+        y: 65,
+        createdAt: "Today · 10:05 PM",
+      },
+    ],
+    fileNodes: defaultFileNodes.filter((n) => existingIds.has(n.fileId)),
+  };
+}
+
 export interface PersistedUiMeta {
   folderMeta: Record<string, FolderUiMeta>;
   sharedVaultPalettes: Record<string, HardwareThemeSlot[]>;
   trashedByVault: Record<string, TrashedFileEntry[]>;
   shareLinkTokens: Record<string, { id: string; token: string; expiry: string; fileId: string }[]>;
+  visionBoards?: Record<string, VisionBoardVaultState>;
 }
 
 export function loadPersistedUiMeta(): PersistedUiMeta {
@@ -244,6 +435,7 @@ export function loadPersistedUiMeta(): PersistedUiMeta {
     sharedVaultPalettes: {},
     trashedByVault: {},
     shareLinkTokens: {},
+    visionBoards: {},
   };
   if (typeof window === "undefined" || !window.localStorage) return empty;
   try {
@@ -255,6 +447,7 @@ export function loadPersistedUiMeta(): PersistedUiMeta {
         sharedVaultPalettes: parsed.sharedVaultPalettes ?? {},
         trashedByVault: parsed.trashedByVault ?? {},
         shareLinkTokens: parsed.shareLinkTokens ?? {},
+        visionBoards: parsed.visionBoards ?? {},
       };
     }
   } catch {
@@ -286,6 +479,11 @@ export function resolveFolderUiMeta(
   };
   const custom = customMetaMap[folder.id];
   if (custom) return applySharedIcon(custom);
+  // T026b: Key by folder.kind first so renaming a default folder keeps its 3D icon
+  if (folder.kind !== null && DEFAULT_KIND_META[folder.kind]) {
+    return applySharedIcon(DEFAULT_KIND_META[folder.kind]);
+  }
+  // Fallback to folder.name only when folder.kind is null
   const lower = folder.name.trim().toLowerCase();
   if (folder.parentId === null && DEFAULT_ROOT_META[lower]) {
     return applySharedIcon(DEFAULT_ROOT_META[lower]);
@@ -298,6 +496,39 @@ export function resolveFolderUiMeta(
     colorSlot: fallbackIndex % 5,
     iconKey: "beats",
     order: 100 + fallbackIndex,
+  });
+}
+
+// T026b: Sort defaults first in DEFAULT_FOLDERS order, then user folders by name (while respecting custom jiggle order)
+export function sortVaultFolders(
+  list: Folder[],
+  customMetaMap: Record<string, FolderUiMeta> = {},
+): Folder[] {
+  const allHaveCustomOrder =
+    list.length > 0 && list.every((item) => customMetaMap[item.id] !== undefined);
+  const rankForFolder = (f: Folder): [number, number] => {
+    const kindOrder = f.kind !== null ? DEFAULT_KIND_ORDER.get(f.kind) : undefined;
+    if (kindOrder !== undefined) {
+      return [0, kindOrder];
+    }
+    const lower = f.name.trim().toLowerCase();
+    const fallback = f.parentId === null ? DEFAULT_ROOT_META[lower] : DEFAULT_SUB_META[lower];
+    if (fallback) {
+      return [1, fallback.order];
+    }
+    return [2, 0];
+  };
+
+  return [...list].sort((a, b) => {
+    if (allHaveCustomOrder) {
+      const diff = customMetaMap[a.id].order - customMetaMap[b.id].order;
+      if (diff !== 0) return diff;
+    }
+    const [aTier, aOrder] = rankForFolder(a);
+    const [bTier, bOrder] = rankForFolder(b);
+    if (aTier !== bTier) return aTier - bTier;
+    if (aOrder !== bOrder) return aOrder - bOrder;
+    return a.name.localeCompare(b.name);
   });
 }
 

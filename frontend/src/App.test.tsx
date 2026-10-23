@@ -7,9 +7,14 @@ import {
   generateRandomSharedPalette,
   resolveFileOwnerName,
   resolveFolderUiMeta,
+  sortVaultFolders,
   SWISH_BLACK_RED_PALETTE,
   TODO_MONOCHROME_PALETTE,
 } from "./vaultTheme.ts";
+import {
+  isVaultPasscodeValid,
+  maskWithAsterisks,
+} from "./components/VaultGateScreen.tsx";
 
 describe("The Vault UI & Theme Specification (T020 & T021)", () => {
   it("locks Swish theme to Mostly Black & Red and Todo theme to White & Black Monochrome", () => {
@@ -87,6 +92,73 @@ describe("The Vault UI & Theme Specification (T020 & T021)", () => {
       true,
     );
     assert.equal(sharedBeatsMeta.iconKey, "rap_cup");
+
+    // T026b: Renaming a default folder preserves its 3D icon via folder.kind
+    const renamedBeatsMeta = resolveFolderUiMeta(
+      {
+        id: "f_renamed_beats",
+        vaultId: "v_personal",
+        parentId: null,
+        name: "808 loops & packs",
+        kind: "beats",
+        createdBy: "u_artist",
+        updatedAt: "2026-10-21T00:00:00.000Z",
+      },
+      {},
+    );
+    assert.equal(renamedBeatsMeta.iconKey, "beats");
+
+    // T026b: sortVaultFolders places DEFAULT_FOLDERS first in canonical order, then user folders by name
+    const sorted = sortVaultFolders([
+      {
+        id: "f_user_z",
+        vaultId: "v_personal",
+        parentId: null,
+        name: "zebra custom",
+        kind: null,
+        createdBy: "u_artist",
+        updatedAt: "2026-10-21T00:00:00.000Z",
+      },
+      {
+        id: "f_media",
+        vaultId: "v_personal",
+        parentId: null,
+        name: "media",
+        kind: "media",
+        createdBy: "u_artist",
+        updatedAt: "2026-10-21T00:00:00.000Z",
+      },
+      {
+        id: "f_user_a",
+        vaultId: "v_personal",
+        parentId: null,
+        name: "alpha stems",
+        kind: null,
+        createdBy: "u_artist",
+        updatedAt: "2026-10-21T00:00:00.000Z",
+      },
+      {
+        id: "f_beats",
+        vaultId: "v_personal",
+        parentId: null,
+        name: "renamed beats",
+        kind: "beats",
+        createdBy: "u_artist",
+        updatedAt: "2026-10-21T00:00:00.000Z",
+      },
+    ]);
+    assert.deepEqual(
+      sorted.map((f) => f.id),
+      ["f_beats", "f_media", "f_user_a", "f_user_z"],
+    );
+  });
+
+  it("validates the 'classics' / '808' Vault Gate passcode and masks typed characters as '*'", () => {
+    assert.equal(isVaultPasscodeValid("classics"), true);
+    assert.equal(isVaultPasscodeValid(" CLASSICS "), true);
+    assert.equal(isVaultPasscodeValid("808"), true);
+    assert.equal(isVaultPasscodeValid("wrong"), false);
+    assert.equal(maskWithAsterisks("classics"), "********");
   });
 
   it("formats byte sizes and resolves file owner names from vaultMembers or fallback", async () => {
