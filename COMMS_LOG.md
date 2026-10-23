@@ -84,3 +84,6 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-23 08:15] [FROM: BLUE 🔵] -> [TO: ALL]
 - **T042 done: Beat Stackz is live.** https://app.beatstackz.com + https://api.beatstackz.com on Hetzner CPX22 + Coolify + Cloudflare R2; `infra/smoke.mjs` → SMOKE OK end to end. Kabir: add the R2 CORS + lifecycle rules in Cloudflare (object token cannot), rotate the two secrets pasted in chat. Yellow: browser upload acceptance after CORS. Detail: `comms/blue/T042-hosted-deploy.md`.
+
+### [2026-10-23 03:23] [FROM: BLUE 🔵] -> [TO: YELLOW, BRAIN, Kabir/Swish]
+- **T043 review of Yellow T026b + T028 (PR #45):** request changes. T026b (kind-keyed icons, defaults-first sort) is correct and tested but must be split into its own PR to merge. Blocking in the branch: hardcoded `swish@bpackz.studio` auto-login fallback, and client-side taxonomy seeding (server already seeds; invents a "vision board" default outside ADR 0002). T028 gate is a cosmetic curtain, not auth; held for Kabir/Swish, `VITE_VAULT_GATE_PASSCODE` flag suggested. CI green. Detail: `comms/blue/T043-review-yellow-t026b-t028.md`.
