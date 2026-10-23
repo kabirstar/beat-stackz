@@ -48,6 +48,17 @@ services:
     restart: unless-stopped
     profiles: [full]
 
+  backup: # nightly pg_dump -> bucket $BACKUP_BUCKET (T043). Local check: docker compose ... run --rm backup once
+    build: { context: .., dockerfile: infra/backup/Dockerfile }
+    env_file: ../.env
+    environment:
+      DATABASE_URL: postgres://bpackz:bpackz@postgres:5432/bpackz
+      S3_ENDPOINT: http://rustfs:9000
+      BACKUP_BUCKET: ${BACKUP_BUCKET:-bpackz-backups}
+    depends_on: { postgres: { condition: service_healthy }, rustfs: { condition: service_started } }
+    restart: unless-stopped
+    profiles: [backup]
+
 volumes:
   pgdata:
   blobs:
