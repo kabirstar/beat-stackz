@@ -61,4 +61,12 @@ export const folderRoutes = {
     response: z.object({}),
     summary: "Soft-delete folder and descendants",
   }),
+  restore: route({
+    method: "POST",
+    path: "/vaults/:vaultId/folders/:folderId/restore",
+    auth: "session",
+    params: FolderParams,
+    response: Folder,
+    summary: "Clear deletedAt on the folder and the descendants trashed with it (same deletedAt). 404 if not in trash; 409 if the parent is still trashed or a live sibling has the same name.",
+  }),
 };

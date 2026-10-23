@@ -44,6 +44,8 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
 
 - [x] T083 [BLUE] INVITE_CODE wiring: .env.example, hosted compose api env (:? guard), HOSTING.md §2 + secrets list (#56; PR title said T082 by mistake, T082 is Yellow)
       paths: infra/**, docs/**  depends: ADR 0003  verify: hosted compose config fails without INVITE_CODE, renders with it
+- [x] T084 [BLUE] trash contract: files.listTrash (roots only, deletedAt), files.restore, folders.restore; mocks + test; openapi (comms/blue/T084-trash-list-restore-contract.md)
+      paths: shared/**, docs/**, contracts/openapi.json  depends: none  verify: pnpm -F @bpackz/shared test
 
 ## RED
 - [x] Verify PC environment and clone isolated Red checkout; GitHub CLI auth works outside sandbox
