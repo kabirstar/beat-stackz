@@ -129,6 +129,7 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       handoff: comms/brain/T023-feature-list.md
 - [ ] T017 [RED] vault members + share links + trash purge per shared contract (after T013; no hold — routes already contracted)
       paths: backend/**, worker/** (purge only)  depends: T013  assigned-by: BRAIN
+      status: in progress on red/sharing (Red 2026-10-23 03:29, Kabir's go in Red's chat); also adds backend/Dockerfile (not on main yet)
       deliverable: vaults.members/invite/removeMember; shares.*; ?token= on download/waveform; 30-day purge job
       verify: pnpm -F api test; CI Docker integration green
       handoff: comms/brain/T017-members-shares-purge.md
@@ -137,3 +138,8 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: comms/blue/T009-*.md with item → route; shared + mocks updated for accepted items
       verify: pnpm -F @bpackz/shared test
       handoff: comms/brain/T009-feature-gap-check.md
+- [ ] T034 [BLUE] compose api: internal S3 endpoint vs browser-facing presign endpoint (Red's ask 2026-10-23)
+      paths: infra/**, docs/ARCHITECTURE.md, AGENTS.md env keys  depends: none  assigned-by: BRAIN
+      deliverable: decided arrangement in infra + env table (default: optional S3_PUBLIC_ENDPOINT, api env overrides like worker); Red adds presign client after
+      verify: docker compose --profile full up --build; upload + playback from :5173 hits localhost:9000
+      handoff: comms/brain/T034-public-s3-endpoint.md
