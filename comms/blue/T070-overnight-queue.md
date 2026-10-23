@@ -19,11 +19,7 @@ CI green, handoff + COMMS_LOG line + one Discord ping. If a task needs a human d
   JSON line `{verified, failed, purged, expired}` so Coolify's log view shows activity. No new deps.
 
 ## BLUE (auto-dispatched)
-- **T075 nightly Postgres backup to R2.** New compose service `backup` in `infra/docker-compose.hosted.yml`
-  only: `postgres:17` image, `restart: unless-stopped`, loops `sleep 86400`, runs `pg_dump -Fc` and uploads
-  to R2 key `backups/bpackz-<date>.dump` with the existing `S3_*` env via `aws`-free curl SigV4 is too
-  much — use the `amazon/aws-cli` image instead (two containers: dump to a shared volume, then upload).
-  Keep 14 days (`aws s3 ls` + delete older). Document restore in `docs/HOSTING.md` §5. Kabir deploys tomorrow.
+- **T075 — dropped.** Nightly Postgres backup is already in progress as T043 by the other Blue session (compose `backup` service + `infra/backup/Dockerfile`). Do not dispatch; BRAIN skips it.
 - **T076 uptime check.** `.github/workflows/uptime.yml`: cron every 15 min, `curl -fsS https://api.beatstackz.com/health`
   and the web root; on failure post to Discord via the existing webhook URL stored as a repo secret
   `DISCORD_WEBHOOK_URL` (Kabir adds the secret tomorrow; workflow must no-op cleanly when it is missing).
