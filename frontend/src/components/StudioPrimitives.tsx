@@ -246,23 +246,25 @@ export function StudioModal({
         if (e.target === e.currentTarget && onClose) onClose();
       }}
       className={`fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] flex ${
-        alignBottomOnMobile ? "items-end sm:items-center p-3 sm:p-4" : "items-center p-4"
+        alignBottomOnMobile
+          ? "items-end sm:items-center p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4"
+          : "items-center p-3 sm:p-4"
       } justify-center`}
     >
       <div
-        className={`w-full ${maxWidthClass} rounded-3xl bg-[var(--bg)] border border-[var(--ink)]/25 shadow-2xl overflow-hidden popover-sheet`}
+        className={`w-full ${maxWidthClass} max-h-[88dvh] flex flex-col rounded-3xl bg-[var(--bg)] border border-[var(--ink)]/25 shadow-2xl overflow-hidden popover-sheet`}
       >
         {title !== undefined && (
-          <div className="px-5 py-3.5 border-b border-[var(--hair)] bg-[var(--card)] flex items-center justify-between">
+          <div className="px-5 py-3.5 border-b border-[var(--hair)] bg-[var(--card)] flex items-center justify-between shrink-0">
             <span className="mono-meta text-[11px] uppercase text-[var(--ink)]">{title}</span>
             {onClose && (
-              <button type="button" onClick={onClose} className="icon-btn w-7 h-7 text-xs">
+              <button type="button" onClick={onClose} className="icon-btn w-8 h-8 text-xs">
                 ×
               </button>
             )}
           </div>
         )}
-        {children}
+        <div className="overflow-y-auto flex-1">{children}</div>
       </div>
     </div>
   );
@@ -321,8 +323,12 @@ export function HardwareGridSection({
 
       if (!activeDragId && pressed) {
         const dist = Math.hypot(e.clientX - pressed.startX, e.clientY - pressed.startY);
-        if (dist > 7) {
+        if (dist > 8) {
           clearHoldTimer();
+          if (e.pointerType === "touch") {
+            pressedRef.current = null;
+            return;
+          }
           suppressClickRef.current = true;
           activeDragId = pressed.id;
           setJiggleMode(true);

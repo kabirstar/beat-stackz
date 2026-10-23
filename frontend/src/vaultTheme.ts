@@ -338,7 +338,55 @@ export interface VisionBoardVaultState {
   fileNodes: VisionBoardFileNode[];
 }
 
-export function createDefaultVisionBoardState(): VisionBoardVaultState {
+export function createDefaultVisionBoardState(vaultFiles: FileItem[] = []): VisionBoardVaultState {
+  const defaultFileNodes: VisionBoardFileNode[] = [
+    {
+      id: "vb_file_1",
+      fileId: "fi_sh_b1",
+      fileName: "swish_x_todo_collab_beat.wav",
+      fileSize: 50_000_000,
+      fileMime: "audio/wav",
+      addedBy: "Swish",
+      x: 90,
+      y: 265,
+      comments: [
+        {
+          id: "c_1",
+          author: "Swish",
+          text: "Bring the 808 glide in 2 bars earlier right at 0:24",
+          timestampTag: "0:24",
+          createdAt: "9:20 PM",
+        },
+        {
+          id: "c_2",
+          author: "Todo",
+          text: "Bet, boosted 60Hz on the kick and tucked the synth pad -2dB",
+          timestampTag: "0:48",
+          createdAt: "9:34 PM",
+        },
+      ],
+    },
+    {
+      id: "vb_file_2",
+      fileId: "fi_sh_vm1",
+      fileName: "collab_hook_stems.wav",
+      fileSize: 46_000_000,
+      fileMime: "audio/wav",
+      addedBy: "Todo",
+      x: 500,
+      y: 260,
+      comments: [
+        {
+          id: "c_3",
+          author: "Todo",
+          text: "Dry lead vox + stereo adlib throw lined up to 144 BPM",
+          timestampTag: "1:12",
+          createdAt: "9:50 PM",
+        },
+      ],
+    },
+  ];
+  const existingIds = new Set(vaultFiles.map((f) => f.id));
   return {
     notes: [
       {
@@ -369,53 +417,7 @@ export function createDefaultVisionBoardState(): VisionBoardVaultState {
         createdAt: "Today · 10:05 PM",
       },
     ],
-    fileNodes: [
-      {
-        id: "vb_file_1",
-        fileId: "fi_sh_b1",
-        fileName: "swish_x_todo_collab_beat.wav",
-        fileSize: 50_000_000,
-        fileMime: "audio/wav",
-        addedBy: "Swish",
-        x: 90,
-        y: 265,
-        comments: [
-          {
-            id: "c_1",
-            author: "Swish",
-            text: "Bring the 808 glide in 2 bars earlier right at 0:24",
-            timestampTag: "0:24",
-            createdAt: "9:20 PM",
-          },
-          {
-            id: "c_2",
-            author: "Todo",
-            text: "Bet, boosted 60Hz on the kick and tucked the synth pad -2dB",
-            timestampTag: "0:48",
-            createdAt: "9:34 PM",
-          },
-        ],
-      },
-      {
-        id: "vb_file_2",
-        fileId: "fi_sh_vm1",
-        fileName: "collab_hook_stems.wav",
-        fileSize: 46_000_000,
-        fileMime: "audio/wav",
-        addedBy: "Todo",
-        x: 500,
-        y: 260,
-        comments: [
-          {
-            id: "c_3",
-            author: "Todo",
-            text: "Dry lead vox + stereo adlib throw lined up to 144 BPM",
-            timestampTag: "1:12",
-            createdAt: "9:50 PM",
-          },
-        ],
-      },
-    ],
+    fileNodes: defaultFileNodes.filter((n) => existingIds.has(n.fileId)),
   };
 }
 
@@ -502,32 +504,30 @@ export function sortVaultFolders(
   list: Folder[],
   customMetaMap: Record<string, FolderUiMeta> = {},
 ): Folder[] {
+  const allHaveCustomOrder =
+    list.length > 0 && list.every((item) => customMetaMap[item.id] !== undefined);
+  const rankForFolder = (f: Folder): [number, number] => {
+    const kindOrder = f.kind !== null ? DEFAULT_KIND_ORDER.get(f.kind) : undefined;
+    if (kindOrder !== undefined) {
+      return [0, kindOrder];
+    }
+    const lower = f.name.trim().toLowerCase();
+    const fallback = f.parentId === null ? DEFAULT_ROOT_META[lower] : DEFAULT_SUB_META[lower];
+    if (fallback) {
+      return [1, fallback.order];
+    }
+    return [2, 0];
+  };
+
   return [...list].sort((a, b) => {
-    const customA = customMetaMap[a.id];
-    const customB = customMetaMap[b.id];
-    if (customA && customB) {
-      return customA.order - customB.order;
+    if (allHaveCustomOrder) {
+      const diff = customMetaMap[a.id].order - customMetaMap[b.id].order;
+      if (diff !== 0) return diff;
     }
-    const aKindOrder = a.kind !== null ? DEFAULT_KIND_ORDER.get(a.kind) : undefined;
-    const bKindOrder = b.kind !== null ? DEFAULT_KIND_ORDER.get(b.kind) : undefined;
-    const aIsDefault = aKindOrder !== undefined;
-    const bIsDefault = bKindOrder !== undefined;
-    if (aIsDefault && bIsDefault) {
-      return aKindOrder - bKindOrder;
-    }
-    if (aIsDefault && !bIsDefault) return -1;
-    if (!aIsDefault && bIsDefault) return 1;
-
-    const aLower = a.name.trim().toLowerCase();
-    const bLower = b.name.trim().toLowerCase();
-    const aFallback = a.parentId === null ? DEFAULT_ROOT_META[aLower] : DEFAULT_SUB_META[aLower];
-    const bFallback = b.parentId === null ? DEFAULT_ROOT_META[bLower] : DEFAULT_SUB_META[bLower];
-    if (aFallback && bFallback) {
-      return aFallback.order - bFallback.order;
-    }
-    if (aFallback && !bFallback) return -1;
-    if (!aFallback && bFallback) return 1;
-
+    const [aTier, aOrder] = rankForFolder(a);
+    const [bTier, bOrder] = rankForFolder(b);
+    if (aTier !== bTier) return aTier - bTier;
+    if (aOrder !== bOrder) return aOrder - bOrder;
     return a.name.localeCompare(b.name);
   });
 }

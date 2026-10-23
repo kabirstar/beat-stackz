@@ -36,7 +36,7 @@ describe("Typed API Client + MSW Mock Handlers (T020 & T021)", () => {
     const personal = items.find((v) => v.kind === "personal")!;
     const rootChildren = await api.files.listChildren(personal.id);
     const rootNames = rootChildren.folders.map((f) => f.name).sort();
-    assert.deepEqual(rootNames, ["beats", "media", "presets", "songs", "vision board", "vocals"]);
+    assert.deepEqual(rootNames, ["beats", "media", "presets", "songs", "vocals"]);
 
     const vocalsRoot = rootChildren.folders.find((f) => f.name === "vocals")!;
     const vocalChildren = await api.files.listChildren(personal.id, {
