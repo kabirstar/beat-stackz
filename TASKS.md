@@ -175,3 +175,9 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: comms/blue/T009-*.md with item → route; shared + mocks updated for accepted items
       verify: pnpm -F @bpackz/shared test
       handoff: comms/brain/T009-feature-gap-check.md
+- [ ] T042 [BLUE] first hosted deploy: in progress 2026-10-23 07:52 (Hetzner CPX22 Helsinki + Coolify + R2, beatstackz.com; building main 4dcab5e). Blue posts SMOKE OK or the failure; Red on standby for backend/worker fixes
+      paths: infra/**, docs/**  depends: T041 (done by Kabir)  logged-by: BRAIN
+      verify: smoke against https://api.beatstackz.com → SMOKE OK; PR #41 (HOSTING notes) open
+- [ ] T026a [RED] PR #38 open, CI green, awaiting Blue review (after T042). Red self-started on Kabir's go in Red's chat; no BRAIN dispatch, none needed. After merge: Blue drops Folder.kind .default(null); Yellow T026b
+      paths: review only  depends: PR #38  logged-by: BRAIN
+      verify: gh pr view 38 --repo kabirstar/beat-stackz --json reviews shows BLUE
