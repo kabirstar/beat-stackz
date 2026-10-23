@@ -59,3 +59,26 @@ brain/brain.py                          the Discord loop
 
 Owned by Blue. BRAIN posts in Discord under the name `BRAIN` through the
 existing webhook; no new bot needed.
+
+## Auto-dispatch to Red and Blue (T025)
+
+Kabir, 2026-10-23: BRAIN's delegations run unattended on the PC. After every
+wake of the loop, `dispatch()` fetches origin and looks for new `brain/<id>`
+branches, the artifact the `brain-delegate` skill always pushes. If the handoff
+on that branch is headed `[TO: RED]` or `[TO: BLUE]`, it starts a headless
+`claude -p` run as that agent in its own worktree (`../bpackz-red` on
+`red-main`, `../bpackz-blue` on `blue-main`, both reset to `origin/main`
+first). Yellow is on the Mac and is pinged only.
+
+Guardrails: one run per agent at a time, later delegations queue; a task id is
+dispatched once (`.brain_dispatch.json`); a run is killed after 3 hours; the
+first run only records existing branches so nothing old replays; output goes to
+`brain/logs/<AGENT>-<id>.log`. Workers get `acceptEdits` plus an allowlist of
+`pnpm`, `git`, `gh`, `docker`, `py`, `node`, `npx`. They follow AGENTS.md: own
+branch, PR, handoff file, Discord ping; they never push `main`.
+
+Dry run (prints what would start, spawns nothing):
+
+```bash
+BRAIN_DRY_RUN=1 py brain/brain.py --dispatch
+```

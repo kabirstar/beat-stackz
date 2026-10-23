@@ -25,6 +25,9 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
 - [x] T026 [BLUE] default folder taxonomy: ADR 0002, Folder.kind, DEFAULT_FOLDERS, mocks seed (PR open)
       paths: shared/**, docs/**  depends: none  verify: pnpm -F @bpackz/shared test
 
+- [x] T025 [BLUE] BRAIN auto-dispatch: brain.py starts RED/BLUE headless runs per delegation, one per owner, queued, logged (Kabir: yes, 2026-10-23)
+      paths: brain/**  depends: none  verify: BRAIN_DRY_RUN=1 py brain/brain.py --dispatch
+
 ## RED
 - [x] Verify PC environment and clone isolated Red checkout; GitHub CLI auth works outside sandbox
 - [x] T010a [RED] Hono health/CORS scaffold in backend; PR #1 workspace review fixes
