@@ -75,9 +75,9 @@ export function VaultHeader({
   const sharedVaults = vaults.filter((v) => v.kind === "shared");
   return (
     <>
-      <header className="px-4 sm:px-6 md:px-12 py-2.5 min-h-16 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--hair)] bg-[#edeae4]/95 backdrop-blur-md sticky top-0 z-30">
+      <header className="px-3 sm:px-6 md:px-12 py-2.5 min-h-14 flex items-center justify-between gap-2 sm:gap-3 border-b border-[var(--hair)] bg-[#edeae4]/95 backdrop-blur-md sticky top-0 z-30">
         {/* Left Navigation Icons */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           <button
             type="button"
             onClick={canGoBack ? onBack : undefined}
@@ -99,7 +99,7 @@ export function VaultHeader({
           <span className="w-px h-5 bg-[var(--hair)] mx-1 hidden sm:block" />
 
           {/* Top Folder Navigation Icon Dock */}
-          <div className="hidden sm:flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-1">
             {rootFolders.map((folder, idx) => {
               const isCurrentRoot = currentRootFolder?.id === folder.id;
               const fMeta = resolveFolderUiMeta(folder, folderMetaMap, idx);
@@ -129,21 +129,21 @@ export function VaultHeader({
         </div>
 
         {/* Search Bar */}
-        <div className="relative flex-1 min-w-[140px] max-w-xs sm:max-w-sm">
-          <span className="text-[var(--ink-soft)] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none">
+        <div className="relative flex-1 min-w-0 max-w-xs sm:max-w-sm">
+          <span className="text-[var(--ink-soft)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
             <StudioIcon name="search" />
           </span>
           <input
             type="text"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search folders & tracks..."
-            className="w-full pl-10 pr-4 py-2 rounded-full bg-[var(--card)] border border-[var(--hair)] focus:border-[var(--ink)] focus:outline-none text-xs text-[var(--ink)] placeholder:text-[var(--ink-soft)]"
+            placeholder="Search..."
+            className="w-full pl-9 pr-3 py-2 rounded-full bg-[var(--card)] border border-[var(--hair)] focus:border-[var(--ink)] focus:outline-none text-xs text-[var(--ink)] placeholder:text-[var(--ink-soft)]"
           />
         </div>
 
         {/* Right Icon Bar */}
-        <div className="flex items-center gap-2 relative">
+        <div className="flex items-center gap-1.5 sm:gap-2 relative shrink-0">
           <div className="relative">
             <button
               type="button"
@@ -160,7 +160,12 @@ export function VaultHeader({
             </button>
 
             {sharedDropdownOpen && (
-              <div className="absolute right-0 top-12 z-50 w-72 sm:w-80 rounded-2xl bg-[#edeae4]/98 backdrop-blur-xl border border-[var(--ink)]/25 shadow-2xl overflow-hidden popover-sheet">
+              <>
+                <div
+                  className="fixed inset-0 z-40 sm:hidden"
+                  onClick={onToggleSharedDropdown}
+                />
+                <div className="fixed left-3 right-3 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-12 z-50 sm:w-80 rounded-2xl bg-[#edeae4]/98 backdrop-blur-xl border border-[var(--ink)]/25 shadow-2xl overflow-hidden popover-sheet">
                 <div className="px-3.5 py-2.5 bg-[var(--card)] border-b border-[var(--hair)] flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="mono-meta text-[10px] uppercase text-[var(--ink)] font-semibold">
@@ -281,7 +286,8 @@ export function VaultHeader({
                     </button>
                   </div>
                 </div>
-              </div>
+                </div>
+              </>
             )}
           </div>
 
