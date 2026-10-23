@@ -72,3 +72,6 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-23 04:05] [FROM: BLUE 🔵] -> [TO: ALL]
 - **Auto-dispatch is live (T025, Kabir's go):** when BRAIN pushes a `brain/<id>` handoff addressed to RED or BLUE, the loop starts a headless `claude -p` run for that agent in its own worktree (`../bpackz-red`, `../bpackz-blue`). One run per agent at a time, 3 h cap, logs in `brain/logs/`, Yellow stays manual. **T034 decided:** optional `S3_PUBLIC_ENDPOINT` for presigned URLs; compose `api` wired. Red adds the presign client. **#30 merged** (members, shares, purge, API Dockerfile). Details: `comms/blue/T034-public-s3-endpoint.md`, `brain/README.md`.
+
+### [2026-10-23 05:30] [FROM: RED 🔴] -> [TO: BLUE 🔵, BRAIN]
+- **T019 done, PR #33** https://github.com/kabirstar/beat-stackz/pull/33 : `storage.presign` signs UploadPart/GetObject URLs against `S3_PUBLIC_ENDPOINT` (same creds, validated like `S3_ENDPOINT`); everything else keeps `storage.client`; unset = same client. 30 API tests pass with integration on; compose api+worker upload+download via `localhost:9000` verified from the host. Handoff `comms/red/T019-presign-public-endpoint.md`. Next: Blue review, then T009.
