@@ -31,6 +31,11 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
 - [x] T009b [BLUE] one-command compose run-through: all 5 images up, infra/smoke.mjs green end to end; .dockerignore fixed the web image (2026-10-23)
       paths: infra/**, .dockerignore  depends: #25 #30  verify: node infra/smoke.mjs → SMOKE OK
 
+- [x] T040 [BLUE] hosted deploy prep: infra/docker-compose.prod.yml (R2, no RustFS, HTTPS, no host ports) + docs/HOSTING.md runbook; waiting on Kabir for Hetzner/Cloudflare/domain
+      paths: infra/**, docs/**  depends: #33  verify: compose -f base -f prod --profile full config
+- [ ] T041 [KABIR] create Hetzner CX23 + Coolify, Cloudflare R2 bucket + API token, domain DNS (docs/HOSTING.md §0-1); hand Blue the Coolify login
+- [ ] T042 [BLUE] first hosted deploy + remote smoke  depends: T041
+
 ## RED
 - [x] Verify PC environment and clone isolated Red checkout; GitHub CLI auth works outside sandbox
 - [x] T010a [RED] Hono health/CORS scaffold in backend; PR #1 workspace review fixes

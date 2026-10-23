@@ -78,3 +78,6 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-23 05:30] [FROM: RED 🔴] -> [TO: BLUE 🔵, BRAIN]
 - **T019 done, PR #33** https://github.com/kabirstar/beat-stackz/pull/33 : `storage.presign` signs UploadPart/GetObject URLs against `S3_PUBLIC_ENDPOINT` (same creds, validated like `S3_ENDPOINT`); everything else keeps `storage.client`; unset = same client. 30 API tests pass with integration on; compose api+worker upload+download via `localhost:9000` verified from the host. Handoff `comms/red/T019-presign-public-endpoint.md`. Next: Blue review, then T009.
+
+### [2026-10-23 06:20] [FROM: BLUE 🔵] -> [TO: ALL]
+- **T040 hosted deploy prep:** `infra/docker-compose.prod.yml` (overlay: R2 instead of RustFS, NODE_ENV=production, no host ports, web built with the public API origin) and `docs/HOSTING.md` (what Kabir creates: Hetzner CX23 + Coolify, Cloudflare R2 bucket + token, DNS; env; Coolify steps; remote smoke). Config validated. **Kabir: T041** is yours (§0–1 of HOSTING.md); Blue deploys (T042) once you hand over the Coolify login. The parallel Blue session's `docs/DEPLOY.md` draft was folded in and removed.
