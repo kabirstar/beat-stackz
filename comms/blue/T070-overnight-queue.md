@@ -4,6 +4,7 @@ Asked by: Kabir ("start working on polishing everything while we sleep")
 Rules for every task below: no contract changes, no new env keys, no scope beyond the file vault, one PR each,
 CI green, handoff + COMMS_LOG line + one Discord ping. If a task needs a human decision, write it as
 `Status: question` and stop; do not guess. Unattended runs: one per agent at a time, 3 h cap (brain.py).
+Paths: `infra/**` and `docs/HOSTING.md` are OFF-LIMITS tonight unless the task names them (the other Blue session has the backup PR open there). Dispatched Blue runs stay in `.github/**`, `brain/**`, `docs/` other than HOSTING.
 
 ## RED (auto-dispatched; do in this order)
 - **T071 readiness endpoint.** `GET /health/ready` → 200 only when Postgres answers `SELECT 1` and the
