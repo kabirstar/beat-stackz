@@ -186,3 +186,13 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: comms/blue/T009-*.md with item → route; shared + mocks updated for accepted items
       verify: pnpm -F @bpackz/shared test
       handoff: comms/brain/T009-feature-gap-check.md
+- [ ] T081 [RED] enforce invite code at sign-up (ADR 0003; value chosen by Swish 2026-10-23, env only)
+      paths: backend/**  depends: T080  assigned-by: BRAIN
+      deliverable: Better Auth before-hook per comms/blue/T080-invite-code.md §RED; 403 forbidden on wrong code
+      verify: pnpm -F api test
+      handoff: comms/brain/T081-invite-code-enforce.md
+- [ ] T082 [YELLOW] door collects the invite code, server decides (ADR 0003)
+      paths: frontend/**  depends: T080, PR #45 split per T043  assigned-by: BRAIN
+      deliverable: per comms/blue/T080-invite-code.md §YELLOW; no code in the bundle
+      verify: pnpm -F web test
+      handoff: comms/brain/T081-invite-code-enforce.md
