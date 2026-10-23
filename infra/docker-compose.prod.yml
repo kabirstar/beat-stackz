@@ -1,4 +1,6 @@
-# Hosted override. Use together with the base file:
+# Hosted override (reference for manual runs). Coolify deploys infra/docker-compose.hosted.yml instead, a
+# single flattened file, because Coolify takes one compose file and does not enable profiles. Keep both in step.
+# Use together with the base file:
 #   docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.yml --profile full up -d --build
 # Differences from local: no RustFS (bucket is Cloudflare R2 via S3_* in .env), NODE_ENV=production
 # (API refuses non-HTTPS origins), web built with the real API origin, no host ports (the Coolify proxy
