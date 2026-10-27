@@ -43,6 +43,7 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
 - [ ] T045 [KABIR] create R2 bucket bpackz-backups with a 14-day lifecycle rule, extend the R2 token to it, set BACKUP_BUCKET in Coolify, redeploy (HOSTING.md §0, §5)
 
 - [x] T083 [BLUE] INVITE_CODE wiring: .env.example, hosted compose api env (:? guard), HOSTING.md §2 + secrets list (#56; PR title said T082 by mistake, T082 is Yellow)
+- [x] T086 [BLUE] ADR 0004 (commander tiebreak, cross-model review, brain-artifacts bucket, quality rule, contracts location); split gate: gitleaks in CI + `pnpm gate:fast`; `docs/PR_LEDGER.md` action (comms/blue/T086-adr-0004-gate-ledger.md)
       paths: infra/**, docs/**  depends: ADR 0003  verify: hosted compose config fails without INVITE_CODE, renders with it
 - [x] T084 [BLUE] trash contract: files.listTrash (roots only, deletedAt), files.restore, folders.restore; mocks + test; openapi (comms/blue/T084-trash-list-restore-contract.md)
       paths: shared/**, docs/**, contracts/openapi.json  depends: none  verify: pnpm -F @bpackz/shared test

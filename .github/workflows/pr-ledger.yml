@@ -1,0 +1,29 @@
+name: PR ledger
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  ledger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node infra/pr-ledger.mjs docs/PR_LEDGER.md
+      - name: Commit if changed
+        run: |
+          git diff --quiet -- docs/PR_LEDGER.md && exit 0
+          git config user.name "bpackz-ledger[bot]"
+          git config user.email "ledger@bpackz.local"
+          git add docs/PR_LEDGER.md
+          git commit -m "docs: regenerate PR_LEDGER.md [skip ci]"
+          git push
