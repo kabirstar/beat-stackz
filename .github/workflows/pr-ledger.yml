@@ -21,9 +21,9 @@ jobs:
       - run: node infra/pr-ledger.mjs docs/PR_LEDGER.md
       - name: Commit if changed
         run: |
-          git diff --quiet -- docs/PR_LEDGER.md && exit 0
+          git add docs/PR_LEDGER.md
+          git diff --cached --quiet && exit 0 # also catches the first, untracked run
           git config user.name "bpackz-ledger[bot]"
           git config user.email "ledger@bpackz.local"
-          git add docs/PR_LEDGER.md
           git commit -m "docs: regenerate PR_LEDGER.md [skip ci]"
           git push
