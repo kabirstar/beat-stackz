@@ -41,7 +41,7 @@ test('default folder taxonomy is atomic, server-owned and stable across edits', 
     return Folder.parse(value);
   };
   const signup = async (email = `${randomUUID()}@example.com`) => {
-    const response = await request('/auth/sign-up/email', '', 'POST', { name: 'Taxonomy', email, password: randomUUID() });
+    const response = await request('/auth/sign-up/email', '', 'POST', { name: 'Taxonomy', email, password: randomUUID(), inviteCode: 'dev' });
     await expect(response);
     const cookie = response.headers.getSetCookie().map((v) => v.split(';')[0]).join('; ');
     const me = authRoutes.me.response.parse(await expect(await request('/me', cookie)));
@@ -120,7 +120,7 @@ test('default folder taxonomy is atomic, server-owned and stable across edits', 
       try {
         assert.equal((await request('/vaults', owner.cookie, 'POST', { name: 'Must roll back' })).status, 500);
         assert.deepEqual((await counts()).rows, before);
-        const failed = await request('/auth/sign-up/email', '', 'POST', { name: 'Rollback', email: `${randomUUID()}@example.com`, password: randomUUID() });
+        const failed = await request('/auth/sign-up/email', '', 'POST', { name: 'Rollback', email: `${randomUUID()}@example.com`, password: randomUUID(), inviteCode: 'dev' });
         assert.ok(failed.status >= 400);
         assert.deepEqual((await counts()).rows, before);
       } finally { await db.execute(sql`DROP TRIGGER reject_seed_audit ON audit_log`); await db.execute(sql`DROP FUNCTION reject_seed_audit()`); }

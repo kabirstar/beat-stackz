@@ -21,9 +21,11 @@ test('HTTP/PostgreSQL signup, cookie sessions, signout, and transactional audit'
 }, async () => {
   assert.ok(databaseUrl);
   assert.match(new URL(databaseUrl).pathname, /\/[^/]+_test$/, 'Use a dedicated test database');
+  const inviteCode = `invite-${randomUUID()}`;
   const config = readConfig({
     DATABASE_URL: databaseUrl,
     BETTER_AUTH_SECRET: randomUUID() + randomUUID(),
+    INVITE_CODE: inviteCode,
   });
   const db = createDatabase(config.databaseUrl);
   const app = createApp(config.webOrigin, createAuth(db, config), db);
@@ -35,6 +37,7 @@ test('HTTP/PostgreSQL signup, cookie sessions, signout, and transactional audit'
   const password = randomUUID() + '-test-password';
   let userId: string | undefined;
   let otherUserId: string | undefined;
+  let openUserId: string | undefined;
   const legacyId = randomUUID();
   const deletedLegacyId = randomUUID();
   const request = (path: string, init?: RequestInit) => fetch(`http://127.0.0.1:${address.port}/auth${path}`, init);
@@ -59,10 +62,34 @@ test('HTTP/PostgreSQL signup, cookie sessions, signout, and transactional audit'
     assert.equal(legacyVault.rows[0].role, 'owner');
     assert.equal((await db.execute(sql`select id from vaults where created_by = ${deletedLegacyId}`)).rowCount, 0);
     assert.equal((await db.execute(sql`select id from audit_log where actor_id = ${legacyId} and vault_id = ${legacyVault.rows[0].id}`)).rowCount, 2);
-    const signup = await post('/sign-up/email', { name: 'Auth Test', email, password });
+    // ADR 0003: wrong invite code is refused with the shared ApiError shape, audited without the code or email.
+    const rejectedSignups = () => db.execute(sql`select actor_id, vault_id, meta from audit_log where action = 'auth.signup_rejected'`);
+    const rejectedBefore = (await rejectedSignups()).rowCount ?? 0;
+    const wrongCode = await post('/sign-up/email', { name: 'Auth Test', email, password, inviteCode: `${inviteCode}-wrong` });
+    assert.equal(wrongCode.status, 403);
+    assert.deepEqual(await wrongCode.json(), { error: 'forbidden', message: 'Invite code not recognized' });
+    const rejectedAfter = await rejectedSignups();
+    assert.equal(rejectedAfter.rowCount, rejectedBefore + 1);
+    assert.deepEqual(rejectedAfter.rows.at(-1), { actor_id: null, vault_id: null, meta: null });
+    assert.equal((await db.execute(sql`select id from users where email = ${email}`)).rowCount, 0);
+    const noCode = await post('/sign-up/email', { name: 'Auth Test', email, password });
+    assert.equal(noCode.status, 400);
+    assert.equal(ApiError.parse(await noCode.json()).error, 'invalid');
+
+    const signup = await post('/sign-up/email', { name: 'Auth Test', email, password, inviteCode });
     assert.equal(signup.status, 200);
     const signupData = await signup.json();
     userId = User.parse(signupData.user).id;
+    assert.equal((await db.execute(sql`select * from users where id = ${userId}`)).rows[0]?.invite_code, undefined, 'the code is dropped, never stored');
+
+    // Development without INVITE_CODE accepts any code.
+    const openApp = createApp(config.webOrigin, createAuth(db, { ...config, inviteCode: undefined }), db);
+    const openSignup = await openApp.request(`${config.authUrl}/auth/sign-up/email`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Origin: config.webOrigin },
+      body: JSON.stringify({ name: 'Open', email: `open-${randomUUID()}@example.com`, password, inviteCode: 'anything' }),
+    });
+    assert.equal(openSignup.status, 200);
+    openUserId = User.parse((await openSignup.json()).user).id;
     const cookies = signup.headers.getSetCookie();
     assert.ok(cookies.some((cookie) => /HttpOnly/i.test(cookie)));
     assert.equal(signup.headers.get('Access-Control-Allow-Origin'), config.webOrigin);
@@ -85,13 +112,13 @@ test('HTTP/PostgreSQL signup, cookie sessions, signout, and transactional audit'
     assert.deepEqual(domainAudit.rows.map((row) => row.action).sort(), ['member.add', 'vault.create', 'vault.seed_folders']);
     const repeatedMe = authRoutes.me.response.parse(await (await me(cookie)).json());
     assert.equal(repeatedMe.personalVaultId, personal.personalVaultId);
-    const duplicate = await post('/sign-up/email', { name: 'Duplicate', email, password });
+    const duplicate = await post('/sign-up/email', { name: 'Duplicate', email, password, inviteCode });
     assert.equal(duplicate.status, 422);
     const personalCount = await db.execute(sql`select id from vaults where created_by = ${userId} and kind = 'personal'`);
     assert.equal(personalCount.rowCount, 1);
     await assert.rejects(db.insert(vaults).values({ id: randomUUID(), createdBy: userId, kind: 'personal', name: 'Duplicate' }));
 
-    const otherSignup = await post('/sign-up/email', { name: 'Other', email: `other-${randomUUID()}@example.com`, password });
+    const otherSignup = await post('/sign-up/email', { name: 'Other', email: `other-${randomUUID()}@example.com`, password, inviteCode });
     assert.equal(otherSignup.status, 200);
     otherUserId = User.parse((await otherSignup.json()).user).id;
     const otherCookie = otherSignup.headers.getSetCookie().map((value) => value.split(';')[0]).join('; ');
@@ -113,7 +140,7 @@ test('HTTP/PostgreSQL signup, cookie sessions, signout, and transactional audit'
     try {
       const rejected = await request('/sign-up/email', {
         method: 'POST', headers: { 'Content-Type': 'application/json', Origin: config.webOrigin, 'User-Agent': rejectedAgent },
-        body: JSON.stringify({ name: 'Rollback', email: rejectedEmail, password }),
+        body: JSON.stringify({ name: 'Rollback', email: rejectedEmail, password, inviteCode }),
       });
       assert.ok(rejected.status >= 400);
       const orphan = await db.execute(sql`select id from users where email = ${rejectedEmail}`);
@@ -169,7 +196,7 @@ test('HTTP/PostgreSQL signup, cookie sessions, signout, and transactional audit'
     assert.equal(rolledBack.rowCount, 0, 'audit rows must roll back with the mutation');
   } finally {
     try {
-      for (const id of [userId, otherUserId, legacyId, deletedLegacyId]) {
+      for (const id of [userId, otherUserId, openUserId, legacyId, deletedLegacyId]) {
         if (!id) continue;
         await db.delete(vaults).where(eq(vaults.createdBy, id));
         await db.delete(users).where(eq(users.id, id));

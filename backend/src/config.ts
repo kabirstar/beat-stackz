@@ -20,7 +20,10 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
       throw new Error(`${name} must use HTTPS in production`);
     }
   }
-  return { databaseUrl, secret, authUrl, webOrigin };
+  // ADR 0003: sign-up requires this code. Unset in development means any code is accepted.
+  const inviteCode = env.INVITE_CODE || undefined;
+  if (env.NODE_ENV === 'production' && !inviteCode) throw new Error('INVITE_CODE is required in production (ADR 0003)');
+  return { databaseUrl, secret, authUrl, webOrigin, inviteCode };
 }
 
 export type Config = ReturnType<typeof readConfig>;

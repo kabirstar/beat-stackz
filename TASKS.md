@@ -125,6 +125,12 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: storage.presign (public endpoint, same creds) behind every getSignedUrl; storage.client for everything else
       verify: pnpm -F api test (unit: presigned host public, HeadObject internal); compose api+worker upload+download via localhost:9000
       handoff: comms/red/T019-presign-public-endpoint.md
+- [ ] T081 [RED] server-enforced invite code on sign-up (ADR 0003)
+      paths: backend/**, worker/test/**  depends: T080 (merged #55)
+      status: implemented on red/t081; pending Blue review
+      deliverable: Better Auth before-hook parses SignUpBody, constant-time compares inviteCode with INVITE_CODE (403 forbidden, audit auth.signup_rejected); missing field 400; INVITE_CODE required in production
+      verify: pnpm -F api test (wrong 403 / right 200 / missing 400 / dev-unset accepts)
+      handoff: comms/red/T081-invite-code-enforce.md
 
 ## YELLOW
 - [x] T020 [YELLOW] scaffold frontend (Vite + React 19 + TS + Tailwind), consume @bpackz/shared client on mocks

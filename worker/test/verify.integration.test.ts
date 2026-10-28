@@ -59,7 +59,7 @@ test('verification worker with real HTTP, PostgreSQL and RustFS', {
     return text ? JSON.parse(text) : null;
   };
   const signup = async () => {
-    const response = await request('/auth/sign-up/email', '', 'POST', { name: 'Worker test', email: `${randomUUID()}@example.com`, password: randomUUID() });
+    const response = await request('/auth/sign-up/email', '', 'POST', { name: 'Worker test', email: `${randomUUID()}@example.com`, password: randomUUID(), inviteCode: 'dev' });
     await expect(response, 200);
     const cookie = response.headers.getSetCookie().map((v) => v.split(';')[0]).join('; ');
     const me = authRoutes.me.response.parse(await expect(await request('/me', cookie), 200));
