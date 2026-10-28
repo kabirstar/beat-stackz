@@ -198,3 +198,13 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: comms/blue/T009-*.md with item → route; shared + mocks updated for accepted items
       verify: pnpm -F @bpackz/shared test
       handoff: comms/brain/T009-feature-gap-check.md
+- [ ] T087 [BLUE] shared Vision Board contract: GET/PUT /vaults/:id/board (one JSON doc, membership check, audit on PUT) + mocks + openapi (Swish: yes, 2026-10-24)
+      paths: shared/**, docs/**, contracts/openapi.json  depends: none  assigned-by: BRAIN
+      deliverable: board routes in shared; Red implements next, Yellow swaps local board state for them
+      verify: pnpm -F @bpackz/shared test
+      handoff: comms/brain/T087-vault-board-contract.md
+- [ ] T088 [BLUE] pending vault invite links contract: create/resolve/accept tokened /i/:token for not-yet-signed-up collaborators; relation to ADR 0003 invite code decided (Swish: yes, 2026-10-24)
+      paths: shared/**, docs/**, contracts/openapi.json  depends: ADR 0003  assigned-by: BRAIN
+      deliverable: invite-link routes in shared (+ ADR note); Red implements next, Yellow builds /i/:token
+      verify: pnpm -F @bpackz/shared test
+      handoff: comms/brain/T088-pending-invite-links-contract.md
