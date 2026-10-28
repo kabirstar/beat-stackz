@@ -1,9 +1,5 @@
 # Hosting Beat Stackz (Hetzner + Coolify + Cloudflare R2)
 
-> **HOLD (2026-10-28): do not deploy `main` until Yellow's T082 (sign-up sends `inviteCode`, PR #45) is merged.**
-> main's API now rejects sign-ups without the code (#58), so deploying today would block every new account.
-> When #45 lands: set `INVITE_CODE` in Coolify first, then Deploy. Remove this note then.
-
 Target: ~€6/month plus storage. One small VPS runs Postgres, the API, the web
 app and the worker from the same compose file used locally. Files live in
 Cloudflare R2 (S3 API, zero egress fees). Blue runs the deploy; Kabir creates
