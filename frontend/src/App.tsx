@@ -67,8 +67,11 @@ export { formatBytes, parseStudioFileDisplay };
 
 export function App() {
   const [vaultGateUnlocked, setVaultGateUnlocked] = useState<boolean>(() => {
-    if (typeof window === "undefined" || !window.sessionStorage) return false;
-    return window.sessionStorage.getItem(VAULT_GATE_SESSION_KEY) === "1";
+    if (typeof window === "undefined") return false;
+    return (
+      window.localStorage?.getItem(VAULT_GATE_SESSION_KEY) === "1" ||
+      window.sessionStorage?.getItem(VAULT_GATE_SESSION_KEY) === "1"
+    );
   });
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -1773,18 +1776,23 @@ export function App() {
   const handleAuthSubmit = async (
     e: React.FormEvent,
     inviteCode?: string,
+    rememberMe = true,
   ): Promise<boolean> => {
     e.preventDefault();
     setAuthError(null);
     try {
       if (authMode === "signin") {
-        await api.auth.signInEmail({ email: authEmail.trim(), password: authPassword });
+        await api.auth.signInEmail({
+          email: authEmail.trim(),
+          password: authPassword,
+          rememberMe,
+        });
       } else {
         await api.auth.signUpEmail({
           name: authName.trim() || "Producer",
           email: authEmail.trim(),
           password: authPassword,
-          inviteCode: inviteCode?.trim() || "808",
+          inviteCode: inviteCode?.trim() || "swish",
         });
       }
       setAuthModalOpen(false);
@@ -1799,8 +1807,9 @@ export function App() {
 
   const handleSignOut = async () => {
     await api.auth.signOut();
-    if (typeof window !== "undefined" && window.sessionStorage) {
-      window.sessionStorage.removeItem(VAULT_GATE_SESSION_KEY);
+    if (typeof window !== "undefined") {
+      window.localStorage?.removeItem(VAULT_GATE_SESSION_KEY);
+      window.sessionStorage?.removeItem(VAULT_GATE_SESSION_KEY);
     }
     setVaultGateUnlocked(false);
     setUser(null);
@@ -1833,9 +1842,14 @@ export function App() {
         onChangeEmail={setAuthEmail}
         onChangePassword={setAuthPassword}
         onSubmitAuth={handleAuthSubmit}
-        onUnlock={() => {
-          if (typeof window !== "undefined" && window.sessionStorage) {
-            window.sessionStorage.setItem(VAULT_GATE_SESSION_KEY, "1");
+        onUnlock={(rememberMe = true) => {
+          if (typeof window !== "undefined") {
+            window.sessionStorage?.setItem(VAULT_GATE_SESSION_KEY, "1");
+            if (rememberMe) {
+              window.localStorage?.setItem(VAULT_GATE_SESSION_KEY, "1");
+            } else {
+              window.localStorage?.removeItem(VAULT_GATE_SESSION_KEY);
+            }
           }
           setVaultGateUnlocked(true);
           setAnimateSpawn(true);

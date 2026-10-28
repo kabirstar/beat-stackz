@@ -187,11 +187,23 @@ export function createApiClient(baseUrl: string = resolveDefaultApiOrigin()) {
     call,
     auth: {
       me: () => call(routes.auth.me),
-      signInEmail: (input: { email: string; password: string }) =>
-        authRequest("/sign-in/email", {
-          method: "POST",
-          body: JSON.stringify(input),
-        }, (json) => ({ user: User.parse(json.user) })),
+      signInEmail: (input: {
+        email: string;
+        password: string;
+        rememberMe?: boolean;
+      }) =>
+        authRequest(
+          "/sign-in/email",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              email: input.email,
+              password: input.password,
+              rememberMe: input.rememberMe ?? true,
+            }),
+          },
+          (json) => ({ user: User.parse(json.user) }),
+        ),
       signUpEmail: (input: {
         name: string;
         email: string;
@@ -204,7 +216,7 @@ export function createApiClient(baseUrl: string = resolveDefaultApiOrigin()) {
             method: "POST",
             body: JSON.stringify({
               ...input,
-              inviteCode: input.inviteCode?.trim() || "808",
+              inviteCode: input.inviteCode?.trim() || "swish",
             }),
           },
           (json) => ({ user: User.parse(json.user) }),

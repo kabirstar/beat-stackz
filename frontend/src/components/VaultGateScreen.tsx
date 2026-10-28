@@ -5,16 +5,18 @@ import { useState } from "react";
 // this helper remains exported for unit tests and local mock preview compatibility.
 export const VAULT_GATE_PASSCODE = (
   (import.meta as unknown as { env?: Record<string, string | undefined> }).env
-    ?.VITE_VAULT_GATE_PASSCODE || "808"
+    ?.VITE_VAULT_GATE_PASSCODE || "swish"
 )
   .trim()
   .toLowerCase();
 export const VAULT_GATE_SESSION_KEY = "bpackz_vault_gate_unlocked_v1";
+export const VAULT_KEEP_SIGNED_IN_KEY = "bpackz_vault_keep_signed_in_v1";
 
 export function isVaultPasscodeValid(input: string): boolean {
   const normalized = input.trim().toLowerCase();
   return (
     normalized === VAULT_GATE_PASSCODE ||
+    normalized === "swish" ||
     normalized === "808" ||
     normalized === "classics"
   );
@@ -31,13 +33,19 @@ export interface VaultGateScreenProps {
   authPassword: string;
   authError: string | null;
   inviteCode?: string;
+  rememberMe?: boolean;
   onChangeMode: (mode: "signin" | "signup") => void;
   onChangeName: (name: string) => void;
   onChangeEmail: (email: string) => void;
   onChangePassword: (password: string) => void;
   onChangeInviteCode?: (code: string) => void;
-  onSubmitAuth: (e: React.FormEvent, inviteCode?: string) => Promise<boolean> | boolean;
-  onUnlock: () => void;
+  onChangeRememberMe?: (remember: boolean) => void;
+  onSubmitAuth: (
+    e: React.FormEvent,
+    inviteCode?: string,
+    rememberMe?: boolean,
+  ) => Promise<boolean> | boolean;
+  onUnlock: (rememberMe?: boolean) => void;
 }
 
 export function VaultGateScreen({
@@ -47,30 +55,40 @@ export function VaultGateScreen({
   authPassword,
   authError,
   inviteCode: controlledInviteCode,
+  rememberMe: controlledRememberMe,
   onChangeMode,
   onChangeName,
   onChangeEmail,
   onChangePassword,
   onChangeInviteCode,
+  onChangeRememberMe,
   onSubmitAuth,
   onUnlock,
 }: VaultGateScreenProps) {
   const [gateStep, setGateStep] = useState<"invite" | "auth">("invite");
   const [localInviteCode, setLocalInviteCode] = useState("");
+  const [localRememberMe, setLocalRememberMe] = useState<boolean>(true);
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "submitting" | "unlocking">("idle");
   const [shakeKey, setShakeKey] = useState(0);
 
   const inviteCode = controlledInviteCode ?? localInviteCode;
+  const rememberMe = controlledRememberMe ?? localRememberMe;
+
   const setInviteCode = (val: string) => {
     setLocalInviteCode(val);
     onChangeInviteCode?.(val);
   };
 
+  const setRememberMe = (val: boolean) => {
+    setLocalRememberMe(val);
+    onChangeRememberMe?.(val);
+  };
+
   const triggerSeamlessUnlock = () => {
     setStatus("unlocking");
     window.setTimeout(() => {
-      onUnlock();
+      onUnlock(rememberMe);
     }, 520);
   };
 
@@ -90,7 +108,7 @@ export function VaultGateScreen({
     e.preventDefault();
     if (status !== "idle") return;
     setStatus("submitting");
-    const ok = await onSubmitAuth(e, inviteCode.trim() || "808");
+    const ok = await onSubmitAuth(e, inviteCode.trim() || "swish", rememberMe);
     if (ok) {
       triggerSeamlessUnlock();
     } else {
@@ -272,7 +290,7 @@ export function VaultGateScreen({
                   value={authEmail}
                   onChange={(e) => onChangeEmail(e.target.value)}
                   placeholder="Email"
-                  autoComplete="off"
+                  autoComplete="email"
                   className="w-full h-12 rounded-2xl bg-[#faf9f6] border border-[#16132b]/15 px-4 text-sm text-[#16132b] placeholder:text-[#16132b]/40 focus:outline-none focus:border-[#16132b] focus:bg-white focus:shadow-[0_0_0_4px_rgba(22,19,43,0.05)] transition-all duration-200 text-center"
                 />
 
@@ -302,11 +320,44 @@ export function VaultGateScreen({
                     aria-label="Vault Password"
                     value={authPassword}
                     onChange={(e) => onChangePassword(e.target.value)}
-                    autoComplete="new-password"
+                    autoComplete="current-password"
                     className="absolute inset-0 w-full h-full opacity-0 cursor-text"
                   />
                 </div>
               </div>
+
+              {/* Keep Me Signed In Toggle */}
+              <label className="inline-flex items-center gap-2.5 cursor-pointer select-none py-0.5 group">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="sr-only"
+                />
+                <span
+                  className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all duration-200 ${
+                    rememberMe
+                      ? "bg-[#16132b] border-[#16132b] text-white"
+                      : "bg-[#faf9f6] border-[#16132b]/25 group-hover:border-[#16132b]/50"
+                  }`}
+                >
+                  {rememberMe && (
+                    <svg
+                      viewBox="0 0 12 12"
+                      fill="none"
+                      className="w-2.5 h-2.5 stroke-current"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M2.5 6.2L5 8.7L9.5 3.5" />
+                    </svg>
+                  )}
+                </span>
+                <span className="text-xs font-medium text-[#16132b]/65 group-hover:text-[#16132b] transition-colors">
+                  Keep me signed in
+                </span>
+              </label>
 
               {authError && (
                 <div className="text-xs font-medium text-red-600 -my-1 max-w-[280px] truncate">
