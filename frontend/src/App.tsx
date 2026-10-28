@@ -1770,7 +1770,10 @@ export function App() {
     }
   };
 
-  const handleAuthSubmit = async (e: React.FormEvent): Promise<boolean> => {
+  const handleAuthSubmit = async (
+    e: React.FormEvent,
+    inviteCode?: string,
+  ): Promise<boolean> => {
     e.preventDefault();
     setAuthError(null);
     try {
@@ -1781,6 +1784,7 @@ export function App() {
           name: authName.trim() || "Producer",
           email: authEmail.trim(),
           password: authPassword,
+          inviteCode: inviteCode?.trim() || "808",
         });
       }
       setAuthModalOpen(false);
@@ -1841,7 +1845,7 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col vault-main-enter">
       <input
         ref={fileInputRef}
         type="file"

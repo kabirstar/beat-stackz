@@ -583,3 +583,86 @@ body[data-file-font="mono"] {
   animation: vaultWheelSlowSpin 24s linear infinite;
 }
 
+@keyframes vaultTitleRise {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes vaultCardStepEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes vaultFieldExpand {
+  0% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes vaultErrorShake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-7px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes vaultMainPageEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.992);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.vault-title-enter {
+  animation: vaultTitleRise 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.vault-step-enter {
+  animation: vaultCardStepEnter 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.vault-field-enter {
+  animation: vaultFieldExpand 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.vault-error-shake {
+  animation: vaultErrorShake 0.38s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.vault-main-enter {
+  animation: vaultMainPageEnter 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+

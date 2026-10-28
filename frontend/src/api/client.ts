@@ -161,12 +161,20 @@ export function createApiClient(baseUrl: string = resolveDefaultApiOrigin()) {
         (errJson && typeof errJson.message === "string" && errJson.message) ||
         (res.status === 401
           ? "Invalid email or password"
-          : res.status === 422
-            ? "An account with this email already exists"
-            : `Authentication failed (${res.status})`);
+          : res.status === 403
+            ? "Invite code not recognized"
+            : res.status === 422
+              ? "An account with this email already exists"
+              : `Authentication failed (${res.status})`);
       throw new BpackzApiError(
         res.status,
-        res.status === 401 ? "unauthorized" : res.status === 422 ? "conflict" : "invalid",
+        res.status === 401
+          ? "unauthorized"
+          : res.status === 403
+            ? "forbidden"
+            : res.status === 422
+              ? "conflict"
+              : "invalid",
         message,
       );
     }
@@ -184,11 +192,23 @@ export function createApiClient(baseUrl: string = resolveDefaultApiOrigin()) {
           method: "POST",
           body: JSON.stringify(input),
         }, (json) => ({ user: User.parse(json.user) })),
-      signUpEmail: (input: { name: string; email: string; password: string }) =>
-        authRequest("/sign-up/email", {
-          method: "POST",
-          body: JSON.stringify(input),
-        }, (json) => ({ user: User.parse(json.user) })),
+      signUpEmail: (input: {
+        name: string;
+        email: string;
+        password: string;
+        inviteCode?: string;
+      }) =>
+        authRequest(
+          "/sign-up/email",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              ...input,
+              inviteCode: input.inviteCode?.trim() || "808",
+            }),
+          },
+          (json) => ({ user: User.parse(json.user) }),
+        ),
       signOut: async () => {
         await fetch(`${origin}/auth/sign-out`, {
           method: "POST",
