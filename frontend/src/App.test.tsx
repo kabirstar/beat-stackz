@@ -158,12 +158,11 @@ describe("The Vault UI & Theme Specification (T020 & T021)", () => {
     );
   });
 
-  it("validates the 'swish' / '808' / 'classics' Vault Gate passcode and masks typed characters as '*'", () => {
+  it("Vault Gate door accepts any non-empty code (server enforces INVITE_CODE) and masks typed characters as '*'", () => {
     assert.equal(isVaultPasscodeValid("swish"), true);
-    assert.equal(isVaultPasscodeValid(" SWISH "), true);
-    assert.equal(isVaultPasscodeValid("classics"), true);
-    assert.equal(isVaultPasscodeValid("808"), true);
-    assert.equal(isVaultPasscodeValid("wrong"), false);
+    assert.equal(isVaultPasscodeValid(" anything "), true);
+    assert.equal(isVaultPasscodeValid(""), false);
+    assert.equal(isVaultPasscodeValid("   "), false);
     assert.equal(maskWithAsterisks("swish"), "*****");
   });
 

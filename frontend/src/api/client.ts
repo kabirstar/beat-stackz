@@ -216,7 +216,7 @@ export function createApiClient(baseUrl: string = resolveDefaultApiOrigin()) {
             method: "POST",
             body: JSON.stringify({
               ...input,
-              inviteCode: input.inviteCode?.trim() || "swish",
+              inviteCode: input.inviteCode?.trim(), // server decides; never default a code in the bundle
             }),
           },
           (json) => ({ user: User.parse(json.user) }),

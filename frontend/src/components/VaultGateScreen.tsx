@@ -1,11 +1,12 @@
 import { useState } from "react";
 
-// Studio invite-code gate preceding real Better Auth (signUpEmail / signInEmail).
-// Per ADR 0003 (T082), the server enforces INVITE_CODE on POST /auth/sign-up/email;
-// this helper remains exported for unit tests and local mock preview compatibility.
+// Invite-code door in front of Better Auth. The server is the authority (ADR 0003:
+// POST /auth/sign-up/email rejects a missing or wrong inviteCode). The door only
+// refuses empty input, unless VITE_VAULT_GATE_PASSCODE is set for a local preview.
+// Never hardcode a real code here: this file ships in the public bundle.
 export const VAULT_GATE_PASSCODE = (
   (import.meta as unknown as { env?: Record<string, string | undefined> }).env
-    ?.VITE_VAULT_GATE_PASSCODE || "swish"
+    ?.VITE_VAULT_GATE_PASSCODE || ""
 )
   .trim()
   .toLowerCase();
@@ -14,12 +15,8 @@ export const VAULT_KEEP_SIGNED_IN_KEY = "bpackz_vault_keep_signed_in_v1";
 
 export function isVaultPasscodeValid(input: string): boolean {
   const normalized = input.trim().toLowerCase();
-  return (
-    normalized === VAULT_GATE_PASSCODE ||
-    normalized === "swish" ||
-    normalized === "808" ||
-    normalized === "classics"
-  );
+  if (!normalized) return false;
+  return VAULT_GATE_PASSCODE ? normalized === VAULT_GATE_PASSCODE : true;
 }
 
 export function maskWithAsterisks(input: string): string {
@@ -108,7 +105,7 @@ export function VaultGateScreen({
     e.preventDefault();
     if (status !== "idle") return;
     setStatus("submitting");
-    const ok = await onSubmitAuth(e, inviteCode.trim() || "swish", rememberMe);
+    const ok = await onSubmitAuth(e, inviteCode.trim(), rememberMe);
     if (ok) {
       triggerSeamlessUnlock();
     } else {

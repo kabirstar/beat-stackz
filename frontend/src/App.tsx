@@ -1792,7 +1792,7 @@ export function App() {
           name: authName.trim() || "Producer",
           email: authEmail.trim(),
           password: authPassword,
-          inviteCode: inviteCode?.trim() || "swish",
+          inviteCode: inviteCode?.trim(),
         });
       }
       setAuthModalOpen(false);
