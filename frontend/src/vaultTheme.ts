@@ -177,6 +177,7 @@ export const WAVEFORM_BARS = [
 ];
 
 export const ICON_TYPES = [
+  { key: "in_progress", label: "In Progress" },
   { key: "vision_board", label: "Vision Board" },
   { key: "rap_cup", label: "Lean Cup" },
   { key: "rap_chain", label: "Diamond Chain" },
@@ -199,6 +200,7 @@ export const SHARED_RAP_ICON_MAP: Record<string, string> = {
   songs: "rap_lambo",
   media: "rap_watch",
   "vision board": "vision_board",
+  "in progress": "in_progress",
 };
 
 export interface FolderUiMeta {
@@ -215,6 +217,7 @@ const DEFAULT_ROOT_META: Record<string, FolderUiMeta> = {
   songs: { by: "demo · mix · drop", colorSlot: 3, iconKey: "songs", order: 3 },
   media: { by: "photos · videos · covers", colorSlot: 4, iconKey: "media", order: 4 },
   "vision board": { by: "notes · songs · threads", colorSlot: 0, iconKey: "vision_board", order: 5 },
+  "in progress": { by: "songs · stems · demo · mix", colorSlot: 1, iconKey: "in_progress", order: 6 },
 };
 
 const DEFAULT_SUB_META: Record<string, FolderUiMeta> = {

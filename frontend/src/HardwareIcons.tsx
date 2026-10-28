@@ -117,6 +117,19 @@ export function MiniFolderSvg({ iconKey }: { iconKey: string }) {
           <circle cx="12" cy="12" r="2.5" />
         </svg>
       );
+    case "in_progress":
+      return (
+        <svg
+          className="w-4 h-4 shrink-0"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        >
+          <rect x="3" y="4" width="18" height="16" rx="2" />
+          <path d="M7 15V9M11 16V8M15 14v-4M19 15v-5" strokeLinecap="round" />
+        </svg>
+      );
     case "vision_board":
       return (
         <svg
@@ -169,6 +182,71 @@ export function HardwareObject3D({
   code: string;
 }) {
   switch (iconKey) {
+    case "in_progress":
+      return (
+        <InHardwareBox>
+          <div
+            className="flex items-center justify-between mb-1.5 px-1.5 py-0.5 rounded-xs border border-white/15"
+            style={{
+              background: "var(--chassis-edge)",
+              transform: "translateZ(6px)",
+            }}
+          >
+            <span
+              className="mono-meta text-[5.5px] uppercase tracking-widest font-bold"
+              style={{ color: "var(--stamp-color)" }}
+            >
+              {code} · FL STEMS
+            </span>
+            <span
+              className="w-2 h-2 rounded-full rec-dot"
+              style={{
+                background: "var(--accent-primary)",
+                boxShadow: "0 0 6px var(--accent-primary)",
+              }}
+            />
+          </div>
+          <div
+            className="grid grid-cols-4 gap-1 flex-1 px-0.5 pt-0.5"
+            style={{ transformStyle: "preserve-3d" }}
+          >
+            {[
+              { label: "BT", h: "75%", delay: "0s" },
+              { label: "MN", h: "88%", delay: "-0.5s" },
+              { label: "BG", h: "62%", delay: "-1.1s" },
+              { label: "AD", h: "54%", delay: "-1.6s" },
+            ].map((ch, idx) => (
+              <div
+                key={ch.label}
+                className="rounded-sm border border-white/15 flex flex-col items-center justify-between p-1 relative"
+                style={{
+                  background: "var(--chassis-mid)",
+                  transform: "translateZ(5px)",
+                }}
+              >
+                <div className="w-1 h-8 rounded-full bg-black/50 relative flex items-end overflow-hidden">
+                  <div
+                    className="w-full rounded-full"
+                    style={{
+                      height: ch.h,
+                      background:
+                        idx % 2 === 0
+                          ? "var(--accent-primary)"
+                          : "var(--stamp-color)",
+                    }}
+                  />
+                </div>
+                <span
+                  className="mono-meta text-[5px] font-bold"
+                  style={{ color: "var(--stamp-color)" }}
+                >
+                  {ch.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </InHardwareBox>
+      );
     case "vision_board":
       return (
         <div

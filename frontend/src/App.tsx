@@ -21,6 +21,11 @@ import {
   ShareContextSheet,
 } from "./components/VaultModals.tsx";
 import { VisionBoardCanvas } from "./components/VisionBoardCanvas.tsx";
+import {
+  InProgressSection,
+  type InProgressSongEcosystem,
+  type LastAutoRouteSummary,
+} from "./components/InProgressSection.tsx";
 import { UserAvatarBadge } from "./HardwareIcons.tsx";
 import {
   computeBlobSha256,
@@ -28,6 +33,17 @@ import {
   formatBytes,
   parseStudioFileDisplay,
 } from "./utils/format.ts";
+import {
+  classifyFlStudioStem,
+  extractSessionFilesFromZip,
+  guessMimeFromFilename,
+  IN_PROGRESS_BUCKETS,
+  IN_PROGRESS_ROOT_FOLDER_NAME,
+  inferSongTitleFromBatch,
+  isInProgressBucketKey,
+  isSupportedSessionFile,
+  type InProgressBucketKey,
+} from "./utils/inProgressAutoRouter.ts";
 import {
   createDefaultVisionBoardState,
   describeFileMeta,
@@ -75,6 +91,12 @@ export function App() {
   const [forceFilesView, setForceFilesView] = useState(false);
   const [viewingTrash, setViewingTrash] = useState(false);
   const [visionBoardOpen, setVisionBoardOpen] = useState(false);
+  const [inProgressOpen, setInProgressOpen] = useState(false);
+  const [activeInProgressSongId, setActiveInProgressSongId] = useState<string | null>(null);
+  const [activeInProgressBucket, setActiveInProgressBucket] = useState<"all" | InProgressBucketKey>("all");
+  const [inProgressImporting, setInProgressImporting] = useState(false);
+  const [inProgressStatusText, setInProgressStatusText] = useState<string | null>(null);
+  const [lastRouteSummary, setLastRouteSummary] = useState<LastAutoRouteSummary | null>(null);
   const [search, setSearch] = useState("");
   const [trackFilter, setTrackFilter] = useState<"all" | "swish" | "todo">("all");
   const [fileLayout, setFileLayout] = useState<FileLayoutMode>("cards");
@@ -156,6 +178,18 @@ export function App() {
               sortedSubs.map(async (sf) => {
                 const subListing = await api.files.listChildren(vaultId, { folderId: sf.id });
                 nextFiles[sf.id] = subListing.files;
+                if (subListing.folders.length > 0) {
+                  const sortedGrandSubs = sortByOrder(subListing.folders);
+                  nextSubs[sf.id] = sortedGrandSubs;
+                  await Promise.all(
+                    sortedGrandSubs.map(async (gsf) => {
+                      const grandListing = await api.files.listChildren(vaultId, {
+                        folderId: gsf.id,
+                      });
+                      nextFiles[gsf.id] = grandListing.files;
+                    }),
+                  );
+                }
               }),
             );
           }),
@@ -259,19 +293,79 @@ export function App() {
     [currentSubfolders, subId],
   );
 
+  const inProgressRootFolder = useMemo(
+    () =>
+      rootFolders.find((f, idx) => {
+        const meta = resolveFolderUiMeta(f, uiMeta.folderMeta, idx);
+        return (
+          f.name.trim().toLowerCase() === IN_PROGRESS_ROOT_FOLDER_NAME ||
+          meta.iconKey === "in_progress"
+        );
+      }) ?? null,
+    [rootFolders, uiMeta.folderMeta],
+  );
+
+  const viewingInProgress = useMemo(() => {
+    if (viewingTrash || visionBoardOpen) return false;
+    if (inProgressOpen) return true;
+    if (!currentRootFolder) return false;
+    const meta = resolveFolderUiMeta(currentRootFolder, uiMeta.folderMeta, 0);
+    return (
+      currentRootFolder.name.trim().toLowerCase() === IN_PROGRESS_ROOT_FOLDER_NAME ||
+      meta.iconKey === "in_progress"
+    );
+  }, [currentRootFolder, viewingTrash, visionBoardOpen, inProgressOpen, uiMeta.folderMeta]);
+
+  const inProgressSongs: InProgressSongEcosystem[] = useMemo(() => {
+    if (!inProgressRootFolder) return [];
+    const songFolders = subfoldersByRoot[inProgressRootFolder.id] ?? [];
+    return songFolders.map((songFolder) => {
+      const grandSubs = subfoldersByRoot[songFolder.id] ?? [];
+      const bucketFolders: Partial<Record<InProgressBucketKey, Folder>> = {};
+      const filesByBucket: Record<InProgressBucketKey, FileItem[]> = {
+        beat: [],
+        main: [],
+        bg: [],
+        adlib: [],
+        demo: [],
+        mixed: [],
+      };
+      for (const gs of grandSubs) {
+        const lower = gs.name.trim().toLowerCase();
+        if (isInProgressBucketKey(lower)) {
+          bucketFolders[lower] = gs;
+          filesByBucket[lower] = filesByFolder[gs.id] ?? [];
+        }
+      }
+      const unbucketedFiles = filesByFolder[songFolder.id] ?? [];
+      const totalFiles =
+        unbucketedFiles.length +
+        IN_PROGRESS_BUCKETS.reduce((acc, b) => acc + (filesByBucket[b.key]?.length ?? 0), 0);
+      return {
+        songFolder,
+        bucketFolders,
+        filesByBucket,
+        unbucketedFiles,
+        totalFiles,
+      };
+    });
+  }, [inProgressRootFolder, subfoldersByRoot, filesByFolder]);
+
   const viewingVisionBoard = useMemo(() => {
     if (viewingTrash) return false;
     if (visionBoardOpen) return true;
+    if (inProgressOpen) return false;
     if (!currentRootFolder) return false;
     const meta = resolveFolderUiMeta(currentRootFolder, uiMeta.folderMeta, 0);
     return (
       currentRootFolder.name.trim().toLowerCase() === "vision board" ||
       meta.iconKey === "vision_board"
     );
-  }, [currentRootFolder, viewingTrash, visionBoardOpen, uiMeta.folderMeta]);
+  }, [currentRootFolder, viewingTrash, visionBoardOpen, inProgressOpen, uiMeta.folderMeta]);
 
   const viewingFiles = Boolean(
     !viewingVisionBoard &&
+      !viewingInProgress &&
       (forceFilesView ||
         (currentRootFolder && currentSubfolders.length === 0) ||
         (currentRootFolder && currentSubFolder)),
@@ -323,20 +417,42 @@ export function App() {
         meta.iconKey === "vision_board"
       );
     });
-    const combinedRoots: Folder[] = hasVisionFolder
-      ? rootFolders
-      : [
-          ...rootFolders,
-          {
-            id: "__vision_board__",
-            vaultId: activeVaultId ?? "default",
-            parentId: null,
-            name: "vision board",
-            kind: null,
-            createdBy: user?.id ?? "u_artist",
-            updatedAt: new Date(0).toISOString(),
-          },
-        ];
+    const hasInProgressFolder = rootFolders.some((f, idx) => {
+      const meta = resolveFolderUiMeta(f, uiMeta.folderMeta, idx);
+      return (
+        f.name.trim().toLowerCase() === IN_PROGRESS_ROOT_FOLDER_NAME ||
+        meta.iconKey === "in_progress"
+      );
+    });
+    const combinedRoots: Folder[] = [
+      ...rootFolders,
+      ...(hasVisionFolder
+        ? []
+        : [
+            {
+              id: "__vision_board__",
+              vaultId: activeVaultId ?? "default",
+              parentId: null,
+              name: "vision board",
+              kind: null,
+              createdBy: user?.id ?? "u_artist",
+              updatedAt: new Date(0).toISOString(),
+            },
+          ]),
+      ...(hasInProgressFolder
+        ? []
+        : [
+            {
+              id: "__in_progress__",
+              vaultId: activeVaultId ?? "default",
+              parentId: null,
+              name: IN_PROGRESS_ROOT_FOLDER_NAME,
+              kind: null,
+              createdBy: user?.id ?? "u_artist",
+              updatedAt: new Date(0).toISOString(),
+            },
+          ]),
+    ];
 
     return combinedRoots.filter((f, idx) => {
       if (!query) return true;
@@ -443,40 +559,61 @@ export function App() {
     [activeVaultId, uiMeta.trashedByVault],
   );
 
-  const canGoBack = Boolean(currentRootFolder || viewingTrash || visionBoardOpen);
+  const canGoBack = Boolean(
+    currentRootFolder || viewingTrash || visionBoardOpen || inProgressOpen,
+  );
 
   const profileSubheading =
     isSharedMode && activeVault ? activeVault.name : user?.name ?? "Swish";
 
   const titleText = viewingTrash
     ? "Trash"
-    : visionBoardOpen && !currentRootFolder
-      ? "Vision Board"
-      : !currentRootFolder
-        ? "The Vault"
-        : currentSubFolder?.name ?? currentRootFolder.name;
+    : viewingInProgress
+      ? "In Progress"
+      : visionBoardOpen && !currentRootFolder
+        ? "Vision Board"
+        : !currentRootFolder
+          ? "The Vault"
+          : currentSubFolder?.name ?? currentRootFolder.name;
 
   const subtitleText = useMemo(() => {
     if (viewingTrash) return `${profileSubheading} · 30-day recovery`;
+    if (viewingInProgress)
+      return `${profileSubheading} · song ecosystems · beat · main · bg · adlib · demo · mixed`;
     if (visionBoardOpen && !currentRootFolder) return `${profileSubheading} · notes · songs · threads`;
     if (!currentRootFolder) return profileSubheading;
     const target = currentSubFolder ?? currentRootFolder;
     const meta = resolveFolderUiMeta(target, uiMeta.folderMeta, 0);
     return `${profileSubheading} · ${meta.by}`;
-  }, [viewingTrash, visionBoardOpen, profileSubheading, currentRootFolder, currentSubFolder, uiMeta.folderMeta]);
+  }, [
+    viewingTrash,
+    viewingInProgress,
+    visionBoardOpen,
+    profileSubheading,
+    currentRootFolder,
+    currentSubFolder,
+    uiMeta.folderMeta,
+  ]);
 
   const parentFolderTheme: HardwareThemeSlot = useMemo(() => {
+    if (viewingInProgress) return activePalette[1] ?? activePalette[0];
     if (!currentRootFolder) return activePalette[0];
     const meta = resolveFolderUiMeta(currentRootFolder, uiMeta.folderMeta, 0);
     return activePalette[meta.colorSlot % activePalette.length] ?? activePalette[0];
-  }, [currentRootFolder, activePalette, uiMeta.folderMeta]);
+  }, [viewingInProgress, currentRootFolder, activePalette, uiMeta.folderMeta]);
 
   const folderHasPlayingTrack = useCallback(
     (folder: Folder) => {
       if (!playingFile) return false;
       if ((filesByFolder[folder.id] ?? []).some((f) => f.id === playingFile.id)) return true;
       const subs = subfoldersByRoot[folder.id] ?? [];
-      return subs.some((sf) => (filesByFolder[sf.id] ?? []).some((f) => f.id === playingFile.id));
+      return subs.some(
+        (sf) =>
+          (filesByFolder[sf.id] ?? []).some((f) => f.id === playingFile.id) ||
+          (subfoldersByRoot[sf.id] ?? []).some((gsf) =>
+            (filesByFolder[gsf.id] ?? []).some((f) => f.id === playingFile.id),
+          ),
+      );
     },
     [playingFile, filesByFolder, subfoldersByRoot],
   );
@@ -487,6 +624,7 @@ export function App() {
     setForceFilesView(false);
     setViewingTrash(false);
     setVisionBoardOpen(false);
+    setInProgressOpen(false);
     setCreatingFolder(false);
     setSharedDropdownOpen(false);
     setPlusMenuOpen(false);
@@ -519,6 +657,7 @@ export function App() {
   const handleBack = () => {
     if (viewingTrash) setViewingTrash(false);
     else if (visionBoardOpen) setVisionBoardOpen(false);
+    else if (inProgressOpen) setInProgressOpen(false);
     else if (forceFilesView) setForceFilesView(false);
     else if (subId) setSubId(null);
     else setRootId(null);
@@ -533,7 +672,19 @@ export function App() {
       setSubId(null);
       setForceFilesView(false);
       setViewingTrash(false);
+      setInProgressOpen(false);
       setVisionBoardOpen(true);
+      setCreatingFolder(false);
+      setPlusMenuOpen(false);
+      return;
+    }
+    if (id === "__in_progress__" || (inProgressRootFolder && id === inProgressRootFolder.id)) {
+      setRootId(inProgressRootFolder ? inProgressRootFolder.id : null);
+      setSubId(null);
+      setForceFilesView(false);
+      setViewingTrash(false);
+      setVisionBoardOpen(false);
+      setInProgressOpen(true);
       setCreatingFolder(false);
       setPlusMenuOpen(false);
       return;
@@ -543,6 +694,7 @@ export function App() {
     setForceFilesView(false);
     setViewingTrash(false);
     setVisionBoardOpen(false);
+    setInProgressOpen(false);
     setCreatingFolder(false);
     setPlusMenuOpen(false);
     setAnimateSpawn(true);
@@ -866,6 +1018,395 @@ export function App() {
       sha256,
       parts: completedParts,
     });
+  };
+
+  const ensureInProgressSongEcosystem = useCallback(
+    async (
+      vaultId: string,
+      rawSongTitle: string,
+    ): Promise<{
+      ipRoot: Folder;
+      songFolder: Folder;
+      bucketFolders: Record<InProgressBucketKey, Folder>;
+    }> => {
+      const rootListing = await api.files.listChildren(vaultId);
+      let ipRoot =
+        rootListing.folders.find(
+          (f) => f.name.trim().toLowerCase() === IN_PROGRESS_ROOT_FOLDER_NAME,
+        ) ?? null;
+      if (!ipRoot) {
+        ipRoot = await api.folders.create(vaultId, {
+          name: IN_PROGRESS_ROOT_FOLDER_NAME,
+          parentId: null,
+        });
+      }
+
+      const cleanSongTitle =
+        rawSongTitle
+          .replace(/[/\\]+/g, "-")
+          .trim()
+          .slice(0, 120) || "Untitled Session";
+
+      const ipListing = await api.files.listChildren(vaultId, { folderId: ipRoot.id });
+      let songFolder =
+        ipListing.folders.find(
+          (f) => f.name.trim().toLowerCase() === cleanSongTitle.toLowerCase(),
+        ) ?? null;
+      if (!songFolder) {
+        songFolder = await api.folders.create(vaultId, {
+          name: cleanSongTitle,
+          parentId: ipRoot.id,
+        });
+      }
+
+      const songListing = await api.files.listChildren(vaultId, { folderId: songFolder.id });
+      const bucketFolders = {} as Record<InProgressBucketKey, Folder>;
+      for (const spec of IN_PROGRESS_BUCKETS) {
+        let bf =
+          songListing.folders.find((f) => f.name.trim().toLowerCase() === spec.key) ?? null;
+        if (!bf) {
+          bf = await api.folders.create(vaultId, {
+            name: spec.key,
+            parentId: songFolder.id,
+          });
+        }
+        bucketFolders[spec.key] = bf;
+      }
+
+      return { ipRoot, songFolder, bucketFolders };
+    },
+    [],
+  );
+
+  const uploadSafeFileToFolder = async (
+    vaultId: string,
+    folderId: string,
+    rawName: string,
+    size: number,
+    mime: string,
+    blob?: Blob,
+  ): Promise<FileItem> => {
+    const cleanName = (rawName.split("/").pop()?.split("\\").pop() ?? rawName).trim();
+    try {
+      return await runMultipartUpload(vaultId, folderId, cleanName, size, mime, blob);
+    } catch (err) {
+      if (err instanceof BpackzApiError && err.status === 409) {
+        const dotIdx = cleanName.lastIndexOf(".");
+        const suffixed =
+          dotIdx > 0
+            ? `${cleanName.slice(0, dotIdx)}_${Math.floor(10 + Math.random() * 89)}${cleanName.slice(dotIdx)}`
+            : `${cleanName}_${Math.floor(10 + Math.random() * 89)}`;
+        return await runMultipartUpload(vaultId, folderId, suffixed, size, mime, blob);
+      }
+      throw err;
+    }
+  };
+
+  const handleCreateEmptyInProgressSong = async (songTitle: string) => {
+    if (!activeVaultId || !songTitle.trim()) return;
+    setInProgressImporting(true);
+    setInProgressStatusText(`Creating "${songTitle.trim()}" song ecosystem...`);
+    try {
+      const { songFolder } = await ensureInProgressSongEcosystem(activeVaultId, songTitle);
+      await loadVaultContents(activeVaultId);
+      setActiveInProgressSongId(songFolder.id);
+      setActiveInProgressBucket("all");
+      showToast(
+        `Created song ecosystem "${songFolder.name}" (beat · main · bg · adlib · demo · mixed)`,
+      );
+    } catch (err) {
+      if (err instanceof BpackzApiError) showToast(err.message);
+    } finally {
+      setInProgressImporting(false);
+      setInProgressStatusText(null);
+    }
+  };
+
+  const handleImportInProgressSessionFiles = async (
+    rawFiles: File[],
+    explicitSongTitle?: string,
+    detectedContainerName?: string | null,
+  ) => {
+    if (!activeVaultId || rawFiles.length === 0) return;
+    setInProgressImporting(true);
+    setInProgressStatusText("Inspecting FL Studio files & archives...");
+    try {
+      const expandedFiles: File[] = [];
+      let containerHint = detectedContainerName ?? null;
+
+      for (const f of rawFiles) {
+        if (f.name.toLowerCase().endsWith(".zip")) {
+          if (!containerHint) containerHint = f.name;
+          setInProgressStatusText(`Unpacking "${f.name}" archive...`);
+          try {
+            const unzipped = await extractSessionFilesFromZip(f);
+            expandedFiles.push(...unzipped);
+          } catch {
+            showToast(`Could not unpack "${f.name}" — please drop uncompressed WAV/MP3 stems`);
+          }
+        } else if (isSupportedSessionFile(f.name)) {
+          expandedFiles.push(f);
+        }
+      }
+
+      if (expandedFiles.length === 0) {
+        showToast("No audio stems (.wav, .mp3, .flac, .aiff) or .flp found in selection");
+        return;
+      }
+
+      const inferredTitle =
+        explicitSongTitle?.trim() ||
+        inferSongTitleFromBatch(
+          expandedFiles.map((f) => f.name),
+          containerHint,
+        );
+
+      setInProgressStatusText(
+        `Creating "${inferredTitle}" & routing ${expandedFiles.length} stems...`,
+      );
+      const { songFolder, bucketFolders } = await ensureInProgressSongEcosystem(
+        activeVaultId,
+        inferredTitle,
+      );
+
+      const counts: Record<InProgressBucketKey, number> = {
+        beat: 0,
+        main: 0,
+        bg: 0,
+        adlib: 0,
+        demo: 0,
+        mixed: 0,
+      };
+
+      for (let i = 0; i < expandedFiles.length; i++) {
+        const file = expandedFiles[i];
+        const bucket = classifyFlStudioStem(file.name, expandedFiles.length);
+        const destFolder = bucketFolders[bucket];
+        setInProgressStatusText(
+          `Uploading [${i + 1}/${expandedFiles.length}] "${file.name}" → /${bucket}...`,
+        );
+        await uploadSafeFileToFolder(
+          activeVaultId,
+          destFolder.id,
+          file.name,
+          file.size || 24_500_000,
+          file.type || guessMimeFromFilename(file.name),
+          file,
+        );
+        counts[bucket] += 1;
+      }
+
+      await loadVaultContents(activeVaultId);
+      setActiveInProgressSongId(songFolder.id);
+      setActiveInProgressBucket("all");
+      setLastRouteSummary({
+        songName: songFolder.name,
+        songFolderId: songFolder.id,
+        counts,
+        totalRouted: expandedFiles.length,
+      });
+      showToast(
+        `Auto-separated ${expandedFiles.length} stems into "${songFolder.name}" ecosystem`,
+      );
+    } catch (err) {
+      if (err instanceof BpackzApiError) showToast(err.message);
+    } finally {
+      setInProgressImporting(false);
+      setInProgressStatusText(null);
+    }
+  };
+
+  const handleSpawnDemoFlSession = async (customSongTitle?: string) => {
+    if (!activeVaultId) return;
+    const title =
+      customSongTitle?.trim() ||
+      `Midnight Bounce ${Math.floor(100 + Math.random() * 899)}`;
+    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+    setInProgressImporting(true);
+    setInProgressStatusText(`Auto-routing FL Studio session "${title}"...`);
+    try {
+      const { songFolder, bucketFolders } = await ensureInProgressSongEcosystem(
+        activeVaultId,
+        title,
+      );
+      const demoStems: { name: string; size: number; mime: string }[] = [
+        { name: `${slug}_Insert_1_Beat_2Track.wav`, size: 47_200_000, mime: "audio/wav" },
+        { name: `${slug}_Insert_2_Main_Lead_Vox.wav`, size: 39_400_000, mime: "audio/wav" },
+        { name: `${slug}_Insert_3_BG_Harmony_Stack.wav`, size: 31_800_000, mime: "audio/wav" },
+        { name: `${slug}_Insert_4_Adlib_Throw_FX.wav`, size: 22_600_000, mime: "audio/wav" },
+        { name: `${slug}_Rough_Demo_Bounce.mp3`, size: 8_100_000, mime: "audio/mpeg" },
+        { name: `${slug}_Prod_Mixed_Master_v1.wav`, size: 52_400_000, mime: "audio/wav" },
+      ];
+
+      const counts: Record<InProgressBucketKey, number> = {
+        beat: 0,
+        main: 0,
+        bg: 0,
+        adlib: 0,
+        demo: 0,
+        mixed: 0,
+      };
+
+      for (const stem of demoStems) {
+        const bucket = classifyFlStudioStem(stem.name, demoStems.length);
+        const destFolder = bucketFolders[bucket];
+        await uploadSafeFileToFolder(
+          activeVaultId,
+          destFolder.id,
+          stem.name,
+          stem.size,
+          stem.mime,
+        );
+        counts[bucket] += 1;
+      }
+
+      await loadVaultContents(activeVaultId);
+      setActiveInProgressSongId(songFolder.id);
+      setActiveInProgressBucket("all");
+      setLastRouteSummary({
+        songName: songFolder.name,
+        songFolderId: songFolder.id,
+        counts,
+        totalRouted: demoStems.length,
+      });
+      showToast(`Created "${songFolder.name}" & separated 6 FL Studio tracks into subfolders`);
+    } catch (err) {
+      if (err instanceof BpackzApiError) showToast(err.message);
+    } finally {
+      setInProgressImporting(false);
+      setInProgressStatusText(null);
+    }
+  };
+
+  const handleUploadToSongBucket = async (
+    songFolderId: string,
+    targetBucket: InProgressBucketKey | "auto",
+    rawFiles: File[],
+  ) => {
+    if (!activeVaultId || rawFiles.length === 0) return;
+    const songEco = inProgressSongs.find((s) => s.songFolder.id === songFolderId);
+    if (!songEco) return;
+
+    setInProgressImporting(true);
+    setInProgressStatusText(`Adding files to "${songEco.songFolder.name}"...`);
+    try {
+      const { bucketFolders } = await ensureInProgressSongEcosystem(
+        activeVaultId,
+        songEco.songFolder.name,
+      );
+
+      const expandedFiles: File[] = [];
+      for (const f of rawFiles) {
+        if (f.name.toLowerCase().endsWith(".zip")) {
+          const unzipped = await extractSessionFilesFromZip(f).catch(() => []);
+          expandedFiles.push(...unzipped);
+        } else {
+          expandedFiles.push(f);
+        }
+      }
+
+      const counts: Record<InProgressBucketKey, number> = {
+        beat: 0,
+        main: 0,
+        bg: 0,
+        adlib: 0,
+        demo: 0,
+        mixed: 0,
+      };
+
+      for (const file of expandedFiles) {
+        const resolvedBucket =
+          targetBucket === "auto"
+            ? classifyFlStudioStem(file.name, expandedFiles.length)
+            : targetBucket;
+        const destFolder = bucketFolders[resolvedBucket];
+        await uploadSafeFileToFolder(
+          activeVaultId,
+          destFolder.id,
+          file.name,
+          file.size || 24_500_000,
+          file.type || guessMimeFromFilename(file.name),
+          file,
+        );
+        counts[resolvedBucket] += 1;
+      }
+
+      await loadVaultContents(activeVaultId);
+      setLastRouteSummary({
+        songName: songEco.songFolder.name,
+        songFolderId: songEco.songFolder.id,
+        counts,
+        totalRouted: expandedFiles.length,
+      });
+      showToast(
+        targetBucket === "auto"
+          ? `Auto-sorted ${expandedFiles.length} file(s) into "${songEco.songFolder.name}"`
+          : `Uploaded ${expandedFiles.length} file(s) to ${songEco.songFolder.name} / ${targetBucket}`,
+      );
+    } catch (err) {
+      if (err instanceof BpackzApiError) showToast(err.message);
+    } finally {
+      setInProgressImporting(false);
+      setInProgressStatusText(null);
+    }
+  };
+
+  const handleMoveFileToBucket = async (
+    file: FileItem,
+    songFolderId: string,
+    targetBucket: InProgressBucketKey,
+  ) => {
+    if (!activeVaultId) return;
+    const songEco = inProgressSongs.find((s) => s.songFolder.id === songFolderId);
+    if (!songEco) return;
+    try {
+      const { bucketFolders } = await ensureInProgressSongEcosystem(
+        activeVaultId,
+        songEco.songFolder.name,
+      );
+      const destFolder = bucketFolders[targetBucket];
+      await api.files.update(activeVaultId, file.id, {
+        folderId: destFolder.id,
+        ifUpdatedAt: file.updatedAt,
+      });
+      await loadVaultContents(activeVaultId);
+      showToast(`Moved "${file.name}" → /${targetBucket}`);
+    } catch (err) {
+      if (err instanceof BpackzApiError) showToast(err.message);
+    }
+  };
+
+  const handleRenameInProgressSong = async (songFolder: Folder) => {
+    if (!activeVaultId) return;
+    const nextName =
+      typeof window !== "undefined" && typeof window.prompt === "function"
+        ? window.prompt("Rename song session:", songFolder.name)
+        : null;
+    if (!nextName || !nextName.trim() || nextName.trim() === songFolder.name) return;
+    try {
+      const updated = await api.folders.update(activeVaultId, songFolder.id, {
+        name: nextName.trim(),
+        ifUpdatedAt: songFolder.updatedAt,
+      });
+      await loadVaultContents(activeVaultId);
+      showToast(`Renamed song ecosystem to "${updated.name}"`);
+    } catch (err) {
+      if (err instanceof BpackzApiError) showToast(err.message);
+    }
+  };
+
+  const handleTrashInProgressSong = async (songFolder: Folder) => {
+    if (!activeVaultId) return;
+    try {
+      await api.folders.trash(activeVaultId, songFolder.id);
+      if (activeInProgressSongId === songFolder.id) {
+        setActiveInProgressSongId(null);
+      }
+      await loadVaultContents(activeVaultId);
+      showToast(`Moved song "${songFolder.name}" to Trash`);
+    } catch (err) {
+      if (err instanceof BpackzApiError) showToast(err.message);
+    }
   };
 
   const handleUploadSelection = async (files: FileList | null) => {
@@ -1363,13 +1904,22 @@ export function App() {
         onSignOut={() => void handleSignOut()}
         onOpenAuthModal={() => setAuthModalOpen(true)}
         viewingVisionBoard={viewingVisionBoard}
+        viewingInProgress={viewingInProgress}
+        inProgressCount={inProgressSongs.length}
         trashedCount={trashedList.length}
         onToggleVisionBoard={() => {
           setViewingTrash(false);
+          setInProgressOpen(false);
           setVisionBoardOpen((v) => !v);
+        }}
+        onToggleInProgress={() => {
+          setViewingTrash(false);
+          setVisionBoardOpen(false);
+          setInProgressOpen((v) => !v);
         }}
         onToggleTrash={() => {
           setVisionBoardOpen(false);
+          setInProgressOpen(false);
           setViewingTrash((v) => !v);
         }}
         onOpenPlusMenu={() => setPlusMenuOpen((o) => !o)}
@@ -1411,7 +1961,7 @@ export function App() {
                 <h1 className="display-heading text-3xl sm:text-5xl md:text-7xl text-[var(--ink)] truncate">
                   {titleText}
                 </h1>
-                {currentRootFolder && !viewingTrash && !visionBoardOpen && (
+                {currentRootFolder && !viewingTrash && !visionBoardOpen && !viewingInProgress && (
                   <div className="inline-flex items-center gap-1 shrink-0">
                     <button
                       type="button"
@@ -1477,6 +2027,42 @@ export function App() {
               type="button"
               onClick={() => {
                 setViewingTrash(false);
+                setVisionBoardOpen(false);
+                if (viewingInProgress) {
+                  setInProgressOpen(false);
+                  if (inProgressRootFolder && rootId === inProgressRootFolder.id) {
+                    setRootId(null);
+                  }
+                } else {
+                  setInProgressOpen(true);
+                }
+              }}
+              title="In Progress — Song Ecosystems (Beat · Main · BG · Adlib · Demo · Mixed)"
+              className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border mono-meta text-[10px] uppercase tracking-wider transition-all cursor-pointer ${
+                viewingInProgress
+                  ? "bg-[var(--ink)] text-[var(--bg)] border-[var(--ink)]"
+                  : "bg-[var(--card)] text-[var(--ink)] border-[var(--hair)] hover:border-[var(--ink)]"
+              }`}
+            >
+              <span>In Progress</span>
+              {inProgressSongs.length > 0 && (
+                <span
+                  className={`px-1.5 py-0.2 rounded-full text-[9px] font-bold ${
+                    viewingInProgress
+                      ? "bg-white/20 text-[var(--bg)]"
+                      : "bg-[var(--card-deep)] text-[var(--ink)]"
+                  }`}
+                >
+                  {inProgressSongs.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setViewingTrash(false);
+                setInProgressOpen(false);
                 setVisionBoardOpen((v) => !v);
               }}
               title="Collab Vision Board"
@@ -1489,7 +2075,7 @@ export function App() {
               Vision Board
             </button>
 
-            {!viewingFiles && !viewingVisionBoard && !viewingTrash && (
+            {!viewingFiles && !viewingVisionBoard && !viewingInProgress && !viewingTrash && (
               <button
                 type="button"
                 onClick={() => {
@@ -1503,7 +2089,7 @@ export function App() {
               </button>
             )}
 
-            {currentRootFolder && !currentSubFolder && !viewingFiles && !viewingVisionBoard && !viewingTrash && (
+            {currentRootFolder && !currentSubFolder && !viewingFiles && !viewingVisionBoard && !viewingInProgress && !viewingTrash && (
               <button
                 type="button"
                 onClick={() => setForceFilesView(true)}
@@ -1578,7 +2164,7 @@ export function App() {
         )}
 
         {/* LEVEL 1: Spawning 3D Studio Hardware Root Icons */}
-        {!currentRootFolder && !viewingVisionBoard && !viewingTrash && !authLoading && (
+        {!currentRootFolder && !viewingVisionBoard && !viewingInProgress && !viewingTrash && !authLoading && (
           <HardwareGridSection
             folders={visibleRoots}
             folderMetaMap={uiMeta.folderMeta}
@@ -1594,7 +2180,7 @@ export function App() {
         )}
 
         {/* LEVEL 2: Spawning 3D Subfolder Studio Hardware Icons */}
-        {currentRootFolder && !viewingFiles && !viewingVisionBoard && !viewingTrash && (
+        {currentRootFolder && !viewingFiles && !viewingVisionBoard && !viewingInProgress && !viewingTrash && (
           <HardwareGridSection
             folders={visibleSubs}
             folderMetaMap={uiMeta.folderMeta}
@@ -1605,6 +2191,50 @@ export function App() {
             onSelectFolder={handleOpenSub}
             onReorderFolder={handleReorderFolder}
             onCreateClick={() => setCreatingFolder(true)}
+          />
+        )}
+
+        {/* IN PROGRESS: Self-Contained Song Ecosystems (FL Studio Split Mixer Auto-Router) */}
+        {viewingInProgress && !viewingTrash && (
+          <InProgressSection
+            songs={inProgressSongs}
+            activeSongId={activeInProgressSongId}
+            activeBucketFilter={activeInProgressBucket}
+            isImporting={inProgressImporting}
+            importStatusText={inProgressStatusText}
+            lastRouteSummary={lastRouteSummary}
+            fileLayout={fileLayout}
+            playingFileId={playingFile?.id ?? null}
+            playProgress={playProgress}
+            parentFolderTheme={parentFolderTheme}
+            otherUserName={otherUserName}
+            vaultMembers={vaultMembers}
+            currentUser={user}
+            onSelectSong={(songId) => {
+              setActiveInProgressSongId(songId);
+            }}
+            onSelectBucketFilter={setActiveInProgressBucket}
+            onImportSessionFiles={(files, explicitSongTitle, detectedContainerName) =>
+              void handleImportInProgressSessionFiles(
+                files,
+                explicitSongTitle,
+                detectedContainerName,
+              )
+            }
+            onCreateEmptySong={(title) => void handleCreateEmptyInProgressSong(title)}
+            onSpawnDemoFlSession={(title) => void handleSpawnDemoFlSession(title)}
+            onUploadToSongBucket={(songFolderId, bucket, files) =>
+              void handleUploadToSongBucket(songFolderId, bucket, files)
+            }
+            onMoveFileToBucket={(file, songFolderId, targetBucket) =>
+              void handleMoveFileToBucket(file, songFolderId, targetBucket)
+            }
+            onRenameSong={(sf) => void handleRenameInProgressSong(sf)}
+            onTrashSong={(sf) => void handleTrashInProgressSong(sf)}
+            onChangeFileLayout={setFileLayout}
+            onTogglePlay={(f) => void handleTogglePlay(f)}
+            onDownload={(f) => void handleDownloadFile(f)}
+            onOpenPopover={(f) => void handleOpenFilePopover(f)}
           />
         )}
 

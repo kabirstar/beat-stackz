@@ -41,8 +41,11 @@ export function VaultHeader({
   onSignOut,
   onOpenAuthModal,
   viewingVisionBoard = false,
+  viewingInProgress = false,
+  inProgressCount = 0,
   trashedCount = 0,
   onToggleVisionBoard,
+  onToggleInProgress,
   onToggleTrash,
   onOpenPlusMenu,
 }: {
@@ -77,8 +80,11 @@ export function VaultHeader({
   onSignOut: () => void;
   onOpenAuthModal: () => void;
   viewingVisionBoard?: boolean;
+  viewingInProgress?: boolean;
+  inProgressCount?: number;
   trashedCount?: number;
   onToggleVisionBoard?: () => void;
+  onToggleInProgress?: () => void;
   onToggleTrash?: () => void;
   onOpenPlusMenu?: () => void;
 }) {
@@ -460,14 +466,32 @@ export function VaultHeader({
               onGoVaultHome();
             }
           }}
-          className={`flex flex-col items-center justify-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${
-            !isSharedMode && !viewingVisionBoard && !viewingTrash
+          className={`flex flex-col items-center justify-center gap-0.5 py-1 px-2 rounded-xl transition cursor-pointer ${
+            !isSharedMode && !viewingVisionBoard && !viewingInProgress && !viewingTrash
               ? "text-[var(--ink)] font-semibold"
               : "text-[var(--ink-soft)]"
           }`}
         >
           <StudioIcon name="home" className="w-5 h-5" />
           <span className="mono-meta text-[9px] uppercase tracking-tight">Vault</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={onToggleInProgress}
+          className={`flex flex-col items-center justify-center gap-0.5 py-1 px-2 rounded-xl transition cursor-pointer relative ${
+            viewingInProgress ? "text-[var(--ink)] font-semibold" : "text-[var(--ink-soft)]"
+          }`}
+        >
+          <span className="w-5 h-5 flex items-center justify-center">
+            <MiniFolderSvg iconKey="in_progress" />
+          </span>
+          <span className="mono-meta text-[9px] uppercase tracking-tight">In Prog</span>
+          {inProgressCount > 0 && (
+            <span className="px-1 min-w-[14px] h-[14px] rounded-full bg-[var(--ink)] text-[var(--bg)] mono-meta text-[8px] flex items-center justify-center absolute top-0.5 right-0.5">
+              {inProgressCount}
+            </span>
+          )}
         </button>
 
         <button
