@@ -7,9 +7,19 @@ import {
   generateRandomSharedPalette,
   resolveFileOwnerName,
   resolveFolderUiMeta,
+  sortVaultFolders,
   SWISH_BLACK_RED_PALETTE,
   TODO_MONOCHROME_PALETTE,
 } from "./vaultTheme.ts";
+import {
+  isVaultPasscodeValid,
+  maskWithAsterisks,
+} from "./components/VaultGateScreen.tsx";
+import {
+  classifyFlStudioStem,
+  IN_PROGRESS_BUCKETS,
+  inferSongTitleFromBatch,
+} from "./utils/inProgressAutoRouter.ts";
 
 describe("The Vault UI & Theme Specification (T020 & T021)", () => {
   it("locks Swish theme to Mostly Black & Red and Todo theme to White & Black Monochrome", () => {
@@ -87,6 +97,73 @@ describe("The Vault UI & Theme Specification (T020 & T021)", () => {
       true,
     );
     assert.equal(sharedBeatsMeta.iconKey, "rap_cup");
+
+    // T026b: Renaming a default folder preserves its 3D icon via folder.kind
+    const renamedBeatsMeta = resolveFolderUiMeta(
+      {
+        id: "f_renamed_beats",
+        vaultId: "v_personal",
+        parentId: null,
+        name: "808 loops & packs",
+        kind: "beats",
+        createdBy: "u_artist",
+        updatedAt: "2026-10-21T00:00:00.000Z",
+      },
+      {},
+    );
+    assert.equal(renamedBeatsMeta.iconKey, "beats");
+
+    // T026b: sortVaultFolders places DEFAULT_FOLDERS first in canonical order, then user folders by name
+    const sorted = sortVaultFolders([
+      {
+        id: "f_user_z",
+        vaultId: "v_personal",
+        parentId: null,
+        name: "zebra custom",
+        kind: null,
+        createdBy: "u_artist",
+        updatedAt: "2026-10-21T00:00:00.000Z",
+      },
+      {
+        id: "f_media",
+        vaultId: "v_personal",
+        parentId: null,
+        name: "media",
+        kind: "media",
+        createdBy: "u_artist",
+        updatedAt: "2026-10-21T00:00:00.000Z",
+      },
+      {
+        id: "f_user_a",
+        vaultId: "v_personal",
+        parentId: null,
+        name: "alpha stems",
+        kind: null,
+        createdBy: "u_artist",
+        updatedAt: "2026-10-21T00:00:00.000Z",
+      },
+      {
+        id: "f_beats",
+        vaultId: "v_personal",
+        parentId: null,
+        name: "renamed beats",
+        kind: "beats",
+        createdBy: "u_artist",
+        updatedAt: "2026-10-21T00:00:00.000Z",
+      },
+    ]);
+    assert.deepEqual(
+      sorted.map((f) => f.id),
+      ["f_beats", "f_media", "f_user_a", "f_user_z"],
+    );
+  });
+
+  it("Vault Gate door accepts any non-empty code (server enforces INVITE_CODE) and masks typed characters as '*'", () => {
+    assert.equal(isVaultPasscodeValid("swish"), true);
+    assert.equal(isVaultPasscodeValid(" anything "), true);
+    assert.equal(isVaultPasscodeValid(""), false);
+    assert.equal(isVaultPasscodeValid("   "), false);
+    assert.equal(maskWithAsterisks("swish"), "*****");
   });
 
   it("formats byte sizes and resolves file owner names from vaultMembers or fallback", async () => {
@@ -126,6 +203,42 @@ describe("The Vault UI & Theme Specification (T020 & T021)", () => {
         updatedAt: "2026-10-21T00:00:00.000Z",
       }),
       "142 BPM · C MIN",
+    );
+  });
+
+  it("classifies FL Studio split-mixer exports into beat, main, bg, adlib, demo, and mixed subfolders", () => {
+    assert.deepEqual(
+      IN_PROGRESS_BUCKETS.map((b) => b.key),
+      ["beat", "main", "bg", "adlib", "demo", "mixed"],
+    );
+
+    assert.equal(classifyFlStudioStem("Nightfall - Insert 1 - Beat 2Track.wav", 6), "beat");
+    assert.equal(classifyFlStudioStem("Nightfall_808_Sub_Bass.wav", 6), "beat");
+    assert.equal(classifyFlStudioStem("Nightfall - Main Lead Vocal.wav", 6), "main");
+    assert.equal(classifyFlStudioStem("Nightfall_Hook_Vox_Dry.wav", 6), "main");
+    assert.equal(classifyFlStudioStem("Nightfall_BG_Harmony_Stack_L.wav", 6), "bg");
+    assert.equal(classifyFlStudioStem("Nightfall_Background_Doubles.wav", 6), "bg");
+    assert.equal(classifyFlStudioStem("Nightfall_Adlibs_Stereo_Throw.wav", 6), "adlib");
+    assert.equal(classifyFlStudioStem("Nightfall_Hype_Ad-Lib.wav", 6), "adlib");
+    assert.equal(classifyFlStudioStem("Nightfall_Rough_Demo_Bounce.mp3", 6), "demo");
+    assert.equal(classifyFlStudioStem("Nightfall_Session.flp", 6), "demo");
+    assert.equal(classifyFlStudioStem("Nightfall_Prod_Mix_v2.wav", 6), "mixed");
+    assert.equal(classifyFlStudioStem("Nightfall_Final_Master.wav", 6), "mixed");
+
+    assert.equal(
+      inferSongTitleFromBatch(
+        [
+          "Obsidian Freestyle - Beat.wav",
+          "Obsidian Freestyle - Main Vox.wav",
+          "Obsidian Freestyle - Adlibs.wav",
+        ],
+        null,
+      ),
+      "Obsidian Freestyle",
+    );
+    assert.equal(
+      inferSongTitleFromBatch(["Track1.wav", "Track2.wav"], "Late Night Stems.zip"),
+      "Late Night",
     );
   });
 });

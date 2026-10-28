@@ -161,12 +161,20 @@ export function createApiClient(baseUrl: string = resolveDefaultApiOrigin()) {
         (errJson && typeof errJson.message === "string" && errJson.message) ||
         (res.status === 401
           ? "Invalid email or password"
-          : res.status === 422
-            ? "An account with this email already exists"
-            : `Authentication failed (${res.status})`);
+          : res.status === 403
+            ? "Invite code not recognized"
+            : res.status === 422
+              ? "An account with this email already exists"
+              : `Authentication failed (${res.status})`);
       throw new BpackzApiError(
         res.status,
-        res.status === 401 ? "unauthorized" : res.status === 422 ? "conflict" : "invalid",
+        res.status === 401
+          ? "unauthorized"
+          : res.status === 403
+            ? "forbidden"
+            : res.status === 422
+              ? "conflict"
+              : "invalid",
         message,
       );
     }
@@ -179,16 +187,40 @@ export function createApiClient(baseUrl: string = resolveDefaultApiOrigin()) {
     call,
     auth: {
       me: () => call(routes.auth.me),
-      signInEmail: (input: { email: string; password: string }) =>
-        authRequest("/sign-in/email", {
-          method: "POST",
-          body: JSON.stringify(input),
-        }, (json) => ({ user: User.parse(json.user) })),
-      signUpEmail: (input: { name: string; email: string; password: string }) =>
-        authRequest("/sign-up/email", {
-          method: "POST",
-          body: JSON.stringify(input),
-        }, (json) => ({ user: User.parse(json.user) })),
+      signInEmail: (input: {
+        email: string;
+        password: string;
+        rememberMe?: boolean;
+      }) =>
+        authRequest(
+          "/sign-in/email",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              email: input.email,
+              password: input.password,
+              rememberMe: input.rememberMe ?? true,
+            }),
+          },
+          (json) => ({ user: User.parse(json.user) }),
+        ),
+      signUpEmail: (input: {
+        name: string;
+        email: string;
+        password: string;
+        inviteCode?: string;
+      }) =>
+        authRequest(
+          "/sign-up/email",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              ...input,
+              inviteCode: input.inviteCode?.trim(), // server decides; never default a code in the bundle
+            }),
+          },
+          (json) => ({ user: User.parse(json.user) }),
+        ),
       signOut: async () => {
         await fetch(`${origin}/auth/sign-out`, {
           method: "POST",
@@ -287,6 +319,12 @@ function resolveDefaultApiOrigin(): string {
   const metaEnv = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
   if (metaEnv?.VITE_API_ORIGIN) {
     return metaEnv.VITE_API_ORIGIN;
+  }
+  if (metaEnv?.VITE_MOCK === "false") {
+    if (typeof window !== "undefined" && window.location?.hostname?.startsWith("app.")) {
+      return `${window.location.protocol}//api.${window.location.hostname.slice(4)}`;
+    }
+    return "http://localhost:4000";
   }
   return MOCK_API;
 }

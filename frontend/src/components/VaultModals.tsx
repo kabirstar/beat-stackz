@@ -18,12 +18,14 @@ export function PlusActionMenu({
   onCreateFolder,
   onUploadFile,
   onCreateSharedVault,
+  onClose,
 }: {
   hasRootFolder: boolean;
   viewingFiles: boolean;
   onCreateFolder: () => void;
   onUploadFile: () => void;
   onCreateSharedVault: () => void;
+  onClose?: () => void;
 }) {
   const items = [
     {
@@ -38,7 +40,7 @@ export function PlusActionMenu({
       title: "Upload Track / Stem",
       subtitle: "Presigned S3 multipart upload",
       onClick: onUploadFile,
-      show: hasRootFolder || viewingFiles,
+      show: true,
     },
     {
       icon: "user-plus" as const,
@@ -50,26 +52,29 @@ export function PlusActionMenu({
   ];
 
   return (
-    <div className="absolute right-0 top-12 z-50 w-56 rounded-2xl bg-[#e4e0d8]/95 backdrop-blur-xl border border-[var(--ink)]/20 shadow-2xl p-1.5 popover-sheet">
-      {items
-        .filter((item) => item.show)
-        .map((item) => (
-          <button
-            key={item.title}
-            type="button"
-            onClick={item.onClick}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-black/5 text-left text-xs text-[var(--ink)] cursor-pointer transition"
-          >
-            <span className="w-7 h-7 rounded-full bg-[var(--bg)] border border-[var(--hair)] flex items-center justify-center shrink-0">
-              <StudioIcon name={item.icon} className="w-3.5 h-3.5" />
-            </span>
-            <div>
-              <div className="font-medium">{item.title}</div>
-              <div className="text-[10px] text-[var(--ink-soft)]">{item.subtitle}</div>
-            </div>
-          </button>
-        ))}
-    </div>
+    <>
+      {onClose && <div className="fixed inset-0 z-40" onClick={onClose} />}
+      <div className="fixed left-3 right-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] sm:absolute sm:left-auto sm:right-0 sm:bottom-auto sm:top-12 z-50 sm:w-64 rounded-2xl bg-[#e4e0d8]/98 backdrop-blur-xl border border-[var(--ink)]/25 shadow-2xl p-2 sm:p-1.5 popover-sheet">
+        {items
+          .filter((item) => item.show)
+          .map((item) => (
+            <button
+              key={item.title}
+              type="button"
+              onClick={item.onClick}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-black/5 text-left text-xs text-[var(--ink)] cursor-pointer transition"
+            >
+              <span className="w-7 h-7 rounded-full bg-[var(--bg)] border border-[var(--hair)] flex items-center justify-center shrink-0">
+                <StudioIcon name={item.icon} className="w-3.5 h-3.5" />
+              </span>
+              <div>
+                <div className="font-medium">{item.title}</div>
+                <div className="text-[10px] text-[var(--ink-soft)]">{item.subtitle}</div>
+              </div>
+            </button>
+          ))}
+      </div>
+    </>
   );
 }
 
@@ -581,8 +586,12 @@ export function CollaboratorsModal({
                 </div>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
-                <span className="mono-meta text-[10px] uppercase px-2 py-0.5 rounded-full bg-[var(--card-deep)] text-[var(--ink)]">
-                  {m.role}
+                <span className="mono-meta text-[9px] uppercase px-2 py-0.5 rounded-full bg-[var(--card-deep)] text-[var(--ink)]">
+                  {m.role === "owner"
+                    ? "owner · full access"
+                    : m.role === "viewer"
+                      ? "viewer · view only"
+                      : "editor · full edit & dl"}
                 </span>
                 {m.role !== "owner" && onRemoveMember && (
                   <button
@@ -610,15 +619,15 @@ export function CollaboratorsModal({
           <select
             value={inviteRole}
             onChange={(e) => onChangeInviteRole(e.target.value as "editor" | "viewer")}
-            className="px-2.5 py-2 rounded-full bg-[var(--card)] border border-[var(--hair)] mono-meta text-[10px] uppercase"
+            className="px-2.5 py-2 rounded-full bg-[var(--card)] border border-[var(--hair)] mono-meta text-[9px] uppercase text-[var(--ink)] shrink-0 cursor-pointer"
           >
-            <option value="editor">Editor</option>
-            <option value="viewer">Viewer</option>
+            <option value="editor">Full Edit + DL</option>
+            <option value="viewer">View Only</option>
           </select>
           <button
             type="button"
             onClick={onInviteMember}
-            title="Send Invite"
+            title="Add Collaborator"
             className="icon-btn icon-btn-active"
           >
             <StudioIcon name="send" />
@@ -662,13 +671,14 @@ export function AuthModal({
       maxWidthClass="max-w-sm"
       onClose={user ? onClose : undefined}
     >
-      <form onSubmit={onSubmit} className="p-5 space-y-3">
+      <form onSubmit={onSubmit} autoComplete="off" className="p-5 space-y-3">
         {authMode === "signup" && (
           <input
             type="text"
             value={authName}
             onChange={(e) => onChangeName(e.target.value)}
             placeholder="Artist / Producer Name"
+            autoComplete="off"
             className="w-full px-3.5 py-2 rounded-xl bg-[var(--card)] border border-[var(--hair)] text-xs text-[var(--ink)]"
           />
         )}
@@ -677,6 +687,7 @@ export function AuthModal({
           value={authEmail}
           onChange={(e) => onChangeEmail(e.target.value)}
           placeholder="Email"
+          autoComplete="off"
           className="w-full px-3.5 py-2 rounded-xl bg-[var(--card)] border border-[var(--hair)] text-xs text-[var(--ink)]"
         />
         <input
@@ -684,6 +695,7 @@ export function AuthModal({
           value={authPassword}
           onChange={(e) => onChangePassword(e.target.value)}
           placeholder="Password"
+          autoComplete="new-password"
           className="w-full px-3.5 py-2 rounded-xl bg-[var(--card)] border border-[var(--hair)] text-xs text-[var(--ink)]"
         />
         {authError && <p className="text-xs text-red-700">{authError}</p>}

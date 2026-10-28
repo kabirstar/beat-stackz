@@ -40,6 +40,14 @@ export function VaultHeader({
   onSelectProfile,
   onSignOut,
   onOpenAuthModal,
+  viewingVisionBoard = false,
+  viewingInProgress = false,
+  inProgressCount = 0,
+  trashedCount = 0,
+  onToggleVisionBoard,
+  onToggleInProgress,
+  onToggleTrash,
+  onOpenPlusMenu,
 }: {
   user: User | null;
   currentUserKey: "swish" | "todo";
@@ -71,35 +79,56 @@ export function VaultHeader({
   onSelectProfile: (key: "swish" | "todo") => void;
   onSignOut: () => void;
   onOpenAuthModal: () => void;
+  viewingVisionBoard?: boolean;
+  viewingInProgress?: boolean;
+  inProgressCount?: number;
+  trashedCount?: number;
+  onToggleVisionBoard?: () => void;
+  onToggleInProgress?: () => void;
+  onToggleTrash?: () => void;
+  onOpenPlusMenu?: () => void;
 }) {
   const sharedVaults = vaults.filter((v) => v.kind === "shared");
   return (
     <>
-      <header className="px-4 sm:px-6 md:px-12 py-2.5 min-h-16 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--hair)] bg-[#edeae4]/95 backdrop-blur-md sticky top-0 z-30">
-        {/* Left Navigation Icons */}
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={canGoBack ? onBack : undefined}
-            title={canGoBack ? "Go Back" : "At Vault Root"}
-            className={`icon-btn ${canGoBack ? "icon-btn-active" : "opacity-35 cursor-default"}`}
-          >
-            <StudioIcon name="back" />
-          </button>
+      <header className="px-3 sm:px-6 md:px-12 py-2 min-h-14 flex items-center justify-between gap-2 sm:gap-3 border-b border-[var(--hair)] bg-[#edeae4]/95 backdrop-blur-md sticky top-0 z-30">
+        {/* Left Navigation Icons — Single clean contextual button on iPhone, full dock on desktop */}
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+          {canGoBack ? (
+            <button
+              type="button"
+              onClick={onBack}
+              title="Go Back"
+              className="icon-btn icon-btn-active"
+            >
+              <StudioIcon name="back" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onGoVaultHome}
+              title="The Vault Home"
+              className="icon-btn icon-btn-active"
+            >
+              <StudioIcon name="home" />
+            </button>
+          )}
 
-          <button
-            type="button"
-            onClick={onGoVaultHome}
-            title="The Vault Home"
-            className={`icon-btn ${!currentRootFolder && !viewingTrash ? "icon-btn-active" : ""}`}
-          >
-            <StudioIcon name="home" />
-          </button>
+          {canGoBack && (
+            <button
+              type="button"
+              onClick={onGoVaultHome}
+              title="The Vault Home"
+              className="hidden sm:inline-flex icon-btn"
+            >
+              <StudioIcon name="home" />
+            </button>
+          )}
 
           <span className="w-px h-5 bg-[var(--hair)] mx-1 hidden sm:block" />
 
           {/* Top Folder Navigation Icon Dock */}
-          <div className="hidden sm:flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-1">
             {rootFolders.map((folder, idx) => {
               const isCurrentRoot = currentRootFolder?.id === folder.id;
               const fMeta = resolveFolderUiMeta(folder, folderMetaMap, idx);
@@ -129,21 +158,21 @@ export function VaultHeader({
         </div>
 
         {/* Search Bar */}
-        <div className="relative flex-1 min-w-[140px] max-w-xs sm:max-w-sm">
-          <span className="text-[var(--ink-soft)] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none">
+        <div className="relative flex-1 min-w-0 max-w-xs sm:max-w-sm">
+          <span className="text-[var(--ink-soft)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
             <StudioIcon name="search" />
           </span>
           <input
             type="text"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search folders & tracks..."
-            className="w-full pl-10 pr-4 py-2 rounded-full bg-[var(--card)] border border-[var(--hair)] focus:border-[var(--ink)] focus:outline-none text-xs text-[var(--ink)] placeholder:text-[var(--ink-soft)]"
+            placeholder="Search..."
+            className="w-full pl-9 pr-3 py-2 rounded-full bg-[var(--card)] border border-[var(--hair)] focus:border-[var(--ink)] focus:outline-none text-xs text-[var(--ink)] placeholder:text-[var(--ink-soft)]"
           />
         </div>
 
         {/* Right Icon Bar */}
-        <div className="flex items-center gap-2 relative">
+        <div className="flex items-center gap-1.5 sm:gap-2 relative shrink-0">
           <div className="relative">
             <button
               type="button"
@@ -160,7 +189,12 @@ export function VaultHeader({
             </button>
 
             {sharedDropdownOpen && (
-              <div className="absolute right-0 top-12 z-50 w-72 sm:w-80 rounded-2xl bg-[#edeae4]/98 backdrop-blur-xl border border-[var(--ink)]/25 shadow-2xl overflow-hidden popover-sheet">
+              <>
+                <div
+                  className="fixed inset-0 z-40 sm:hidden"
+                  onClick={onToggleSharedDropdown}
+                />
+                <div className="fixed left-3 right-3 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-12 z-50 sm:w-80 rounded-2xl bg-[#edeae4]/98 backdrop-blur-xl border border-[var(--ink)]/25 shadow-2xl overflow-hidden popover-sheet">
                 <div className="px-3.5 py-2.5 bg-[var(--card)] border-b border-[var(--hair)] flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="mono-meta text-[10px] uppercase text-[var(--ink)] font-semibold">
@@ -281,7 +315,8 @@ export function VaultHeader({
                     </button>
                   </div>
                 </div>
-              </div>
+                </div>
+              </>
             )}
           </div>
 
@@ -289,53 +324,43 @@ export function VaultHeader({
             <>
               <button
                 type="button"
-                onClick={() => onSelectProfile("swish")}
-                title="Swish's Vault (Black & Red Theme)"
-                className="icon-btn relative font-semibold text-xs"
+                onClick={() => onSelectProfile(currentUserKey)}
+                title={`${user.name ?? user.email}'s Personal Vault`}
+                className="icon-btn relative font-semibold text-xs uppercase"
                 style={
-                  currentUserKey === "swish" && !isSharedMode
-                    ? {
-                        background: "#0b0a0c",
-                        color: "#ef4444",
-                        borderColor: "#dc2626",
-                        boxShadow: "0 0 0 2px #0b0a0c",
-                      }
-                    : {
-                        background: "#181416",
-                        color: "#ef4444",
-                        borderColor: "rgba(220,38,38,0.45)",
-                      }
+                  currentUserKey === "todo"
+                    ? !isSharedMode
+                      ? {
+                          background: "#111114",
+                          color: "#fafafa",
+                          borderColor: "#111114",
+                          boxShadow: "0 0 0 2px #16132b",
+                        }
+                      : {
+                          background: "linear-gradient(135deg, #ffffff 50%, #d4d4d8 50%)",
+                          color: "#111114",
+                        }
+                    : !isSharedMode
+                      ? {
+                          background: "#0b0a0c",
+                          color: "#ef4444",
+                          borderColor: "#dc2626",
+                          boxShadow: "0 0 0 2px #0b0a0c",
+                        }
+                      : {
+                          background: "#181416",
+                          color: "#ef4444",
+                          borderColor: "rgba(220,38,38,0.45)",
+                        }
                 }
               >
-                S
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onSelectProfile("todo")}
-                title="Todo's Vault (White & Black Theme)"
-                className="icon-btn relative font-semibold text-xs"
-                style={
-                  currentUserKey === "todo" && !isSharedMode
-                    ? {
-                        background: "#111114",
-                        color: "#fafafa",
-                        borderColor: "#111114",
-                        boxShadow: "0 0 0 2px #16132b",
-                      }
-                    : {
-                        background: "linear-gradient(135deg, #ffffff 50%, #d4d4d8 50%)",
-                        color: "#111114",
-                      }
-                }
-              >
-                T
+                {(user.name || user.email || "V").trim().charAt(0).toUpperCase()}
               </button>
 
               <button
                 type="button"
                 onClick={onSignOut}
-                title={`Sign out (${user.name})`}
+                title={`Sign out (${user.name ?? user.email})`}
                 className="icon-btn"
               >
                 <StudioIcon name="sign-out" />
@@ -355,7 +380,7 @@ export function VaultHeader({
       </header>
 
       {canGoBack && (
-        <nav className="px-4 sm:px-6 md:px-12 py-2 border-b border-[var(--hair)] bg-[var(--card)]/75 backdrop-blur-sm sticky top-16 z-20 flex items-center justify-between gap-3 overflow-x-auto">
+        <nav className="hidden sm:flex px-3 sm:px-6 md:px-12 py-2 border-b border-[var(--hair)] bg-[var(--card)]/75 backdrop-blur-sm sticky top-14 sm:top-16 z-20 items-center justify-between gap-3 overflow-x-auto">
           <div className="flex items-center gap-1.5 min-w-max">
             <button
               type="button"
@@ -374,7 +399,7 @@ export function VaultHeader({
                   key={folder.id}
                   type="button"
                   onClick={() => onOpenRoot(folder.id)}
-                  className={`px-2.5 py-1 rounded-full text-xs flex items-center gap-1.5 cursor-pointer border transition ${
+                  className={`px-3 py-1.5 rounded-full text-xs flex items-center gap-1.5 cursor-pointer border transition ${
                     active
                       ? "bg-[var(--ink)] text-[var(--bg)] border-[var(--ink)] font-medium"
                       : "bg-[var(--bg)] text-[var(--ink-soft)] border-[var(--hair)] hover:text-[var(--ink)]"
@@ -399,7 +424,7 @@ export function VaultHeader({
                       key={sf.id}
                       type="button"
                       onClick={() => onOpenSub(sf.id)}
-                      className={`px-2.5 py-1 rounded-full text-xs flex items-center gap-1.5 cursor-pointer border transition ${
+                      className={`px-3 py-1.5 rounded-full text-xs flex items-center gap-1.5 cursor-pointer border transition ${
                         subActive
                           ? "bg-[var(--ink)] text-[var(--bg)] border-[var(--ink)] font-medium"
                           : "bg-[var(--card-deep)] text-[var(--ink)] border-[var(--hair)] hover:border-[var(--ink)]"
@@ -421,11 +446,108 @@ export function VaultHeader({
           type="button"
           onClick={onBack}
           title="Back"
-          className="fixed left-3 sm:left-5 top-1/2 -translate-y-1/2 z-30 icon-btn w-11 h-11 icon-btn-active shadow-xl"
+          className="hidden sm:inline-flex fixed left-5 top-1/2 -translate-y-1/2 z-30 icon-btn w-11 h-11 icon-btn-active shadow-xl"
         >
           <StudioIcon name="back" className="w-5 h-5" />
         </button>
       )}
+
+      {/* iPhone Thumb-Friendly Bottom Navigation Dock (Visible on Mobile / Home Screen Web App) */}
+      <nav
+        aria-label="Mobile Navigation Dock"
+        className="sm:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pt-1.5 pb-[calc(0.45rem+env(safe-area-inset-bottom))] bg-[#edeae4]/96 backdrop-blur-xl border-t border-[var(--hair)] flex items-center justify-around shadow-[0_-6px_24px_rgba(22,19,43,0.08)]"
+      >
+        <button
+          type="button"
+          onClick={() => {
+            if (isSharedMode) {
+              onSelectProfile(currentUserKey);
+            } else {
+              onGoVaultHome();
+            }
+          }}
+          className={`flex flex-col items-center justify-center gap-0.5 py-1 px-2 rounded-xl transition cursor-pointer ${
+            !isSharedMode && !viewingVisionBoard && !viewingInProgress && !viewingTrash
+              ? "text-[var(--ink)] font-semibold"
+              : "text-[var(--ink-soft)]"
+          }`}
+        >
+          <StudioIcon name="home" className="w-5 h-5" />
+          <span className="mono-meta text-[9px] uppercase tracking-tight">Vault</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={onToggleInProgress}
+          className={`flex flex-col items-center justify-center gap-0.5 py-1 px-2 rounded-xl transition cursor-pointer relative ${
+            viewingInProgress ? "text-[var(--ink)] font-semibold" : "text-[var(--ink-soft)]"
+          }`}
+        >
+          <span className="w-5 h-5 flex items-center justify-center">
+            <MiniFolderSvg iconKey="in_progress" />
+          </span>
+          <span className="mono-meta text-[9px] uppercase tracking-tight">In Prog</span>
+          {inProgressCount > 0 && (
+            <span className="px-1 min-w-[14px] h-[14px] rounded-full bg-[var(--ink)] text-[var(--bg)] mono-meta text-[8px] flex items-center justify-center absolute top-0.5 right-0.5">
+              {inProgressCount}
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={onToggleSharedDropdown}
+          className={`flex flex-col items-center justify-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer relative ${
+            isSharedMode || sharedDropdownOpen
+              ? "text-[var(--ink)] font-semibold"
+              : "text-[var(--ink-soft)]"
+          }`}
+        >
+          <StudioIcon name="users" className="w-5 h-5" />
+          <span className="mono-meta text-[9px] uppercase tracking-tight">Shared</span>
+          {isSharedMode && (
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00e5ff] absolute top-1 right-2.5" />
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={onOpenPlusMenu}
+          title="Upload or Create"
+          className="w-12 h-10 rounded-2xl bg-[var(--ink)] text-[var(--bg)] flex items-center justify-center shadow-lg active:scale-95 transition cursor-pointer"
+        >
+          <StudioIcon name="plus" className="w-5 h-5" />
+        </button>
+
+        <button
+          type="button"
+          onClick={onToggleVisionBoard}
+          className={`flex flex-col items-center justify-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer ${
+            viewingVisionBoard ? "text-[var(--ink)] font-semibold" : "text-[var(--ink-soft)]"
+          }`}
+        >
+          <span className="w-5 h-5 flex items-center justify-center">
+            <MiniFolderSvg iconKey="vision_board" />
+          </span>
+          <span className="mono-meta text-[9px] uppercase tracking-tight">Board</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={onToggleTrash}
+          className={`flex flex-col items-center justify-center gap-0.5 py-1 px-2.5 rounded-xl transition cursor-pointer relative ${
+            viewingTrash ? "text-[var(--ink)] font-semibold" : "text-[var(--ink-soft)]"
+          }`}
+        >
+          <StudioIcon name="trash" className="w-5 h-5" />
+          <span className="mono-meta text-[9px] uppercase tracking-tight">Trash</span>
+          {trashedCount > 0 && (
+            <span className="px-1 min-w-[14px] h-[14px] rounded-full bg-[var(--ink)] text-[var(--bg)] mono-meta text-[8px] flex items-center justify-center absolute top-0.5 right-1.5">
+              {trashedCount}
+            </span>
+          )}
+        </button>
+      </nav>
     </>
   );
 }

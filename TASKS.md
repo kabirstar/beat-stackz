@@ -154,8 +154,17 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       paths: frontend/**, comms/yellow/**  depends: T022, T009  verify: pnpm -F web typecheck && pnpm -F web test && pnpm -F web build
       deliverable: PublicShareLandingModal + URL /s/:token auto-resolve, CollaboratorsModal removeMember/rename, ShareContextSheet inline file rename, frontend/Dockerfile + frontend/nginx.conf
       handoff: comms/yellow/T024-shares-and-dockerfile.md
-- [ ] T026b [YELLOW] key icons by folder.kind (name fallback for null); defaults first in DEFAULT_FOLDERS order
+- [x] T026b [YELLOW] key icons by folder.kind (name fallback for null); defaults first in DEFAULT_FOLDERS order
       paths: frontend/**  depends: T026  deliverable: per comms/blue/T026-default-taxonomy.md  verify: pnpm -F web test
+      handoff: comms/yellow/T026-vision-board-and-jiggle-ui.md
+- [x] T028 [YELLOW] 3D Bank Vault Landing Gate ('classics' passcode masked as '*'), Collab Vault Vision Board (Figma infinite canvas, sticky notes, pinned song cards with comments), and iOS 3D icon jiggle reordering
+      paths: frontend/**, comms/yellow/**  depends: T026b  verify: pnpm -F web typecheck && pnpm -F web test && pnpm -F web build
+      handoff: comms/yellow/T026-vision-board-and-jiggle-ui.md
+- [x] T032 [YELLOW] "In Progress" section with per-song folder ecosystems (beat, main, bg, adlib, demo, mixed) & FL Studio split-mixer folder/.zip stem auto-router
+      paths: frontend/**, comms/yellow/T032-in-progress-song-ecosystems.md  depends: T026b
+      deliverable: InProgressSection.tsx + inProgressAutoRouter.ts + 3-level folder loading & auto-routing into /beat, /main, /bg, /adlib, /demo, /mixed
+      verify: pnpm -F web typecheck && pnpm -F web test && pnpm -F web build
+      handoff: comms/yellow/T032-in-progress-song-ecosystems.md
 
 ## BRAIN
 - [x] T090 [BRAIN] first live run on #beat-stackz-hq (live since 2026-10-22)

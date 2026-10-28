@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#18161f"/>
+      <stop offset="50%" stop-color="#0d0c11"/>
+      <stop offset="100%" stop-color="#070609"/>
+    </linearGradient>
+    <radialGradient id="ring" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#52525b"/>
+      <stop offset="65%" stop-color="#27272a"/>
+      <stop offset="100%" stop-color="#09090b"/>
+    </radialGradient>
+    <radialGradient id="crimson" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="#991b1b"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="196" fill="url(#ring)" stroke="#3f3f46" stroke-width="8"/>
+  <circle cx="256" cy="256" r="154" fill="#0d0c11" stroke="#dc2626" stroke-width="4" stroke-opacity="0.65"/>
+  <!-- 8 Locking Bolts -->
+  <g stroke="#a1a1aa" stroke-width="14" stroke-linecap="round">
+    <line x1="256" y1="74" x2="256" y2="108"/>
+    <line x1="256" y1="404" x2="256" y2="438"/>
+    <line x1="74" y1="256" x2="108" y2="256"/>
+    <line x1="404" y1="256" x2="438" y2="256"/>
+    <line x1="127" y1="127" x2="151" y2="151"/>
+    <line x1="361" y1="361" x2="385" y2="385"/>
+    <line x1="385" y1="127" x2="361" y2="151"/>
+    <line x1="151" y1="361" x2="127" y2="385"/>
+  </g>
+  <!-- Center Hub -->
+  <circle cx="256" cy="256" r="68" fill="url(#crimson)" stroke="#fca5a5" stroke-width="3"/>
+  <text x="256" y="272" text-anchor="middle" fill="#ffffff" font-family="monospace" font-weight="700" font-size="48" letter-spacing="4">***</text>
+</svg>
