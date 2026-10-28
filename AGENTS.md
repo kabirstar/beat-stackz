@@ -21,7 +21,7 @@ taxonomy in `docs/adr/0002-default-folder-taxonomy.md` (`DEFAULT_FOLDERS` in
 | **Red** (Astra) | PC | `backend/**`, `worker/**` | `frontend`, `shared`, infra |
 | **Blue** (Claude) | PC | `shared/**`, `docs/**`, `infra/**`, `brain/**`, `.claude/**`, root configs, code review | app code except via review |
 | **BRAIN** (Claude agent, run by `brain/brain.py` on the PC) | PC | `comms/brain/**`, its own section of `TASKS.md`, `.claude/agents/*` and `.claude/skills/*` it creates. When it delegates to RED or BLUE, the loop starts that agent's run unattended in `../bpackz-red` / `../bpackz-blue` (T025, Kabir 2026-10-23; see `brain/README.md`) | product code; never pushes `main` or merges |
-| **Kabir + Swish** (humans; Kabir is also Todo / Lush / `prodbylush808`, Swish is `mysterious_cheetah_19465` on Discord) | — | product decisions, design direction, scope; may merge or veto anything. Equal authority | — |
+| **Kabir + Swish** (humans; Kabir is also Todo / Lush / `prodbylush808`, Swish is `mysterious_cheetah_19465` on Discord) | — | product decisions, design direction, scope; may merge or veto anything. Equal authority; Kabir is the tiebreak on a direct conflict (ADR 0004) | — |
 
 **BRAIN** is the front door. Humans talk to BRAIN in `#beat-stackz-hq`; BRAIN reads
 `TASKS.md`, `COMMS_LOG.md`, `comms/*` and open PRs, then delegates with a handoff
@@ -119,7 +119,8 @@ blocked on Red.
 - Dependencies: add to **your app's** `package.json` only. Root deps are Blue's.
 - Commit messages: `[yellow] short imperative line`. Attribution trailer per
   your tool's convention.
-- CI (GitHub Actions, Blue): `pnpm typecheck`, `pnpm lint`, `pnpm test`,
+- Gate, split (ADR 0004): local `pnpm gate:fast` = typecheck + lint + gitleaks (under 5 s, needs `gitleaks` installed); CI is the gate.
+- CI (GitHub Actions, Blue): gitleaks, `pnpm typecheck`, `pnpm lint`, `pnpm test`,
   `pnpm -F @bpackz/shared build`. Red PRs must pass `drizzle-kit check` (no drift).
 
 ## Rules of engagement

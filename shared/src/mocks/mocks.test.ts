@@ -79,6 +79,26 @@ test("full vault flow: me -> vaults -> folder -> upload -> list -> share -> reso
   await api("DELETE", `/vaults/v_shared/folders/${folder.id}`, undefined, 204);
   const after = await api("GET", "/vaults/v_shared/children?folderId=fo_proj");
   assert.equal(after.folders.some((f: { id: string }) => f.id === folder.id), false);
+
+  // trash lists only the root (the file inside is not a separate row); restore brings both back
+  const trash = await api("GET", "/vaults/v_shared/trash");
+  assert.deepEqual(trash.folders.map((f: { id: string }) => f.id), [folder.id]);
+  assert.deepEqual(trash.files, []);
+  await api("POST", `/vaults/v_shared/files/${file.id}/restore`, undefined, 409); // parent still trashed
+  await api("POST", "/vaults/v_shared/folders", { parentId: "fo_proj", name: "Renamed" }, 201); // live sibling
+  await api("POST", `/vaults/v_shared/folders/${folder.id}/restore`, undefined, 409);
+  const sibling = (await api("GET", "/vaults/v_shared/children?folderId=fo_proj")).folders.find((f: { name: string }) => f.name === "Renamed");
+  await api("DELETE", `/vaults/v_shared/folders/${sibling.id}`, undefined, 204);
+  const restored = await api("POST", `/vaults/v_shared/folders/${folder.id}/restore`);
+  assert.equal(restored.id, folder.id);
+  await api("POST", `/vaults/v_shared/folders/${folder.id}/restore`, undefined, 404); // no longer in trash
+  const back = await api("GET", `/vaults/v_shared/children?folderId=${folder.id}`);
+  assert.deepEqual(back.files.map((f: { id: string }) => f.id), [file.id]);
+  await api("DELETE", `/vaults/v_shared/files/${file.id}`, undefined, 204);
+  const t2 = await api("GET", "/vaults/v_shared/trash");
+  assert.deepEqual(t2.files.map((f: { id: string }) => f.id), [file.id]);
+  assert.ok(t2.files[0].deletedAt);
+  assert.equal((await api("POST", `/vaults/v_shared/files/${file.id}/restore`)).id, file.id);
 });
 
 test("knowing a hash is not authorization (ADR 0001)", async () => {

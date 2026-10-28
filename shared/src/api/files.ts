@@ -73,6 +73,29 @@ export const fileRoutes = {
     response: z.object({}),
     summary: "Soft-delete",
   }),
+  /** Trash roots only: items whose parent is live (or vault root). Descendants of a trashed folder
+   *  come back with it on restore. Purge after 30 days (T017) is measured from deletedAt. */
+  listTrash: route({
+    method: "GET",
+    path: "/vaults/:vaultId/trash",
+    auth: "session",
+    params: VaultParams,
+    query: Page,
+    response: z.object({
+      folders: z.array(Folder.extend({ deletedAt: Timestamp })),
+      files: z.array(FileItem.extend({ deletedAt: Timestamp })),
+      nextCursor: z.string().nullable(),
+    }),
+    summary: "List trashed folders and files (top level), newest first",
+  }),
+  restore: route({
+    method: "POST",
+    path: "/vaults/:vaultId/files/:fileId/restore",
+    auth: "session",
+    params: FileParams,
+    response: FileItem,
+    summary: "Clear deletedAt. 404 if not in trash; 409 if the parent folder is still trashed or a live sibling has the same name.",
+  }),
   /** Short-lived presigned GET. Range requests work directly against the URL. */
   downloadUrl: route({
     method: "GET",
