@@ -7,10 +7,10 @@ on:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }} # never cancel a main run mid-deploy
 
 jobs:
-  check:
+  check: # the gate (ADR 0005): capped at 10 minutes
     runs-on: ubuntu-latest
     timeout-minutes: 10
     services:
@@ -41,7 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # gitleaks scans history
+          fetch-depth: 0 # gitleaks scans history; coverage gate diffs against origin/main
       - name: gitleaks (secrets scan, ADR 0004 split gate)
         uses: gitleaks/gitleaks-action@v2
         env:
@@ -57,14 +57,79 @@ jobs:
       - run: pnpm -F @bpackz/shared build # others import its dist
       - run: pnpm typecheck
       - run: pnpm lint
-      - run: pnpm -r --filter '!worker' --if-present run test # worker needs ffmpeg + audiowaveform: see below
+      - name: Tests with coverage (backend, shared, frontend; mocked + real deps) # worker: see below
+        run: mkdir -p backend/coverage shared/coverage frontend/coverage && pnpm -r --filter '!worker' --if-present run test:cov
       - name: Worker tests (in its image, which has ffmpeg + audiowaveform)
         run: |
           docker build -f worker/Dockerfile --target test -t bpackz-worker:test .
           docker run --rm --network host -e TEST_DATABASE_URL -e RUN_STORAGE_INTEGRATION -e S3_ENDPOINT -e S3_REGION -e S3_BUCKET -e S3_ACCESS_KEY -e S3_SECRET_KEY -e S3_FORCE_PATH_STYLE bpackz-worker:test
+      - name: Coverage gate (ADR 0005; changed lines >= 80 %, package floors)
+        run: node infra/coverage-gate.mjs
+        env:
+          BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || 'HEAD~1' }}
       - run: pnpm -r --if-present run db:check # drizzle-kit check in backend
       - name: OpenAPI is in sync with shared schemas
         run: |
           pnpm openapi
           git diff --exit-code -- contracts/openapi.json || {
             echo "::error::contracts/openapi.json is stale. Run 'pnpm openapi' and commit."; exit 1; }
+
+  # ---- continuous deployment (ADR 0005): main -> staging -> smoke -> production -> smoke ------------------
+  # Off until the repository variable CD_ENABLED is "true" and the staging/production environments hold
+  # COOLIFY_URL, COOLIFY_TOKEN, COOLIFY_APP_UUID, INVITE_CODE (secrets) and API_URL, WEB_URL (variables). HOSTING.md §6.
+  deploy-staging:
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.CD_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    concurrency: { group: deploy, cancel-in-progress: false }
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - name: Deploy to staging
+        run: node infra/deploy.mjs
+        env:
+          COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+          COOLIFY_APP_UUID: ${{ secrets.COOLIFY_APP_UUID }}
+      - name: Smoke staging
+        run: node infra/smoke.mjs
+        env:
+          API: ${{ vars.API_URL }}
+          WEB: ${{ vars.WEB_URL }}
+          WEB_ORIGIN: ${{ vars.WEB_URL }}
+          INVITE_CODE: ${{ secrets.INVITE_CODE }}
+
+  deploy-prod:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    concurrency: { group: deploy, cancel-in-progress: false }
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - name: Deploy to production
+        run: node infra/deploy.mjs
+        env:
+          COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+          COOLIFY_APP_UUID: ${{ secrets.COOLIFY_APP_UUID }}
+      - name: Smoke production
+        run: node infra/smoke.mjs
+        env:
+          API: ${{ vars.API_URL }}
+          WEB: ${{ vars.WEB_URL }}
+          WEB_ORIGIN: ${{ vars.WEB_URL }}
+          INVITE_CODE: ${{ secrets.INVITE_CODE }}
+      - name: Report to #brain-updates
+        if: always() && env.HOOK != ''
+        env:
+          HOOK: ${{ secrets.DISCORD_UPDATES_WEBHOOK_URL }}
+          STATUS: ${{ job.status }}
+          SHA: ${{ github.sha }}
+        run: |
+          curl -sf -H 'content-type: application/json' -d "{\"content\":\"CD: production deploy of ${SHA:0:7} ${STATUS} (${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\"}" "$HOOK" || true

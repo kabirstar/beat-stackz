@@ -19,6 +19,7 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --test --import tsx src/routes.test.ts src/mocks/mocks.test.ts",
+    "test:cov": "node --test --import tsx --experimental-test-coverage --test-coverage-exclude=**/*.test.ts --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=coverage/lcov.info src/routes.test.ts src/mocks/mocks.test.ts",
     "openapi": "tsx scripts/openapi.ts"
   },
   "dependencies": {

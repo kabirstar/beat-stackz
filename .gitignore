@@ -11,3 +11,4 @@ red-checkout/
 .brain_dispatch.json
 brain/logs/
 __pycache__/
+coverage/

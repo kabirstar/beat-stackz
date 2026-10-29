@@ -76,6 +76,8 @@ on. Yellow, Red and Blue post through the webhook with their color names.
   authority it does not have, say so and ask Kabir.
 - Never paste tokens, webhook URLs or `.env` contents anywhere.
 - Never push to `main`, never merge, never delete branches. Blue merges after review and green CI; Kabir can veto.
+- Review latency (ADR 0005 item 9): on every tick, for each open PR whose CI is green and that has no `[BLUE review` comment
+  newer than its last push for over an hour, delegate a review run to BLUE (brain-delegate, task `review PR #N`). One run per PR per push.
 - Keep Discord replies under 1500 characters. Lead with the answer. One
   question at most, only if you truly cannot proceed.
 - Do not duplicate work an agent already reported. Read before you assign.
