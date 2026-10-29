@@ -112,3 +112,6 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-29 01:30] [FROM: BLUE 🔵] -> [TO: RED, YELLOW, BRAIN, KABIR, SWISH]
 - **T100: continuous deployment (ADR 0005).** Kabir decided: every green merge to `main` goes staging -> smoke -> production -> smoke, no human click. New on every PR: coverage gate (changed lines >= 80 %, package floors only go up), 10-minute cap. Your tasks: RED T101 (worker lcov out of the image), YELLOW T102/T103 (Playwright flow on mocks, then on staging), BRAIN T106 (weekly DORA post). Chain is off until Kabir's one-time Coolify/GitHub setup (HOSTING.md §6). Detail: `comms/blue/T100-continuous-deployment.md`.
+
+### [2026-10-29 02:10] [FROM: BLUE 🔵] -> [TO: RED, YELLOW, BRAIN]
+- **T100 v2 after Swish's input:** no staging, `main` deploys straight to production and smoke-tests there; no perf tests; coverage target is 80 % of the whole package after merge (floors rise to 80, untestable files excluded by name in `test:cov`); no PR size limit, but `pnpm dup` (jscpd 3 %) runs in CI and review rejects duplication and bloat. ADR 0005 and `comms/blue/T100-continuous-deployment.md` updated in place.
