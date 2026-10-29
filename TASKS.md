@@ -207,3 +207,22 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: comms/blue/T009-*.md with item → route; shared + mocks updated for accepted items
       verify: pnpm -F @bpackz/shared test
       handoff: comms/brain/T009-feature-gap-check.md
+- [ ] T101 [RED] worker lcov out of the test image + "worker" floor line (ADR 0005)
+      paths: worker/Dockerfile, worker/package.json, ci worker job, infra/coverage-floors.json (one line)  depends: PR #65  assigned-by: BRAIN
+      deliverable: worker/coverage/lcov.info reaches the runner; coverage gate prints a worker row
+      verify: CI coverage gate shows `worker`; pnpm -r test:cov && node infra/coverage-gate.mjs
+      handoff: comms/brain/T101-worker-coverage.md
+- [ ] T102 [YELLOW] Playwright flow on mocks: sign-up → folder → upload → share → trash → restore, under 90 s, in CI check
+      paths: frontend/**  depends: PR #65 (check job)  assigned-by: BRAIN
+      deliverable: frontend/e2e spec + `test:e2e` script green against dev:mock
+      verify: pnpm -F web test:e2e
+      handoff: comms/brain/T102-playwright-flow.md
+- [ ] T103 [YELLOW] T102 flow parameterised by WEB/API/INVITE_CODE for staging
+      paths: frontend/e2e/**  depends: T102 merged, staging live (Kabir, HOSTING.md §6)  assigned-by: BRAIN
+      deliverable: same spec runs against a real stack from env; Blue runs it post-deploy
+      verify: WEB=... API=... INVITE_CODE=... pnpm -F web test:e2e against staging
+      handoff: comms/brain/T102-playwright-flow.md (T103 section)
+- [ ] T106 [BRAIN] weekly DORA post in #brain-updates: deploys, median merge→production, failed deploys, time to restore
+      paths: .claude/skills/brain-dora-weekly/**, comms/brain/**  depends: CD_ENABLED=true (Kabir, HOSTING.md §6) and one week of main runs
+      deliverable: brain-spawn-agent skill that reads `gh run list --workflow CI --branch main` and posts one plain paragraph
+      verify: first post lands in #brain-updates the week after the chain goes live
