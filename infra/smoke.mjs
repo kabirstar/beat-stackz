@@ -40,7 +40,8 @@ assert.deepEqual((await api("GET", "/health"))[1], { status: "ok" }); step("api 
 
 // --- signup → session cookie → /me
 const email = `smoke-${randomUUID()}@example.com`;
-const [signup] = await api("POST", "/auth/sign-up/email", { name: "Smoke", email, password: randomUUID() });
+// ADR 0003: hosted API rejects sign-up without the invite code; pass INVITE_CODE=... when running against production.
+const [signup] = await api("POST", "/auth/sign-up/email", { name: "Smoke", email, password: randomUUID(), inviteCode: process.env.INVITE_CODE });
 cookie = signup.headers.getSetCookie().map((v) => v.split(";")[0]).join("; ");
 assert.ok(cookie, "no session cookie");
 const [, me] = await api("GET", "/me");
