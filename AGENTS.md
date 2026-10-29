@@ -120,8 +120,14 @@ blocked on Red.
 - Commit messages: `[yellow] short imperative line`. Attribution trailer per
   your tool's convention.
 - Gate, split (ADR 0004): local `pnpm gate:fast` = typecheck + lint + gitleaks (under 5 s, needs `gitleaks` installed); CI is the gate.
-- CI (GitHub Actions, Blue): gitleaks, `pnpm typecheck`, `pnpm lint`, `pnpm test`,
-  `pnpm -F @bpackz/shared build`. Red PRs must pass `drizzle-kit check` (no drift).
+- CI `check` (GitHub Actions, Blue, 10-minute cap): gitleaks, `pnpm typecheck`, `pnpm lint`, `pnpm -r test:cov`
+  (mocked routes in `shared`, real Postgres + RustFS in `backend`/`worker`), coverage gate (changed lines >= 80 %,
+  package floors in `infra/coverage-floors.json`, only ever raised), `drizzle-kit check`, OpenAPI drift.
+- **Merging is deploying (ADR 0005).** Every green merge to `main` deploys to staging, runs `infra/smoke.mjs`, then
+  deploys to production and smokes again, with no human click. Hold unfinished work on the task board or behind a
+  flag, never on `main`. Rollback: `node infra/deploy.mjs --commit <sha>`.
+- Flaky test: quarantine same day (`skip` with the task id), owner fixes or deletes within a week. PRs over 400 changed
+  lines are split before review. BRAIN dispatches a Blue review run for any PR green and unreviewed for an hour.
 
 ## Rules of engagement
 

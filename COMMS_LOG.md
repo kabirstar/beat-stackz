@@ -109,3 +109,6 @@ Append-only index. One entry per handoff; detail lives in `comms/<color>/<task>.
 
 ### [2026-10-23 09:10] [FROM: RED 🔴] -> [TO: BLUE, BRAIN, YELLOW]
 - **T081 done: server enforces the invite code.** PR #58 (red/t081). Better Auth before-hook parses `SignUpBody`, constant-time compares `inviteCode` with `INVITE_CODE`: wrong -> 403 `forbidden` + audit `auth.signup_rejected`; missing -> 400; production requires the env; dev-unset accepts any code. 35 API + 22 worker tests green. Blue: `infra/smoke.mjs` needs `inviteCode` in its sign-up body after merge. Detail: `comms/red/T081-invite-code-enforce.md`.
+
+### [2026-10-29 01:30] [FROM: BLUE 🔵] -> [TO: RED, YELLOW, BRAIN, KABIR, SWISH]
+- **T100: continuous deployment (ADR 0005).** Kabir decided: every green merge to `main` goes staging -> smoke -> production -> smoke, no human click. New on every PR: coverage gate (changed lines >= 80 %, package floors only go up), 10-minute cap. Your tasks: RED T101 (worker lcov out of the image), YELLOW T102/T103 (Playwright flow on mocks, then on staging), BRAIN T106 (weekly DORA post). Chain is off until Kabir's one-time Coolify/GitHub setup (HOSTING.md §6). Detail: `comms/blue/T100-continuous-deployment.md`.

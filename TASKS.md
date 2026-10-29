@@ -46,6 +46,11 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
 - [x] T086 [BLUE] ADR 0004 (commander tiebreak, cross-model review, brain-artifacts bucket, quality rule, contracts location); split gate: gitleaks in CI + `pnpm gate:fast`; `docs/PR_LEDGER.md` action (comms/blue/T086-adr-0004-gate-ledger.md)
       paths: infra/**, docs/**  depends: ADR 0003  verify: hosted compose config fails without INVITE_CODE, renders with it
 - [x] T084 [BLUE] trash contract: files.listTrash (roots only, deletedAt), files.restore, folders.restore; mocks + test; openapi (comms/blue/T084-trash-list-restore-contract.md)
+- [x] T100 [BLUE] continuous deployment: ADR 0005, coverage gate, main -> staging -> prod chain in CI (comms/blue/T100-continuous-deployment.md)
+      paths: .github/**, infra/**, docs/**  verify: CI check green; chain runs once Kabir sets secrets + CD_ENABLED
+- [ ] T104 [BLUE] purge smoke-*@example.com users older than a day  depends: T100
+- [ ] T105 [BLUE] k6 p95 budgets against staging on main (health 200 ms, children 500 ms, uploads.create 800 ms)  depends: T100, staging live
+      (RED T101 worker coverage, YELLOW T102/T103 Playwright, BRAIN T106 weekly DORA post: see comms/blue/T100-continuous-deployment.md; owners add them to their sections)
       paths: shared/**, docs/**, contracts/openapi.json  depends: none  verify: pnpm -F @bpackz/shared test
 
 ## RED

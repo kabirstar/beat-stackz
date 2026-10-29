@@ -10,6 +10,7 @@
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "test": "node --test --import tsx src/api/client.test.ts src/App.test.tsx",
+    "test:cov": "node --test --import tsx --experimental-test-coverage --test-coverage-exclude=**/*.test.* --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=coverage/lcov.info src/api/client.test.ts src/App.test.tsx",
     "preview": "vite preview --port 5173"
   },
   "dependencies": {
