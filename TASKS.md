@@ -49,8 +49,7 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
 - [x] T100 [BLUE] continuous deployment: ADR 0005, coverage gate, main -> staging -> prod chain in CI (comms/blue/T100-continuous-deployment.md)
       paths: .github/**, infra/**, docs/**  verify: CI check green; chain runs once Kabir sets secrets + CD_ENABLED
 - [ ] T104 [BLUE] purge smoke-*@example.com users older than a day  depends: T100
-- [ ] T105 [BLUE] k6 p95 budgets against staging on main (health 200 ms, children 500 ms, uploads.create 800 ms)  depends: T100, staging live
-      (RED T101 worker coverage, YELLOW T102/T103 Playwright, BRAIN T106 weekly DORA post: see comms/blue/T100-continuous-deployment.md; owners add them to their sections)
+      (T105 perf budgets dropped 2026-10-29 per Swish. RED T101 worker coverage, YELLOW T102/T103 Playwright, BRAIN T106 weekly DORA post: see comms/blue/T100-continuous-deployment.md; owners add them to their sections)
       paths: shared/**, docs/**, contracts/openapi.json  depends: none  verify: pnpm -F @bpackz/shared test
 
 ## RED

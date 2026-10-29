@@ -57,6 +57,7 @@ jobs:
       - run: pnpm -F @bpackz/shared build # others import its dist
       - run: pnpm typecheck
       - run: pnpm lint
+      - run: pnpm dup # jscpd: no copy-paste, ADR 0005 item 6
       - name: Tests with coverage (backend, shared, frontend; mocked + real deps) # worker: see below
         run: mkdir -p backend/coverage shared/coverage frontend/coverage && pnpm -r --filter '!worker' --if-present run test:cov
       - name: Worker tests (in its image, which has ffmpeg + audiowaveform)
@@ -74,36 +75,12 @@ jobs:
           git diff --exit-code -- contracts/openapi.json || {
             echo "::error::contracts/openapi.json is stale. Run 'pnpm openapi' and commit."; exit 1; }
 
-  # ---- continuous deployment (ADR 0005): main -> staging -> smoke -> production -> smoke ------------------
-  # Off until the repository variable CD_ENABLED is "true" and the staging/production environments hold
-  # COOLIFY_URL, COOLIFY_TOKEN, COOLIFY_APP_UUID, INVITE_CODE (secrets) and API_URL, WEB_URL (variables). HOSTING.md §6.
-  deploy-staging:
+  # ---- continuous deployment (ADR 0005): main -> production -> smoke. No staging; tests carry the weight. ----------
+  # Off until the repository variable CD_ENABLED is "true" and the `production` environment holds the secrets
+  # COOLIFY_URL, COOLIFY_TOKEN, COOLIFY_APP_UUID, INVITE_CODE, DISCORD_UPDATES_WEBHOOK_URL and variables API_URL, WEB_URL (HOSTING.md §6).
+  deploy-prod:
     needs: check
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.CD_ENABLED == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 35
-    concurrency: { group: deploy, cancel-in-progress: false }
-    environment: staging
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 24 }
-      - name: Deploy to staging
-        run: node infra/deploy.mjs
-        env:
-          COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
-          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
-          COOLIFY_APP_UUID: ${{ secrets.COOLIFY_APP_UUID }}
-      - name: Smoke staging
-        run: node infra/smoke.mjs
-        env:
-          API: ${{ vars.API_URL }}
-          WEB: ${{ vars.WEB_URL }}
-          WEB_ORIGIN: ${{ vars.WEB_URL }}
-          INVITE_CODE: ${{ secrets.INVITE_CODE }}
-
-  deploy-prod:
-    needs: deploy-staging
     runs-on: ubuntu-latest
     timeout-minutes: 35
     concurrency: { group: deploy, cancel-in-progress: false }
@@ -118,7 +95,7 @@ jobs:
           COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
           COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
           COOLIFY_APP_UUID: ${{ secrets.COOLIFY_APP_UUID }}
-      - name: Smoke production
+      - name: Validate in production (smoke)
         run: node infra/smoke.mjs
         env:
           API: ${{ vars.API_URL }}

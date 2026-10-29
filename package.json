@@ -13,9 +13,11 @@
     "test": "pnpm -r --if-present run test",
     "openapi": "pnpm -F @bpackz/shared openapi",
     "gate:fast": "pnpm typecheck && pnpm lint && gitleaks protect --staged --redact",
-    "ledger": "node infra/pr-ledger.mjs"
+    "ledger": "node infra/pr-ledger.mjs",
+    "dup": "jscpd"
   },
   "devDependencies": {
+    "jscpd": "^4.0.5",
     "oxlint": "^1.89.0",
     "turbo": "^2.5.0",
     "typescript": "^5.9.0"

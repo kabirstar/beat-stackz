@@ -141,28 +141,20 @@ revoke, trash. Then open `https://app.<domain>` and sign up for real.
 
 ## 6. Continuous deployment (ADR 0005)
 
-`main` deploys itself: CI `check` → `deploy-staging` → smoke → `deploy-prod` → smoke → post in `#brain-updates`.
-The chain is off until this one-time setup is done (about 30 minutes, Kabir):
+`main` deploys itself: CI `check` → `deploy-prod` → smoke on production → post in `#brain-updates`. No staging
+(Swish, 2026-10-29): the tests carry the weight and we validate in production while there are no outside users.
+The chain is off until this one-time setup is done (about 10 minutes, Kabir):
 
-1. **Staging resource in Coolify.** Same project: + New → Public Repository → `kabirstar/beat-stackz`, branch `main`,
-   build pack Docker Compose, compose location `/infra/docker-compose.hosted.yml`. Domains: `api` →
-   `https://api-staging.beatstackz.com`, `web` → `https://staging.beatstackz.com`. Environment: copy production's
-   variables, then change `S3_BUCKET` to `bpackz-staging`, `BETTER_AUTH_URL`/`API_ORIGIN` to the api-staging URL,
-   `WEB_ORIGIN` to the staging URL, a fresh `BETTER_AUTH_SECRET`, a different `INVITE_CODE`, `BACKUP_BUCKET` unset
-   or `bpackz-staging-backups`. Postgres is its own container inside the compose project; nothing to add.
-2. **DNS (Cloudflare):** A records `staging` and `api-staging` → the server IPv4, DNS only (grey cloud), like §1.
-3. **R2:** create bucket `bpackz-staging`, same CORS rule and 1-day abort-multipart lifecycle as §0.
-4. **Coolify API token:** Keys & Tokens → API tokens → Create (permissions: read, deploy). Copy it once.
-5. **App UUIDs:** each resource's URL in Coolify ends in `/application/<uuid>`; note both.
-6. **GitHub:** repo Settings → Environments → create `staging` and `production`. In each, secrets `COOLIFY_URL`
-   (`http://2.29.96.215:8000`), `COOLIFY_TOKEN`, `COOLIFY_APP_UUID` (that environment's), `INVITE_CODE` (that
-   environment's), and variables `API_URL`, `WEB_URL`. On `production` only, also the secret
-   `DISCORD_UPDATES_WEBHOOK_URL` (from `.env`). Optionally add yourself as a required reviewer on `production` if
-   you ever want a pause button; the default is none.
-7. **Flip it on:** Settings → Secrets and variables → Actions → Variables → `CD_ENABLED` = `true`. The next merge
+1. **Coolify API token:** Coolify → Keys & Tokens → API tokens → Create, permissions read + deploy. Copy it once.
+2. **App UUID:** open the Beat Stackz resource; its URL ends in `/application/<uuid>`.
+3. **GitHub:** repo Settings → Environments → `production` (already created). Add secrets `COOLIFY_URL`
+   (`http://2.29.96.215:8000`), `COOLIFY_TOKEN`, `COOLIFY_APP_UUID`, `INVITE_CODE` (the same value as in Coolify).
+   `API_URL`, `WEB_URL` and `DISCORD_UPDATES_WEBHOOK_URL` are already set. Add yourself as a required reviewer on
+   `production` only if you ever want a pause button; the default is none.
+4. **Flip it on:** Settings → Secrets and variables → Actions → Variables → `CD_ENABLED` = `true`. The next merge
    to `main` deploys. Watch the first one in the Actions tab.
 
-Rollback: `COOLIFY_URL=… COOLIFY_TOKEN=… COOLIFY_APP_UUID=<prod> node infra/deploy.mjs --commit <last good sha>`.
+Rollback: `COOLIFY_URL=… COOLIFY_TOKEN=… COOLIFY_APP_UUID=… node infra/deploy.mjs --commit <last good sha>`.
 Manual deploy (chain off): the Deploy button in Coolify still works exactly as §3.
 
 ## Not doing
