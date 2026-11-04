@@ -184,3 +184,22 @@ compose), `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `WEB_ORIGIN`, `API_ORIGIN`,
 3. Red: shared vault invites, share links, trash. Yellow: sharing UI, trash UI.
 4. Red: worker + waveform JSON. Yellow: inline player.
 5. Blue: hosted deploy on Hetzner + R2.
+
+## Agent quick reference (standard section, proposed 2026-11-04)
+
+Every repo Kabir runs has this section with the same headings, so one background-worker prompt fits all of them.
+Anything here that conflicts with the sections above: the sections above win. **Proposal:** the background-worker
+lines need Kabir and Swish to agree before any worker runs here (ADR 0004 equal authority).
+
+- **Build.** `pnpm install`, then `pnpm -F @bpackz/shared build`. Full stack: see Local setup (needs Docker).
+- **Test.** `pnpm gate:fast` (typecheck, lint, gitleaks), `pnpm test`. Backend changes also pass `drizzle-kit check`.
+  Non-trivial logic ships with one runnable check.
+- **CI gate.** `.github/workflows/ci.yml` on every pull request: gitleaks, typecheck, lint, test, shared build.
+  Green CI is required before Blue merges.
+- **Branches.** Base is `main` (protected). Agents use `yellow/`, `red/`, `blue/`. A background worker would use
+  `bg/<linear-id>-<slug>`, stay inside the paths of the lane that owns the issue, and never touch `shared/` contracts.
+  Blue squash-merges; nobody else.
+- **Needs a human.** Scope and product decisions (Kabir and Swish). Hosting and deploys. Anything in `.env` or other
+  secrets. Contract changes in `shared/` (Blue, with both sides pinged).
+- **Never.** Merge or push to `main`. Read, print or commit `.env`. Add payments, a marketplace or a public catalog
+  (out of scope). Write file bytes through the API or to local disk.
