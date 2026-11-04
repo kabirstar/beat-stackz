@@ -185,11 +185,11 @@ compose), `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `WEB_ORIGIN`, `API_ORIGIN`,
 4. Red: worker + waveform JSON. Yellow: inline player.
 5. Blue: hosted deploy on Hetzner + R2.
 
-## Agent quick reference (standard section, proposed 2026-11-04)
+## Agent quick reference (standard section, agreed by Kabir and Swish, 2026-11-04)
 
 Every repo Kabir runs has this section with the same headings, so one background-worker prompt fits all of them.
-Anything here that conflicts with the sections above: the sections above win. **Proposal:** the background-worker
-lines need Kabir and Swish to agree before any worker runs here (ADR 0004 equal authority).
+Anything here that conflicts with the sections above: the sections above win. The background-worker lines were
+agreed by Kabir and Swish, 2026-11-04 (ADR 0004 equal authority).
 
 - **Build.** `pnpm install`, then `pnpm -F @bpackz/shared build`. Full stack: see Local setup (needs Docker).
 - **Test.** `pnpm gate:fast` (typecheck, lint, gitleaks), `pnpm test`. Backend changes also pass `drizzle-kit check`.
