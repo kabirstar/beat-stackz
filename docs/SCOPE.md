@@ -167,10 +167,10 @@ a rewrite, mainly through usernames and public profiles.
 | The look | Speed and clarity win over the 3D look. The vault door stays on every visit, redone. Everything already built stays; anything saved only in the browser moves to the account. |
 | Never | A site full of half-baked features. |
 
-## Still open for Kabir
+## Claude's five changes (accepted by Kabir, 5 Nov)
 
-The page lists these as "Claude's five changes · accepted by Kabir 5 Nov ·
-stems still needs a yes or no before 2B".
+The fifth change, stem splitting and mastering, is under "Still open for
+Kabir" below.
 
 1. **Backups.** You marked them Next. Claude moved them into 1A, because "safe
    and secure" is your own test for milestone 1 and there is no copy of the
@@ -182,20 +182,21 @@ stems still needs a yes or no before 2B".
 3. **The vision board had eight things on it.** Notes, pinned songs, images,
    links and the task list are in 1B. Voice memos, drawing and comments moved
    to 2A. A board per song waits for milestone 3, when a Song exists.
-4. **Stem splitting and mastering.** You put them in milestone 2 and set paid
-   AI to zero. Free tools exist but need a bigger server, roughly $15 to $30
-   more a month. Either allow that, or move them to Later.
-5. **Yellow and Clipper.** You said Yellow may keep improving Clipper freely,
+4. **Yellow and Clipper.** You said Yellow may keep improving Clipper freely,
    and also that the next month goes to making what exists solid. Yellow builds
    the screens in 1B. Claude suggests milestone 1 comes first and Clipper work
    fills the gaps.
 
-Added when this file was written (not on the page):
+## Still open for Kabir
 
-6. **Staging. Needs Kabir's call.** Milestone 1A lists "a staging copy of the
-   site" and 2C says "the live site updates per milestone, from staging". But
-   ADR 0005 v2 (PR #66, 2026-10-29, from Swish) removed staging, so `main`
-   deploys straight to production. Not resolved here.
+1. **Stem splitting and mastering. Needs a yes or no before 2B.** You put them
+   in milestone 2 and set paid AI to zero. Free tools exist but need a bigger
+   server, roughly $15 to $30 more a month. Either allow that, or move them to
+   Later.
+2. **Staging. Needs Kabir's call. Not on the page.** Milestone 1A lists "a
+   staging copy of the site" and 2C says "the live site updates per milestone,
+   from staging". But ADR 0005 v2 (PR #66, 2026-10-29, from Swish) removed
+   staging, so `main` deploys straight to production. Not resolved here.
 
 ## What it costs each month
 
