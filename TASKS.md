@@ -103,9 +103,9 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       verify: Docker worker test target with TEST_DATABASE_URL + RUN_STORAGE_INTEGRATION=1; pnpm typecheck; pnpm lint
       verification: 16 worker checks passed with real Docker PostgreSQL/RustFS and audio tools, zero skips
       handoff: comms/red/T016-waveforms.md
-- [ ] T026a [RED] folders.kind migration + seed the 18-folder default tree on signup and vault create; backfill where name free
+- [x] T026a [RED] folders.kind migration + seed the 18-folder default tree on signup and vault create; backfill where name free
       paths: backend/**  depends: T026 (PR #29 merged)
-      status: implemented on red/t026a / PR #38; pending Blue review
+      status: merged in PR #38
       deliverable: stable folder kind, transactional DEFAULT_FOLDERS seeding, collision-safe legacy backfill
       verify: Docker PostgreSQL taxonomy/migration checks; pnpm -F api test; worker Docker test target
       verification: 72 tests passed, zero skips (35 API + 22 worker + 7 shared + 8 frontend)
@@ -129,9 +129,9 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: storage.presign (public endpoint, same creds) behind every getSignedUrl; storage.client for everything else
       verify: pnpm -F api test (unit: presigned host public, HeadObject internal); compose api+worker upload+download via localhost:9000
       handoff: comms/red/T019-presign-public-endpoint.md
-- [ ] T081 [RED] server-enforced invite code on sign-up (ADR 0003)
+- [x] T081 [RED] server-enforced invite code on sign-up (ADR 0003)
       paths: backend/**, worker/test/**  depends: T080 (merged #55)
-      status: implemented on red/t081; pending Blue review
+      status: merged in PR #58
       deliverable: Better Auth before-hook parses SignUpBody, constant-time compares inviteCode with INVITE_CODE (403 forbidden, audit auth.signup_rejected); missing field 400; INVITE_CODE required in production
       verify: pnpm -F api test (wrong 403 / right 200 / missing 400 / dev-unset accepts)
       handoff: comms/red/T081-invite-code-enforce.md
@@ -195,19 +195,21 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: GitHub review on PR #14; merge on green CI or request changes via comms/blue/ (focus: S3/DB recovery boundary, dedup authz, receipt retention, migration 0005)
       verify: gh pr view 14 --repo kabirstar/beat-stackz --json reviews,state shows BLUE's review
       handoff: comms/brain/T008-review-pr14-pr21.md
-- [ ] T015 [RED] verification worker per ADR 0001 (hash, ready/failed, late-dedup, expired intents; no ffmpeg yet)
+- [x] T015 [RED] verification worker per ADR 0001 (hash, ready/failed, late-dedup, expired intents; no ffmpeg yet)
       paths: worker/**, backend/**  depends: T008 (Blue clears + merges #14)  assigned-by: BRAIN
-      status: hold lifted 2026-10-22 04:48 — Red reports Kabir's go in Red's chat, conditional on #14 clearance; Kabir/Swish may veto in #brain-updates
+      status: merged in PR #23
       deliverable: worker claims verify jobs, streams+hashes once, applies ADR transitions with audits under vault-lock; aborts expired intents
       verify: worker integration command Red adds — match/mismatch/retry/late-dedup/expired, zero skips on Docker Postgres + RustFS
       handoff: comms/brain/T015-verification-worker.md
-- [ ] T023 [YELLOW] publish the solidified UI feature list, each line mapped to a shared route or marked NEW
+- [x] T023 [YELLOW] publish the solidified UI feature list, each line mapped to a shared route or marked NEW
       paths: comms/yellow/T023-feature-list.md, frontend/**  depends: none  assigned-by: BRAIN
+      status: merged in PR #21
       deliverable: comms/yellow/T023-feature-list.md on a yellow/ branch; T020 scaffold PR if the UI exists (frontend/ is empty on main)
       verify: file pushed; Discord ping
       handoff: comms/brain/T023-feature-list.md
-- [ ] T017 [RED] vault members + share links + trash purge per shared contract (after T013; no hold — routes already contracted)
+- [x] T017 [RED] vault members + share links + trash purge per shared contract (after T013; no hold — routes already contracted)
       paths: backend/**, worker/** (purge only)  depends: T013  assigned-by: BRAIN
+      status: merged in PR #30
       deliverable: vaults.members/invite/removeMember; shares.*; ?token= on download/waveform; 30-day purge job
       verify: pnpm -F api test; CI Docker integration green
       handoff: comms/brain/T017-members-shares-purge.md
