@@ -25,11 +25,12 @@ brain-handoff documents say the same thing.
 6. **Split gate.** Local pre-check `pnpm gate:fast` = `typecheck + lint + gitleaks protect --staged`, under 5 s,
    needs `gitleaks` installed (`winget install gitleaks` / `brew install gitleaks`). CI is the gate: gitleaks over
    history, typecheck, lint, tests, drizzle check, OpenAPI drift. A green local gate is never a reason to skip CI.
-7. **PR ledger.** `docs/PR_LEDGER.md` is generated from `git log` on every merge to `main` by
-   `.github/workflows/pr-ledger.yml` (idempotent: regenerates the whole file, so a missed run self-heals). Hand edits
-   are overwritten. The `pr-agent` walkthrough column is a follow-up; until then the row carries the squash subject.
+7. **PR ledger.** Produced on demand from `git log` by `pnpm ledger [out-file]` (`infra/pr-ledger.mjs`, stdout by
+   default); `gh pr list --state merged` gives the same list. It is not committed and no workflow regenerates it:
+   `main` takes changes by pull request only, and a generated file nothing regenerates goes stale (TOD-99,
+   2026-11-05; replaces the `pr-ledger.yml` action that pushed `docs/PR_LEDGER.md` to `main`).
 
 ## Rejected
 Humanizer or any prose pass over `shared/**`, `docs/adr/**`, commit messages or API error strings (correctness
-hazard); a 24/7 Chronos brain (replaced by this ledger action plus an on-demand skill in brain-os); putting brain-os
+hazard); a 24/7 Chronos brain (replaced by the ledger script plus an on-demand skill in brain-os); putting brain-os
 tables in `@bpackz/shared` (scope drift).
