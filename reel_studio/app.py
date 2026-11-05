@@ -258,6 +258,7 @@ HTML_TEMPLATE = r"""
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
   <title>REEL STUDIO — Cinematic Event & Temple Recap Editor</title>
   <style>
     :root {
@@ -277,27 +278,35 @@ HTML_TEMPLATE = r"""
       --muted: #94a3b8;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
+    html, body {
       background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
-      height: 100vh;
+      min-height: 100vh;
+      width: 100%;
+      max-width: 100vw;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;
       user-select: none;
     }
 
     header {
-      height: 58px;
+      min-height: 56px;
+      height: auto;
       background: linear-gradient(90deg, #13111c 0%, #191424 50%, #12121a 100%);
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 16px;
+      padding: 8px 16px;
       gap: 10px;
       flex-shrink: 0;
+      flex-wrap: wrap;
+      position: sticky;
+      top: 0;
+      z-index: 80;
     }
     .brand {
       display: flex;
@@ -319,23 +328,24 @@ HTML_TEMPLATE = r"""
     .toolbar-group {
       display: flex;
       align-items: center;
-      gap: 8px;
-      flex-wrap: nowrap;
+      gap: 7px;
+      flex-wrap: wrap;
     }
     .btn {
       background: var(--panel2);
       color: var(--text);
       border: 1px solid var(--border);
-      padding: 7px 12px;
+      padding: 6px 11px;
       border-radius: 8px;
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       transition: all 0.15s ease;
       white-space: nowrap;
+      text-decoration: none;
     }
     .btn:hover { background: var(--panel3); border-color: #3f3f5a; }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -353,6 +363,12 @@ HTML_TEMPLATE = r"""
       font-weight: 700;
     }
     .btn-primary:hover { filter: brightness(1.1); }
+    .btn-download {
+      background: rgba(16, 185, 129, 0.18);
+      border: 1px solid var(--green);
+      color: #6ee7b7;
+      font-weight: 700;
+    }
     .btn-active {
       background: rgba(245, 158, 11, 0.18);
       border-color: var(--gold);
@@ -366,36 +382,65 @@ HTML_TEMPLATE = r"""
       border-radius: 8px;
       font-size: 12px;
       outline: none;
+      max-width: 220px;
     }
     select.input-select:focus, input.input-text:focus {
       border-color: var(--gold);
     }
 
     .status-bar {
-      height: 28px;
+      min-height: 28px;
       background: #0d0d14;
       border-bottom: 1px solid var(--border);
-      padding: 0 16px;
+      padding: 4px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       font-size: 11.5px;
       color: var(--muted);
       flex-shrink: 0;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* Mobile / Tablet Workspace Tab Switcher (CapCut Web style) */
+    .mobile-workspace-tabs {
+      display: none;
+      background: #101018;
+      border-bottom: 1px solid var(--border);
+      padding: 6px 12px;
+      gap: 6px;
+    }
+    .mobile-tab-btn {
+      flex: 1;
+      padding: 7px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+    }
+    .mobile-tab-btn.active {
+      background: rgba(245, 158, 11, 0.18);
+      border-color: var(--gold);
+      color: var(--gold-light);
     }
 
     .workspace {
       flex: 1;
       display: grid;
-      grid-template-columns: 300px 1fr 355px;
-      min-height: 0;
-      overflow: hidden;
+      grid-template-columns: 290px minmax(0, 1fr) 350px;
+      min-height: 520px;
     }
     .col-panel {
       background: var(--panel);
       display: flex;
       flex-direction: column;
       min-height: 0;
+      max-height: calc(100vh - 260px);
       overflow: hidden;
     }
     .col-left { border-right: 1px solid var(--border); }
@@ -1057,11 +1102,88 @@ HTML_TEMPLATE = r"""
       width: 520px;
       max-width: 94vw;
       padding: 20px;
+      max-height: 88vh;
+      overflow-y: auto;
       box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    }
+
+    /* CapCut / Instagram Reels Segmented Full-Reel Progress Bar */
+    .reel-progress-ribbon {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      height: 22px;
+      background: #0d0d16;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 3px 6px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .reel-seg-pill {
+      height: 100%;
+      border-radius: 4px;
+      background: #232336;
+      position: relative;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 800;
+      color: rgba(255,255,255,0.75);
+      overflow: hidden;
+      transition: filter 0.12s, transform 0.12s;
+      min-width: 14px;
+    }
+    .reel-seg-pill:hover {
+      filter: brightness(1.25);
+    }
+    .reel-seg-pill.active-seg {
+      background: linear-gradient(90deg, rgba(245, 158, 11, 0.88), rgba(255, 42, 133, 0.88));
+      color: #fff;
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.55);
+    }
+
+    /* Responsive Tablet & Mobile Breakpoints */
+    @media (max-width: 1180px) {
+      .workspace {
+        grid-template-columns: 1fr;
+        min-height: auto;
+      }
+      .col-panel {
+        max-height: 540px;
+        border-right: none;
+        border-left: none;
+        border-bottom: 1px solid var(--border);
+      }
+      .mobile-workspace-tabs {
+        display: flex;
+        position: sticky;
+        top: 56px;
+        z-index: 75;
+      }
+      body.mobile-tab-mode .col-left,
+      body.mobile-tab-mode .center-stage,
+      body.mobile-tab-mode .col-right {
+        display: none;
+      }
+      body.mobile-tab-mode.active-tab-media .col-left { display: flex; }
+      body.mobile-tab-mode.active-tab-stage .center-stage { display: flex; }
+      body.mobile-tab-mode.active-tab-inspector .col-right { display: flex; }
+    }
+    @media (max-width: 768px) {
+      header { padding: 8px 10px; gap: 6px; }
+      .brand { font-size: 13px; }
+      .toolbar-group { width: 100%; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 2px; }
+      .btn { padding: 5px 9px; font-size: 11px; }
+      .transport-bar { flex-wrap: wrap; }
+      .trimmer-header { flex-wrap: wrap; gap: 6px; }
+      .dock-header { flex-wrap: wrap; height: auto; padding: 6px 10px; gap: 6px; }
     }
   </style>
 </head>
-<body>
+<body class="mobile-tab-mode active-tab-stage">
 
   <!-- TOP HEADER -->
   <header>
@@ -1103,9 +1225,21 @@ HTML_TEMPLATE = r"""
       <button class="btn" onclick="toggleAgentsDrawer()">
         🤖 Agents <span id="agentCountBadge" class="badge badge-gold">0</span>
       </button>
+      <details style="position:relative;">
+        <summary class="btn" style="list-style:none;" title="Keyboard Shortcuts">⌨️ Keys</summary>
+        <div style="position:absolute;right:0;top:36px;z-index:120;background:#141422;border:1px solid var(--border);border-radius:10px;padding:10px 12px;width:235px;box-shadow:0 12px 30px rgba(0,0,0,0.75);font-size:11px;display:flex;flex-direction:column;gap:5px;">
+          <div style="font-weight:800;color:var(--gold-light);margin-bottom:2px;">⌨️ Studio Shortcuts</div>
+          <div style="display:flex;justify-content:space-between;"><span>Play / Pause Reel</span><code>Space</code></div>
+          <div style="display:flex;justify-content:space-between;"><span>Prev / Next Scene</span><code>← / →</code></div>
+          <div style="display:flex;justify-content:space-between;"><span>Loop Active Cut</span><code>L</code></div>
+        </div>
+      </details>
       <button id="exportBtn" class="btn btn-primary" onclick="exportReelNow()">
         🚀 Export 1080p MP4
       </button>
+      <a id="headerDownloadReelBtn" class="btn btn-download" href="/output/cinematic_temple_reel_1080p.mp4" download style="display:none;">
+        ⬇️ Download MP4
+      </a>
     </div>
   </header>
 
@@ -1113,6 +1247,13 @@ HTML_TEMPLATE = r"""
   <div class="status-bar">
     <span id="statusBanner">Ready — 1 Best Highlight Per Clip (No Reused Clips) • Clean Regular Cuts (Zero Black Flash) • Slow-Motion & Native Audio!</span>
     <span id="projectSummaryTag">0 Clips • 0.0s Total Reel • 100% Native Event Audio</span>
+  </div>
+
+  <!-- MOBILE / TABLET WORKSPACE SWITCHER (CapCut Web style) -->
+  <div class="mobile-workspace-tabs">
+    <button type="button" class="mobile-tab-btn" id="mobTabMedia" onclick="switchMobileTab('media')">📂 Media Bin</button>
+    <button type="button" class="mobile-tab-btn active" id="mobTabStage" onclick="switchMobileTab('stage')">🎬 Stage &amp; Trimmer</button>
+    <button type="button" class="mobile-tab-btn" id="mobTabInspector" onclick="switchMobileTab('inspector')">🎛️ Cut Inspector</button>
   </div>
 
   <!-- 3-COLUMN STUDIO WORKSPACE -->
@@ -1175,9 +1316,12 @@ HTML_TEMPLATE = r"""
         </div>
       </div>
 
+      <!-- Segmented Full-Reel Progress Bar (CapCut / Instagram Reels style) -->
+      <div class="reel-progress-ribbon" id="reelProgressRibbon" title="Click any scene segment to jump directly to that cut"></div>
+
       <!-- Transport Controls -->
       <div class="transport-bar">
-        <div style="display:flex; align-items:center; gap:6px;">
+        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
           <button class="btn" onclick="stepStoryboard(-1)" title="Previous Cut (Left Arrow)">⏮</button>
           <button id="playPauseBtn" class="btn btn-gold" onclick="togglePlayReel()" style="min-width:130px; justify-content:center;">
             ▶ Play Full Reel
@@ -1192,7 +1336,11 @@ HTML_TEMPLATE = r"""
           No cut selected
         </div>
 
-        <div class="timecode" id="timecodeDisplay">00:00.0 / 00:00.0</div>
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <div class="timecode" id="timecodeDisplay">00:00.0 / 00:00.0</div>
+          <button class="btn btn-primary" style="padding:5px 10px;font-size:11px;" onclick="exportReelNow()">🚀 Export MP4</button>
+          <a id="transportDownloadReelBtn" class="btn btn-download" style="padding:5px 10px;font-size:11px;display:none;" href="/output/cinematic_temple_reel_1080p.mp4" download>⬇️ Download MP4</a>
+        </div>
       </div>
 
       <!-- Interactive 4Hz Visual + Audio Excitement Trimmer -->
@@ -1675,9 +1823,48 @@ HTML_TEMPLATE = r"""
       return currentProject.clips.find(c => c.clip_id === clipId) || null;
     }
 
+    function switchMobileTab(tab) {
+      document.body.classList.remove('active-tab-media', 'active-tab-stage', 'active-tab-inspector');
+      document.body.classList.add('active-tab-' + tab);
+      ['media', 'stage', 'inspector'].forEach(t => {
+        const b = document.getElementById('mobTab' + t.charAt(0).toUpperCase() + t.slice(1));
+        if (b) b.classList.toggle('active', t === tab);
+      });
+    }
+
+    function renderReelProgressRibbon() {
+      const container = document.getElementById('reelProgressRibbon');
+      if (!container) return;
+      const sb = (currentProject && currentProject.storyboard) || [];
+      if (!sb.length) {
+        container.innerHTML = '<span style="font-size:10.5px;color:var(--muted);padding-left:6px;">No scenes in reel yet</span>';
+        return;
+      }
+      const totalDur = Math.max(0.1, sb.reduce((acc, s) => acc + getCutPlayDuration(s), 0));
+      container.innerHTML = sb.map((s, idx) => {
+        const d = getCutPlayDuration(s);
+        const flexVal = Math.max(1, Math.round((d / totalDur) * 100));
+        const isSel = s.id === selectedSbId;
+        const hasScrap = !!(s.scrapbook_photo_id || s.scrapbook_photo_filepath);
+        const isSlow = (s.speed_mode || '1.0x') !== '1.0x';
+        const icon = hasScrap ? '📸' : (isSlow ? '⚡' : '');
+        return `<div class="reel-seg-pill ${isSel ? 'active-seg' : ''}"
+                     style="flex:${flexVal};"
+                     title="Scene #${idx + 1}: ${escapeHtml(s.clip_filename)} (${d.toFixed(1)}s)"
+                     onclick="selectStoryboardItem('${s.id}', true)">#${idx + 1}${icon}</div>`;
+      }).join('');
+    }
+
     function loadProjectIntoUI(proj, preserveSelection = true) {
       currentProject = proj;
       lastKnownVersion = proj.version || 1;
+
+      if (proj.latest_export_url) {
+        const hDl = document.getElementById('headerDownloadReelBtn');
+        const tDl = document.getElementById('transportDownloadReelBtn');
+        if (hDl) { hDl.href = proj.latest_export_url; hDl.style.display = 'inline-flex'; }
+        if (tDl) { tDl.href = proj.latest_export_url; tDl.style.display = 'inline-flex'; }
+      }
 
       const is169 = proj.aspect_ratio === '16:9';
       document.getElementById('btnRatio916').classList.toggle('btn-active', !is169);
@@ -1691,6 +1878,7 @@ HTML_TEMPLATE = r"""
 
       renderLibraryClips();
       renderStoryboardRibbon();
+      renderReelProgressRibbon();
       updateSummaryTag();
 
       const curItem = getSelectedStoryboardItem();
@@ -1862,6 +2050,7 @@ HTML_TEMPLATE = r"""
 
       selectedSbId = item.id;
       renderStoryboardRibbon();
+      renderReelProgressRibbon();
       populateInspectorFromItem(item);
       updatePreviewStageFraming(item);
       updateLiveStageOverlays(item);
@@ -2763,6 +2952,10 @@ HTML_TEMPLATE = r"""
         expVid.src = data.video_url + '?t=' + Date.now();
         document.getElementById('exportedPathLabel').textContent = 'Saved to: ' + data.output_path;
         document.getElementById('exportDownloadLink').href = data.video_url;
+        const hDl = document.getElementById('headerDownloadReelBtn');
+        const tDl = document.getElementById('transportDownloadReelBtn');
+        if (hDl) { hDl.href = data.video_url; hDl.style.display = 'inline-flex'; }
+        if (tDl) { tDl.href = data.video_url; tDl.style.display = 'inline-flex'; }
         document.getElementById('exportModal').style.display = 'flex';
         statusBanner.textContent = `✅ Exported 1080p Cinematic Reel to ${data.output_path}!`;
       } catch (err) {
@@ -2886,6 +3079,10 @@ def serve_output(filename):
 @app.route("/api/project", methods=["GET"])
 def api_get_project():
     proj = load_project_state()
+    if not proj.get("latest_export_url"):
+        mp4s = sorted(OUT_DIR.glob("*.mp4"), key=lambda p: p.stat().st_mtime, reverse=True)
+        if mp4s:
+            proj["latest_export_url"] = f"/output/{mp4s[0].name}"
     return jsonify({"project": proj})
 
 

@@ -99,5 +99,15 @@ This living document tracks every architectural lesson learned while building an
 ### 1.9 Eliminating Camera Angle Preview Card Flashing (`angleCardCache` in `app.py`)
 - **Root Cause**: During playback, `followPlayheadToActiveCut(t)` called `setSelectionRange(..., fromPlayheadFollow=true)` on every cut boundary (80 times per song), which called `renderTakePicker()` and executed `grid.innerHTML = ''` — destroying and recreating all 10 `<video src="...">` thumbnail preview cards every ~1.2 seconds and triggering 10 simultaneous HTTP range requests + black decoder flashes on every cut!
 - **Fix Applied**:
-  1. Added a persistent `angleCardCache` in [`app.py`](file:///Users/kabirduggal/Desktop/ANTIGRAV/clipper/app.py#L2007-L2140) (`getOrCreateAngleCard`) so each camera angle's `<div class="take-card">` and `<video>` element is created **only once** and mutated in-place (updating `.active-take` border and text badges without ever destroying or reloading `<video>` nodes).
+  1. Added a persistent `angleCardCache` in [`app.py`](file:///Users/kabirduggal/Desktop/ANTIGRAV/clipper/app.py#L2250-L2380) (`getOrCreateAngleCard`) so each camera angle's `<div class="take-card">` and `<video>` element is created **only once** and mutated in-place (updating `.active-take` border and text badges without ever destroying or reloading `<video>` nodes).
   2. When `fromPlayheadFollow === true`, `setSelectionRange` updates timeline selection classes and angle badges in-place without rebuilding DOM trees or seeking thumbnail `<video>` elements during playback.
+
+### 1.10 Benchmark NLE UI Audit & Upgrades (Runway / FCPX Multicam / Descript)
+- **Audit Findings vs. Industry Benchmarks**:
+  1. `#rulerLane` (timecode ticks + `🥁 808` pins) and `#lyricsLane` (clickable lyric phrase chips) were previously `display: none` in the bottom timeline dock.
+  2. The main video monitor lacked a dedicated touch/mouse scrub bar with AI transition markers, and the multicam angle grid lacked quick filters (`All`, `🔒 Synced`, `⚡ Peak`) and visual energy meters.
+- **Upgrades Shipped (`app.py`)**:
+  1. **Interactive Master Scrubber (`#masterScrubWrap`)**: Runway/DaVinci-style scrub bar directly below the monitor stage with live playhead thumb, cut tick dividers, and glowing purple pins (`✨`) for all 15 AI Morph Transitions. Supports click and touch/mouse drag scrubbing.
+  2. **Visible Time Ruler + 808 Pins + Toggleable Lyric Strip & Multicam Tracks**: Enabled `#rulerLane` and `#lyricsLane` in `.timeline-dock` with toolbar toggles (`🎤 Hide/Show Lyrics`, `📊 Show All Camera Tracks`) and a triangular playhead cap (`.playhead-line::before`).
+  3. **In-Place Multicam Angle Filtering & Energy Meter Bars**: Added `All | 🔒 Synced | ⚡ Peak` filter pills and `.take-energy-meter-fill` bars inside `getOrCreateAngleCard()` that toggle `card.style.display` in-place without ever destroying `<video>` decoder nodes.
+  4. **Keyboard Shortcuts Cheat-Sheet (`⌨️ Keys`)**: Added a quick header popover listing `Space`, `←/→`, `1–9`, `L`, `S`, and `I/O`.
