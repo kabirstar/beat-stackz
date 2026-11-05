@@ -5,8 +5,11 @@ File vault for artists and producers. Each user has a private space; a
 share), Google-Drive style. Runs locally with zero cloud accounts; moves to a
 hosted box by changing env vars. Full design: `docs/ARCHITECTURE.md`.
 
-**Scope (Kabir, 2026-10-21): file vault only. No payments, no marketplace, no
-public catalog.** Don't build toward them.
+**Scope (Kabir, 2026-11-05): see `docs/SCOPE.md`.** A vault first, growing in
+ordered milestones. The current milestone is 1A, then 1B. Build only what the
+current milestone lists. Do not build or scaffold the later milestones or the
+vision items (social, store, public catalog, distribution, paid subscriptions)
+yet.
 
 **Vision (Kabir, 2026-10-23):** for artists and producers, to ease creating,
 sharing and marketing music. Every vault starts with the default folder
@@ -21,7 +24,7 @@ taxonomy in `docs/adr/0002-default-folder-taxonomy.md` (`DEFAULT_FOLDERS` in
 | **Red** (Astra) | PC | `backend/**`, `worker/**` | `frontend`, `shared`, infra |
 | **Blue** (Claude) | PC | `shared/**`, `docs/**`, `infra/**`, `brain/**`, `.claude/**`, root configs, code review | app code except via review |
 | **BRAIN** (Claude agent, run by `brain/brain.py` on the PC) | PC | `comms/brain/**`, its own section of `TASKS.md`, `.claude/agents/*` and `.claude/skills/*` it creates. When it delegates to RED or BLUE, the loop starts that agent's run unattended in `../bpackz-red` / `../bpackz-blue` (T025, Kabir 2026-10-23; see `brain/README.md`) | product code; never pushes `main` or merges |
-| **Kabir + Swish** (humans; Kabir is also Todo / Lush / `prodbylush808`, Swish is `mysterious_cheetah_19465` on Discord) | — | product decisions, design direction, scope; may merge or veto anything. Equal authority; Kabir is the tiebreak on a direct conflict (ADR 0004) | — |
+| **Kabir + Swish** (humans; Kabir is also Todo / Lush / `prodbylush808`, Swish is `mysterious_cheetah_19465` on Discord) | — | product decisions, design direction, scope; may merge or veto anything. Kabir owns the product. Swish helps and can do everything Kabir can, except: changing the scope, spending money, hosting and keys, opening sign-up, deleting data for real, and reversing a decision. Swish signs off on big changes to the look only (`docs/SCOPE.md`, Who decides) | — |
 
 **BRAIN** is the front door. Humans talk to BRAIN in `#beat-stackz-hq`; BRAIN reads
 `TASKS.md`, `COMMS_LOG.md`, `comms/*` and open PRs, then delegates with a handoff
