@@ -4,11 +4,17 @@ import { formatBytes } from "../utils/format.ts";
 import { describeFileMeta, resolveFileOwnerName } from "../vaultTheme.ts";
 import { StudioIcon } from "./StudioPrimitives.tsx";
 
+function formatClock(sec: number): string {
+  const s = Math.max(0, Math.floor(sec));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+
 export function BottomTransportPlayer({
   playingFile,
   isPaused = false,
   waveformBars,
   playProgress,
+  durationSec,
   loopEnabled,
   vaultMembers,
   currentUser,
@@ -23,6 +29,7 @@ export function BottomTransportPlayer({
   isPaused?: boolean;
   waveformBars: number[];
   playProgress: number;
+  durationSec?: number;
   loopEnabled: boolean;
   vaultMembers?: VaultMember[];
   currentUser?: User | null;
@@ -33,22 +40,9 @@ export function BottomTransportPlayer({
   onDownload: (file: FileItem) => void;
   onClose: () => void;
 }) {
+  const hasDuration = !!durationSec && Number.isFinite(durationSec);
   return (
-    <div className="fixed bottom-[calc(4.15rem+env(safe-area-inset-bottom))] left-2.5 right-2.5 sm:bottom-0 sm:left-0 sm:right-0 z-40 px-3.5 sm:px-8 py-2.5 sm:pt-2.5 sm:pb-[calc(0.75rem+env(safe-area-inset-bottom))] rounded-2xl sm:rounded-none shadow-2xl sm:shadow-none bg-[#e4e0d8]/96 backdrop-blur-xl border border-[var(--ink)]/20 sm:border-x-0 sm:border-b-0 sm:border-t sm:border-[var(--hair)] flex items-center justify-between gap-2.5 sm:gap-3 overflow-hidden">
-      {/* Mobile-visible top progress bar */}
-      <div
-        className="sm:hidden absolute top-0 left-0 right-0 h-1 bg-black/10 cursor-pointer"
-        onClick={(e) => {
-          const rect = e.currentTarget.getBoundingClientRect();
-          const pct = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
-          onSeek(Math.round(pct));
-        }}
-      >
-        <div
-          className="h-full bg-[var(--ink)] transition-all duration-150"
-          style={{ width: `${playProgress}%` }}
-        />
-      </div>
+    <div className="fixed bottom-[calc(4.15rem+env(safe-area-inset-bottom))] left-2.5 right-2.5 sm:bottom-0 sm:left-0 sm:right-0 z-40 px-3.5 sm:px-8 py-2.5 sm:pt-2.5 sm:pb-[calc(0.75rem+env(safe-area-inset-bottom))] rounded-2xl sm:rounded-none shadow-2xl sm:shadow-none bg-[#e4e0d8]/96 backdrop-blur-xl border border-[var(--ink)]/20 sm:border-x-0 sm:border-b-0 sm:border-t sm:border-[var(--hair)] flex flex-wrap items-center justify-between gap-x-2.5 sm:gap-3 overflow-hidden">
       <div className="flex items-center gap-3 min-w-0 flex-1 max-w-xs">
         <UserAvatarBadge
           byName={resolveFileOwnerName(playingFile.createdBy, vaultMembers, currentUser)}
@@ -128,6 +122,25 @@ export function BottomTransportPlayer({
         >
           ×
         </button>
+      </div>
+
+      {/* Phone seek row (TOD-102): desktop seeks on the waveform above. */}
+      <div className="sm:hidden basis-full flex items-center gap-2 mono-meta text-[10px] text-[var(--ink-soft)]">
+        <span className="w-8 tabular-nums">
+          {hasDuration ? formatClock((playProgress / 100) * durationSec) : "0:00"}
+        </span>
+        <input
+          type="range"
+          aria-label="Seek"
+          min={0}
+          max={100}
+          value={playProgress}
+          onChange={(e) => onSeek(Number(e.currentTarget.value))}
+          className="flex-1 min-w-0 h-11 cursor-pointer accent-[var(--ink)]"
+        />
+        <span className="w-8 text-right tabular-nums">
+          {hasDuration ? formatClock(durationSec) : "--:--"}
+        </span>
       </div>
     </div>
   );

@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import type { ReactElement, ReactNode } from "react";
+import { BottomTransportPlayer } from "./components/BottomTransportPlayer.tsx";
 import { formatBytes, parseStudioFileDisplay } from "./App.tsx";
 import { computeBlobSha256, createSampleWavBlob } from "./utils/format.ts";
 import {
@@ -240,5 +242,74 @@ describe("The Vault UI & Theme Specification (T020 & T021)", () => {
       inferSongTitleFromBatch(["Track1.wav", "Track2.wav"], "Late Night Stems.zip"),
       "Late Night",
     );
+  });
+});
+
+// The frontend tests run without a DOM, and the player has no hooks, so call it
+// as a function and walk the element tree it returns.
+function findSeekSlider(node: ReactNode): ReactElement<Record<string, unknown>> | null {
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      const hit = findSeekSlider(child);
+      if (hit) return hit;
+    }
+    return null;
+  }
+  if (!node || typeof node !== "object" || !("props" in node)) return null;
+  const el = node as ReactElement<Record<string, unknown>>;
+  if (el.type === "input" && el.props.type === "range") return el;
+  return findSeekSlider(el.props.children as ReactNode);
+}
+
+describe("Bottom transport player seek slider (TOD-102)", () => {
+  const audio = { currentTime: 0, duration: 200 };
+  const renderPlayer = (playProgress: number) =>
+    BottomTransportPlayer({
+      playingFile: {
+        id: "file_1",
+        vaultId: "v_personal",
+        folderId: null,
+        name: "nightfall_mix_v2.wav",
+        status: "ready",
+        size: 51_000_000,
+        mime: "audio/wav",
+        sha256: null,
+        durationMs: 200_000,
+        hasWaveform: true,
+        createdBy: "u_artist",
+        createdAt: "2026-10-21T00:00:00.000Z",
+        updatedAt: "2026-10-21T00:00:00.000Z",
+      },
+      waveformBars: [10, 20, 30],
+      playProgress,
+      durationSec: audio.duration,
+      loopEnabled: false,
+      onToggleLoop: () => {},
+      // Same arithmetic as App.tsx's onSeek, against a stand-in <audio>.
+      onSeek: (pct) => {
+        audio.currentTime = (pct / 100) * audio.duration;
+      },
+      onShare: () => {},
+      onDownload: () => {},
+      onClose: () => {},
+    });
+
+  it("renders a labelled, touch-sized range input that reflects the position and seeks", () => {
+    const tree = renderPlayer(25);
+    const slider = findSeekSlider(tree);
+    assert.ok(slider, "player renders an <input type=range>");
+    assert.equal(slider.props["aria-label"], "Seek");
+    assert.equal(slider.props.value, 25);
+    assert.match(String(slider.props.className), /\bh-11\b/); // 44px touch target
+
+    // Current time and duration sit beside it: 25% of 200s is 0:50 of 3:20.
+    const row = JSON.stringify(tree);
+    assert.match(row, /"0:50"/);
+    assert.match(row, /"3:20"/);
+
+    (slider.props.onChange as (e: { currentTarget: { value: string } }) => void)({
+      currentTarget: { value: "60" },
+    });
+    assert.equal(audio.currentTime, 120);
   });
 });
