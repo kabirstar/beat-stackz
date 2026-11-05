@@ -473,8 +473,8 @@ HTML_TEMPLATE = """
     .monitor-stage-wrap {
       width: 100%;
       aspect-ratio: 16 / 9;
-      max-height: 48vh;
-      min-height: 200px;
+      max-height: 38vh;
+      min-height: 180px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -974,6 +974,148 @@ HTML_TEMPLATE = """
       z-index: 15;
     }
 
+    /* Second & Clip Navigator Timeline (Directly under AI Morph Transitions Bar) */
+    .clip-timeline-nav-wrap {
+      background: #10101a;
+      border: 1px solid rgba(6, 182, 212, 0.42);
+      border-radius: 9px;
+      padding: 7px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .second-pills-strip {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      overflow-x: auto;
+      padding-bottom: 3px;
+      scrollbar-width: thin;
+    }
+    .sec-nav-pill {
+      padding: 2px 6px;
+      font-size: 10px;
+      font-family: monospace;
+      font-weight: 700;
+      border-radius: 5px;
+      background: #171726;
+      border: 1px solid #28283e;
+      color: var(--muted);
+      cursor: pointer;
+      flex-shrink: 0;
+      user-select: none;
+      transition: all 0.12s ease;
+    }
+    .sec-nav-pill.major-sec {
+      border-color: rgba(6, 182, 212, 0.45);
+      color: #cbd5e1;
+      background: #1a1d2e;
+    }
+    .sec-nav-pill:hover {
+      border-color: var(--cyan);
+      color: #fff;
+      background: rgba(6, 182, 212, 0.22);
+    }
+    .sec-nav-pill.active-sec {
+      background: var(--cyan);
+      border-color: #fff;
+      color: #03151a;
+      box-shadow: 0 0 8px rgba(6, 182, 212, 0.65);
+    }
+    .triller-segment-strip {
+      display: flex;
+      align-items: stretch;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: thin;
+    }
+    .triller-cut-pill {
+      min-width: 138px;
+      max-width: 175px;
+      background: #161624;
+      border: 1px solid #2b2b42;
+      border-radius: 7px;
+      padding: 5px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      cursor: pointer;
+      flex-shrink: 0;
+      user-select: none;
+      transition: all 0.12s ease;
+    }
+    .triller-cut-pill:hover {
+      border-color: var(--cyan);
+      background: #1c1e30;
+      transform: translateY(-1px);
+    }
+    .triller-cut-pill.active-cut {
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.25), rgba(255, 42, 133, 0.22));
+      border: 1.5px solid var(--cyan);
+      box-shadow: 0 0 12px rgba(6, 182, 212, 0.45);
+    }
+    .triller-cut-pill.ai-cut {
+      border-color: rgba(168, 85, 247, 0.6);
+      background: rgba(147, 51, 234, 0.16);
+    }
+    .triller-cut-pill.ai-cut.active-cut {
+      background: linear-gradient(135deg, rgba(147, 51, 234, 0.42), rgba(219, 39, 119, 0.38));
+      border-color: #f472b6;
+      box-shadow: 0 0 12px rgba(219, 39, 119, 0.55);
+    }
+    .triller-cut-pill .seg-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      font-size: 10.5px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .triller-cut-pill .angles-badge {
+      font-size: 9.5px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: rgba(6, 182, 212, 0.18);
+      color: #67e8f9;
+      border: 1px solid rgba(6, 182, 212, 0.35);
+    }
+    .triller-cut-pill .seg-clip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      color: #cbd5e1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .take-replace-cta {
+      margin-top: 4px;
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-size: 10.5px;
+      font-weight: 800;
+      text-align: center;
+      background: rgba(6, 182, 212, 0.16);
+      border: 1px solid rgba(6, 182, 212, 0.45);
+      color: #67e8f9;
+      transition: all 0.12s ease;
+    }
+    .take-card:hover .take-replace-cta {
+      background: var(--cyan);
+      border-color: #fff;
+      color: #021318;
+    }
+    .take-card.active-take .take-replace-cta {
+      background: rgba(16, 185, 129, 0.22);
+      border-color: var(--green);
+      color: #6ee7b7;
+    }
+
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -1172,6 +1314,27 @@ HTML_TEMPLATE = """
         <div id="aiTransitionsPills" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;"></div>
       </div>
 
+      <!-- Second & Clip Navigator Timeline directly under the AI Animation Timeline -->
+      <div class="clip-timeline-nav-wrap" id="clipTimelineNavigatorWrap">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:11px;font-weight:800;color:var(--cyan);display:flex;align-items:center;gap:6px;">
+            🎬 Second &amp; Clip Timeline (<span id="clipNavTotalCount">0</span> Clips)
+            <span style="font-weight:500;color:var(--muted);font-size:10px;">— Click any second or clip card to preview available clips &amp; replace</span>
+          </span>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <button type="button" class="btn" style="padding:2px 6px;font-size:10px;" onclick="stepSecond(-1)" title="Jump back 1 second">-1s</button>
+            <div style="display:inline-flex;align-items:center;gap:2px;background:#0b0b13;border:1px solid var(--border);border-radius:6px;padding:1px 6px;font-size:10.5px;">
+              <span style="color:var(--muted);">⏱️</span>
+              <input type="number" id="quickSecJumpInput" min="0" step="1" value="0" onchange="jumpToSecond(parseFloat(this.value)||0)" style="width:42px;background:transparent;border:none;color:var(--cyan);font-family:monospace;font-weight:800;font-size:11px;text-align:right;outline:none;" title="Type any second to jump directly to that timestamp" />
+              <span style="color:var(--muted);font-family:monospace;">s</span>
+            </div>
+            <button type="button" class="btn" style="padding:2px 6px;font-size:10px;" onclick="stepSecond(1)" title="Jump forward 1 second">+1s</button>
+          </div>
+        </div>
+        <div class="second-pills-strip" id="secondPillsStrip" title="Click any second to jump to that timestamp and select its clip"></div>
+        <div class="triller-segment-strip" id="trillerSegmentStrip" title="Click any clip to see all available clips for that section on the right and replace it in 1 click"></div>
+      </div>
+
       <div class="transport-bar">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
           <button class="btn" onclick="stepCutSelection(-1)" title="Previous Cut (Left Arrow)">⬅️ Prev</button>
@@ -1265,7 +1428,6 @@ HTML_TEMPLATE = """
           <div class="track-label" style="font-size:10px;color:var(--cyan);">🎤 Lyrics</div>
           <div class="lyrics-lane" id="lyricsLane"></div>
         </div>
-        <div id="trillerSegmentStrip" style="display:none;"></div>
 
         <div class="track-row">
           <div class="track-label">🎵 Song Audio</div>
@@ -1574,6 +1736,12 @@ HTML_TEMPLATE = """
 
       wavesurfer.on('play', () => {
         isPlaying = true;
+        if (!loopMode) {
+          previewingSectionInGrid = false;
+          Object.values(angleCardCache).forEach(entry => {
+            if (entry && entry.vid && !entry.vid.paused) entry.vid.pause();
+          });
+        }
         document.getElementById('playPauseBtn').textContent = '⏸️ Pause (Space)';
         syncProgramMonitor(wavesurfer.getCurrentTime(), true);
       });
@@ -1722,18 +1890,30 @@ HTML_TEMPLATE = """
         btn.style.borderColor = active ? '#f9a8d4' : 'rgba(168, 85, 247, 0.55)';
       });
 
+      // Highlight active Second pill in #secondPillsStrip
+      const curIntSec = Math.floor(Math.max(0, t));
+      const secInput = document.getElementById('quickSecJumpInput');
+      if (secInput && document.activeElement !== secInput) {
+        secInput.value = curIntSec;
+      }
+      document.querySelectorAll('#secondPillsStrip .sec-nav-pill').forEach(pill => {
+        const pSec = parseInt(pill.dataset.sec, 10);
+        pill.classList.toggle('active-sec', pSec === curIntSec);
+      });
+
       const rawClipTime = seg.clip_in + Math.max(0, t - seg.song_start);
       const targetClipTime = Math.min(Math.max(0, rawClipTime), Math.max(0, seg.clip_out - 0.04));
       document.getElementById('activeClipHud').textContent =
         `🎬 ${seg.clip_filename} (${seg.song_start.toFixed(1)}s–${seg.song_end.toFixed(1)}s)`;
+      const canUseMasterForSeg = useSeamlessMaster && Boolean(project.latest_export_url) && !loopMode && seg.cut_reason !== 'manual';
       document.getElementById('activeSyncHud').textContent =
-        loopMode ? '🔁 Looping Cut' : (useSeamlessMaster && project.latest_export_url ? '⚡ Seamless Master (0 Flash)' : '🔒 Synced');
+        loopMode ? '🔁 Looping Replaced/Selected Cut' : (canUseMasterForSeg ? '⚡ Seamless Master (0 Flash)' : '🔒 Live Synced Clip');
 
       // Live browser preview of segment visual effect
       applyLiveMonitorEffect(seg, t - seg.song_start);
 
-      // 1. ZERO-FLASH SEAMLESS MASTER MODE: Play the continuous rendered MP4 so `.src` never switches between cuts!
-      if (useSeamlessMaster && project.latest_export_url) {
+      // 1. ZERO-FLASH SEAMLESS MASTER MODE: Play the continuous rendered MP4 for unedited segments
+      if (canUseMasterForSeg) {
         if (currentMonitorClipUrl !== project.latest_export_url) {
           currentMonitorClipUrl = project.latest_export_url;
           programVideo.src = project.latest_export_url;
@@ -1886,9 +2066,91 @@ HTML_TEMPLATE = """
 
       renderManageClipsModalList();
       renderAiTransitionsBar();
+      renderSecondPillsStrip();
+      renderTrillerStrip();
       renderMasterScrubPins();
       if (!isPlaying) {
         setTimeout(() => syncProgramMonitor(selStart, false), 150);
+      }
+    }
+
+    let previewingSectionInGrid = false;
+
+    function renderSecondPillsStrip() {
+      const strip = document.getElementById('secondPillsStrip');
+      if (!strip || !project) return;
+      const totalSec = Math.ceil(project.song_duration || 0);
+      strip.innerHTML = '';
+      const curIntSec = Math.floor(Math.max(0, playheadSec));
+
+      for (let s = 0; s <= totalSec; s++) {
+        const pill = document.createElement('button');
+        pill.type = 'button';
+        const isMajor = (s % 5 === 0);
+        pill.className = 'sec-nav-pill' + (isMajor ? ' major-sec' : '') + (s === curIntSec ? ' active-sec' : '');
+        pill.dataset.sec = String(s);
+        pill.textContent = `${s}s`;
+        pill.title = `Jump to ${s}.0s and view available clips for this section`;
+        pill.addEventListener('click', () => {
+          jumpToSecond(s);
+        });
+        strip.appendChild(pill);
+      }
+    }
+
+    function jumpToSecond(targetSec) {
+      if (!project) return;
+      const clamped = Math.max(0, Math.min(project.song_duration - 0.05, Number(targetSec) || 0));
+      if (wavesurfer && isPlaying) {
+        wavesurfer.pause();
+      }
+      playheadSec = clamped;
+      if (wavesurfer) {
+        wavesurfer.setTime(clamped);
+      }
+      const seg = (project.segments || []).find(s => clamped >= s.song_start - 0.02 && clamped < s.song_end)
+        || (project.segments || [])[0];
+      if (seg) {
+        selectClipFromTimeline(seg.id, true, clamped);
+      } else {
+        setSelectionRange(clamped, Math.min(project.song_duration, clamped + 2.0), false, false);
+        syncProgramMonitor(clamped, false);
+      }
+      updatePlayheadUI();
+      const activeSecEl = document.querySelector(`#secondPillsStrip .sec-nav-pill[data-sec="${Math.floor(clamped)}"]`);
+      if (activeSecEl) {
+        activeSecEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+    }
+
+    function stepSecond(deltaSec) {
+      if (!project) return;
+      jumpToSecond(Math.round(playheadSec + deltaSec));
+    }
+
+    function selectClipFromTimeline(segId, autoPlayGridPreviews = true, explicitSeekSec = null) {
+      if (!project || !project.segments) return;
+      const seg = project.segments.find(s => s.id === segId);
+      if (!seg) return;
+
+      if (wavesurfer && isPlaying) {
+        wavesurfer.pause();
+      }
+      selectedSegId = seg.id;
+      previewingSectionInGrid = Boolean(autoPlayGridPreviews);
+      setSelectionRange(seg.song_start, seg.song_end, true, false);
+      const targetT = explicitSeekSec !== null ? explicitSeekSec : seg.song_start;
+      playheadSec = targetT;
+      if (wavesurfer) {
+        wavesurfer.setTime(targetT);
+      }
+      syncProgramMonitor(targetT, false);
+      updatePlayheadUI();
+
+      // Scroll the right-hand Available Clips pane to the top so user immediately sees all cameras for this section
+      const takesScroll = document.getElementById('takesScrollContainer');
+      if (takesScroll) {
+        takesScroll.scrollTo({ top: 0, behavior: 'smooth' });
       }
     }
 
@@ -1913,14 +2175,14 @@ HTML_TEMPLATE = """
         document.getElementById('activeCutIndexLabel').textContent =
           `🎯 Cut #${segIdx + 1} of ${totalCuts} (${matchSeg.song_start.toFixed(1)}s–${matchSeg.song_end.toFixed(1)}s)`;
         document.getElementById('syncBinTitle').textContent =
-          `🎥 Camera Angles for Cut #${segIdx + 1} (${matchSeg.song_start.toFixed(1)}s–${matchSeg.song_end.toFixed(1)}s)`;
+          `🎥 Available Clips for Cut #${segIdx + 1} (${matchSeg.song_start.toFixed(1)}s–${matchSeg.song_end.toFixed(1)}s)`;
         document.getElementById('segReasonBadge').textContent =
           formatCutReason(matchSeg.cut_reason);
       } else {
         document.getElementById('activeCutIndexLabel').textContent =
           `🎯 Custom Window (${selStart.toFixed(1)}s–${selEnd.toFixed(1)}s)`;
         document.getElementById('syncBinTitle').textContent =
-          `🎥 Camera Angles for ${selStart.toFixed(1)}s–${selEnd.toFixed(1)}s`;
+          `🎥 Available Clips for ${selStart.toFixed(1)}s–${selEnd.toFixed(1)}s`;
         document.getElementById('segReasonBadge').textContent = 'Custom Window';
       }
 
@@ -1931,6 +2193,7 @@ HTML_TEMPLATE = """
         playheadSec = selStart;
       }
       if (fromPlayheadFollow) {
+        previewingSectionInGrid = false;
         // Lightweight in-place update during playback so DOM nodes & preview <video> elements NEVER flash!
         const dur = Math.max(0.1, project.song_duration);
         document.querySelectorAll('.range-highlight').forEach(hl => {
@@ -1940,6 +2203,14 @@ HTML_TEMPLATE = """
         document.querySelectorAll('#assembledLane .assembled-seg').forEach((el, i) => {
           const s = project.segments[i];
           el.classList.toggle('selected', Boolean(s && s.id === selectedSegId));
+        });
+        document.querySelectorAll('#trillerSegmentStrip .triller-cut-pill').forEach((pill, i) => {
+          const s = project.segments[i];
+          const active = Boolean(s && s.id === selectedSegId);
+          pill.classList.toggle('active-cut', active);
+          if (active) {
+            pill.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+          }
         });
         renderTakePicker(true);
       } else {
@@ -1982,18 +2253,19 @@ HTML_TEMPLATE = """
       if (idx === -1) idx = 0;
       const nextIdx = Math.max(0, Math.min(project.segments.length - 1, idx + delta));
       const seg = project.segments[nextIdx];
-      selectedSegId = seg.id;
-      setSelectionRange(seg.song_start, seg.song_end, true);
-      syncProgramMonitor(seg.song_start, false);
+      selectClipFromTimeline(seg.id, true);
     }
 
     function renderTrillerStrip() {
       const strip = document.getElementById('trillerSegmentStrip');
+      const totalBadge = document.getElementById('clipNavTotalCount');
       if (!strip) return;
       if (!project || !project.segments || !project.segments.length) {
         strip.innerHTML = '';
+        if (totalBadge) totalBadge.textContent = '0';
         return;
       }
+      if (totalBadge) totalBadge.textContent = String(project.segments.length);
       const clipColorMap = {};
       (project.clips || []).forEach(c => { clipColorMap[c.clip_id] = c.color; });
       const syncedClips = (project.clips || []).filter(c => c.is_synced_take);
@@ -2002,27 +2274,27 @@ HTML_TEMPLATE = """
       project.segments.forEach((seg, idx) => {
         const isSel = seg.id === selectedSegId ||
           (Math.abs(seg.song_start - selStart) < 0.04 && Math.abs(seg.song_end - selEnd) < 0.04);
+        const isAi = seg.cut_reason === 'ai_transition' || String(seg.clip_filename || '').includes('AI_TRANS');
         const alignedCount = syncedClips.filter(
           c => seg.song_start >= c.active_song_start - 0.35 && seg.song_end <= c.active_song_end + 0.35
         ).length;
 
         const pill = document.createElement('div');
-        pill.className = 'triller-cut-pill' + (isSel ? ' active-cut' : '');
-        const cColor = clipColorMap[seg.clip_id] || '#ff2a85';
+        pill.className = 'triller-cut-pill' + (isAi ? ' ai-cut' : '') + (isSel ? ' active-cut' : '');
+        const cColor = isAi ? '#e879f9' : (clipColorMap[seg.clip_id] || '#ff2a85');
+        const cleanName = String(seg.clip_filename || '').replace('✨ AI_TRANS ', '✨ ');
         pill.innerHTML = `
           <div class="seg-top">
-            <span>#${idx + 1} • ${seg.song_start.toFixed(1)}s–${seg.song_end.toFixed(1)}s</span>
-            <span class="angles-badge">${alignedCount || 1} cam${alignedCount === 1 ? '' : 's'}</span>
+            <span>${isAi ? '✨' : '🎬'} Cut #${idx + 1} • ${seg.song_start.toFixed(1)}s–${seg.song_end.toFixed(1)}s</span>
+            <span class="angles-badge">🎥 ${alignedCount || 1} clip${alignedCount === 1 ? '' : 's'}</span>
           </div>
           <div class="seg-clip">
             <span class="color-dot" style="background:${cColor}"></span>
-            <span style="overflow:hidden;text-overflow:ellipsis;">${seg.clip_filename}</span>
+            <span style="overflow:hidden;text-overflow:ellipsis;" title="${seg.clip_filename}">${cleanName}</span>
           </div>
         `;
         pill.addEventListener('click', () => {
-          selectedSegId = seg.id;
-          setSelectionRange(seg.song_start, seg.song_end, true);
-          syncProgramMonitor(seg.song_start, false);
+          selectClipFromTimeline(seg.id, true);
         });
         strip.appendChild(pill);
         if (isSel) {
@@ -2137,9 +2409,7 @@ HTML_TEMPLATE = """
 
         el.addEventListener('click', (ev) => {
           ev.stopPropagation();
-          selectedSegId = seg.id;
-          setSelectionRange(seg.song_start, seg.song_end, true);
-          syncProgramMonitor(seg.song_start, false);
+          selectClipFromTimeline(seg.id, true);
         });
         assembled.appendChild(el);
       });
@@ -2294,18 +2564,22 @@ HTML_TEMPLATE = """
 
     const angleCardCache = {};
 
-    function getOrCreateAngleCard(item, hotKeyNum, activeClipId, winDur, fromPlayheadFollow = false) {
+    function getOrCreateAngleCard(item, hotKeyNum, activeClipId, winDur, fromPlayheadFollow = false, cutNumberLabel = '') {
       const { clip, coversActiveSong, defaultClipIn, winEnergy } = item;
       const energyPct = Math.round(winEnergy * 100);
       const isCurrentActive = clip.clip_id === activeClipId;
 
       const keyLabel = hotKeyNum
-        ? (isCurrentActive ? `✓ ACTIVE [Key ${hotKeyNum}]` : `Press [${hotKeyNum}] or Click`)
-        : (isCurrentActive ? '✓ ACTIVE' : 'Click to Swap');
+        ? (isCurrentActive ? `✓ ACTIVE IN TIMELINE [Key ${hotKeyNum}]` : `Press [${hotKeyNum}] or Click to Replace`)
+        : (isCurrentActive ? '✓ ACTIVE IN TIMELINE' : 'Click to Replace');
 
       const subInfo = coversActiveSong
-        ? `🔒 Synced @ ${defaultClipIn.toFixed(1)}s–${(defaultClipIn + winDur).toFixed(1)}s`
+        ? `🔒 Synced Section @ ${defaultClipIn.toFixed(1)}s–${(defaultClipIn + winDur).toFixed(1)}s`
         : `🎞️ B-Roll (Song @ ${clip.active_song_start.toFixed(1)}s–${clip.active_song_end.toFixed(1)}s)`;
+
+      const ctaText = isCurrentActive
+        ? `✓ Current Clip in ${cutNumberLabel || 'Selected Cut'}`
+        : `🔄 Click to Replace ${cutNumberLabel || 'Selected Cut'} with This Section (${defaultClipIn.toFixed(1)}s–${(defaultClipIn + winDur).toFixed(1)}s)`;
 
       let entry = angleCardCache[clip.clip_id];
       if (!entry) {
@@ -2328,6 +2602,7 @@ HTML_TEMPLATE = """
             <div class="take-energy-meter">
               <div class="take-energy-meter-fill"></div>
             </div>
+            <div class="take-replace-cta"></div>
           </div>
         `;
         const vid = card.querySelector('video');
@@ -2338,6 +2613,7 @@ HTML_TEMPLATE = """
           energyBadge: card.querySelector('.take-energy-badge'),
           subInfoEl: card.querySelector('.take-subinfo'),
           energyMeterFill: card.querySelector('.take-energy-meter-fill'),
+          replaceCtaEl: card.querySelector('.take-replace-cta'),
           clip,
           defaultClipIn,
           winDur,
@@ -2347,7 +2623,9 @@ HTML_TEMPLATE = """
           entry.vid.play().catch(() => {});
         });
         card.addEventListener('mouseleave', () => {
-          entry.vid.pause();
+          if (!previewingSectionInGrid) {
+            entry.vid.pause();
+          }
         });
         vid.addEventListener('timeupdate', () => {
           if (entry.vid.currentTime >= Math.min(entry.clip.usable_end_sec, entry.defaultClipIn + entry.winDur)) {
@@ -2371,6 +2649,9 @@ HTML_TEMPLATE = """
       if (entry.energyMeterFill) {
         entry.energyMeterFill.style.width = `${energyPct}%`;
       }
+      if (entry.replaceCtaEl) {
+        entry.replaceCtaEl.textContent = ctaText;
+      }
 
       // Filter visibility in-place (preserving <video> decoder state!)
       let visible = true;
@@ -2381,12 +2662,17 @@ HTML_TEMPLATE = """
       }
       entry.card.style.display = visible ? 'flex' : 'none';
 
-      // Only seek thumbnail preview frame when user clicks a cut while paused (never during continuous playback!)
-      if (!fromPlayheadFollow && !isPlaying && entry.vid.readyState >= 1) {
+      // When user clicks a clip on the timeline to inspect/replace it, seek & auto-play the section in the preview grid!
+      if (!fromPlayheadFollow && visible) {
         const targetThumbT = Math.min(defaultClipIn, Math.max(0, clip.duration - 0.1));
-        if (Math.abs(entry.vid.currentTime - targetThumbT) > 0.6) {
+        if (Math.abs(entry.vid.currentTime - targetThumbT) > 0.35) {
           entry.vid.currentTime = targetThumbT;
         }
+        if (previewingSectionInGrid && !isPlaying) {
+          entry.vid.play().catch(() => {});
+        }
+      } else if (fromPlayheadFollow && !entry.vid.paused) {
+        entry.vid.pause();
       }
 
       return entry.card;
@@ -2404,10 +2690,12 @@ HTML_TEMPLATE = """
         return;
       }
 
-      const activeSeg = (project.segments || []).find(
+      const activeSegIdx = (project.segments || []).findIndex(
         s => s.id === selectedSegId || (Math.abs(s.song_start - selStart) < 0.05 && Math.abs(s.song_end - selEnd) < 0.05)
       );
+      const activeSeg = activeSegIdx >= 0 ? project.segments[activeSegIdx] : null;
       const activeClipId = activeSeg ? activeSeg.clip_id : null;
+      const cutNumberLabel = activeSegIdx >= 0 ? `Cut #${activeSegIdx + 1}` : `${selStart.toFixed(1)}s–${selEnd.toFixed(1)}s`;
       const winDur = Math.max(0.15, selEnd - selStart);
 
       const syncedClips = project.clips.filter(c => c.is_synced_take);
@@ -2429,14 +2717,14 @@ HTML_TEMPLATE = """
       const subtitle = document.getElementById('syncBinSubtitle');
       if (subtitle) {
         subtitle.innerHTML = directCount > 0
-          ? `<strong style="color:var(--green);">${directCount} Synced Angle${directCount === 1 ? '' : 's'}</strong> lined up here • Click or press <code>1–${Math.min(9, scoredClips.length)}</code> to swap &amp; loop with audio`
-          : `<span style="color:var(--amber);">Instrumental / Outro Window — Pick any high-energy B-Roll angle below</span>`;
+          ? `<strong style="color:var(--green);">${directCount} Available Synced Clip${directCount === 1 ? '' : 's'}</strong> for ${cutNumberLabel} (${selStart.toFixed(1)}s–${selEnd.toFixed(1)}s) • <strong>Click any video preview below to replace ${cutNumberLabel}</strong>`
+          : `<span style="color:var(--amber);">Instrumental / Outro Section — Click any clip preview below to replace ${cutNumberLabel}</span>`;
       }
 
       if (brollContainer) brollContainer.innerHTML = '';
 
       scoredClips.forEach((item, idx) => {
-        const card = getOrCreateAngleCard(item, idx + 1 <= 9 ? idx + 1 : null, activeClipId, winDur, fromPlayheadFollow);
+        const card = getOrCreateAngleCard(item, idx + 1 <= 9 ? idx + 1 : null, activeClipId, winDur, fromPlayheadFollow, cutNumberLabel);
         if (card.parentElement !== grid) {
           grid.appendChild(card);
         }
@@ -2561,10 +2849,12 @@ HTML_TEMPLATE = """
       updated.forEach((s, i) => { s.index = i; });
       project.segments = updated;
       selectedSegId = newSegId;
+      useSeamlessMaster = false;
 
-      statusBanner.textContent = `✓ Inserted ${clip.filename} at song ${sStart.toFixed(2)}s–${sEnd.toFixed(2)}s`;
+      statusBanner.textContent = `✓ Replaced clip with ${clip.filename} at song ${sStart.toFixed(2)}s–${sEnd.toFixed(2)}s (Clip section ${cIn.toFixed(2)}s–${cOut.toFixed(2)}s)`;
       renderTimeline();
-      renderTakePicker();
+      renderTrillerStrip();
+      renderTakePicker(false);
       syncProgramMonitor(sStart, false);
       await saveSegmentsToServer();
     }

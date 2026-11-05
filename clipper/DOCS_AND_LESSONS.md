@@ -111,3 +111,16 @@ This living document tracks every architectural lesson learned while building an
   2. **Visible Time Ruler + 808 Pins + Toggleable Lyric Strip & Multicam Tracks**: Enabled `#rulerLane` and `#lyricsLane` in `.timeline-dock` with toolbar toggles (`🎤 Hide/Show Lyrics`, `📊 Show All Camera Tracks`) and a triangular playhead cap (`.playhead-line::before`).
   3. **In-Place Multicam Angle Filtering & Energy Meter Bars**: Added `All | 🔒 Synced | ⚡ Peak` filter pills and `.take-energy-meter-fill` bars inside `getOrCreateAngleCard()` that toggle `card.style.display` in-place without ever destroying `<video>` decoder nodes.
   4. **Keyboard Shortcuts Cheat-Sheet (`⌨️ Keys`)**: Added a quick header popover listing `Space`, `←/→`, `1–9`, `L`, `S`, and `I/O`.
+
+### 1.11 Second & Clip Navigator Timeline + 1-Click Section Preview & Clip Replacement (`app.py`)
+- **Problem**:
+  1. Packing 80 cuts into a 100%-wide horizontal bar in `#assembledLane` made individual cuts ~1.2% wide at `1x` zoom, making it hard to navigate to a specific second or click individual cuts.
+  2. When a user clicked a clip to inspect it, the right-hand preview grid (`#takesGrid`) did not automatically play each available camera's synced section (`[defaultClipIn .. defaultClipIn + winDur]`), and when clicking a replacement clip, `syncProgramMonitor` was called before `useSeamlessMaster` was disabled, causing the main monitor to keep playing the old pre-rendered master MP4 instead of the newly replaced clip.
+- **Fix Applied (`app.py`)**:
+  1. **Dedicated Second & Clip Timeline (`#clipTimelineNavigatorWrap`) Directly Under `#aiTransitionsBarWrap`**:
+     - **Row 1 (`#secondPillsStrip`)**: Clickable second-by-second pills (`0s, 1s, 2s ... 103s`) plus `-1s` / `+1s` step buttons and a direct second jump input (`#quickSecJumpInput`).
+     - **Row 2 (`#trillerSegmentStrip`)**: Scrollable storyboard clip cards (`🎬 Cut #1 • 0.0s–1.8s • 🎥 8 clips • IMG_3602.MOV`), auto-scrolling smoothly with the playhead.
+  2. **Auto-Previewing Available Clips for the Selected Section (`selectClipFromTimeline`)**:
+     - Clicking any clip or second selects that cut, scrolls `#takesScrollContainer` to the top, and seeks + loops every available synced camera's `<video>` in `#takesGrid` over that exact section (`[defaultClipIn .. defaultClipIn + winDur]`, muted) while preserving `angleCardCache` in-place.
+  3. **Instant 1-Click Clip Replacement & Hybrid Seamless Playback (`insertClipIntoSelection` & `syncProgramMonitor`)**:
+     - Clicking any video card in `#takesGrid` replaces the selected timeline cut with that camera's synced section (`[defaultClipIn .. defaultClipIn + winDur]`), immediately sets `useSeamlessMaster = false` before calling `syncProgramMonitor`, updates `#trillerSegmentStrip` and `#assembledLane`, and loop-plays the newly replaced cut with master song audio.
