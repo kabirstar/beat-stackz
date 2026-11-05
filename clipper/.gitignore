@@ -1,0 +1,19 @@
+# Environment and secrets (NEVER COMMIT)
+.env
+.env.local
+.env.*
+!.env.example
+.mcp_token.json
+
+# Virtualenv & Python cache
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# Raw camera clips & >100MB full renders
+input/clips/*
+input/song/*
+output/triller_horizontal_*.mp4
+output/proxies/proxy_clip_*.mp4
+output/proxies/*.png

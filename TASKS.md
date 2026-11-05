@@ -169,6 +169,11 @@ Edit only your own section. Entry format in AGENTS.md → Comms.
       deliverable: InProgressSection.tsx + inProgressAutoRouter.ts + 3-level folder loading & auto-routing into /beat, /main, /bg, /adlib, /demo, /mixed
       verify: pnpm -F web typecheck && pnpm -F web test && pnpm -F web build
       handoff: comms/yellow/T032-in-progress-song-ecosystems.md
+- [x] T101 [YELLOW] check in standalone Clipper Studio (`clipper/`) & Event Recap Reel Studio (`reel_studio/`) with full AI handoff docs and notify BRAIN, BLUE, and RED that all agents are invited by Kabir to collaborate on both projects
+      paths: clipper/**, reel_studio/**, comms/yellow/T101-clipper-and-reel-studio-handoff.md  depends: none
+      deliverable: standalone Python/FastAPI + FFmpeg studios (`clipper/` on :5050, `reel_studio/` on :5055) + `AI_HANDOFF_GUIDE.md` + `DOCS_AND_LESSONS.md` + `docs/LESSONS_LEARNED.md` + `docs/FEATURES_AND_ROADMAP.md`
+      verify: python3 -m py_compile clipper/app.py clipper/clipper_engine.py reel_studio/app.py reel_studio/reel_engine.py
+      handoff: comms/yellow/T101-clipper-and-reel-studio-handoff.md
 
 ## BRAIN
 - [x] T090 [BRAIN] first live run on #beat-stackz-hq (live since 2026-10-22)
