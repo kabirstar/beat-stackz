@@ -134,6 +134,7 @@ export function App() {
   const [isPaused, setIsPaused] = useState(false);
   const [waveformBars, setWaveformBars] = useState<number[]>(WAVEFORM_BARS);
   const [playProgress, setPlayProgress] = useState(0);
+  const [playDuration, setPlayDuration] = useState(0);
   const [loopEnabled, setLoopEnabled] = useState(false);
 
   const [toast, setToast] = useState<string | null>(null);
@@ -1874,6 +1875,7 @@ export function App() {
         onTimeUpdate={(e) => {
           const el = e.currentTarget;
           if (el.duration && Number.isFinite(el.duration) && el.duration > 0) {
+            setPlayDuration(el.duration);
             setPlayProgress(Math.min(100, Math.round((el.currentTime / el.duration) * 100)));
           }
         }}
@@ -2499,6 +2501,7 @@ export function App() {
           isPaused={isPaused}
           waveformBars={waveformBars}
           playProgress={playProgress}
+          durationSec={playDuration}
           loopEnabled={loopEnabled}
           vaultMembers={vaultMembers}
           currentUser={user}
