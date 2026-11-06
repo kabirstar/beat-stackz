@@ -19,6 +19,7 @@ import {
 import {
   isVaultPasscodeValid,
   maskWithAsterisks,
+  VaultGateScreen,
 } from "./components/VaultGateScreen.tsx";
 import {
   classifyFlStudioStem,
@@ -169,6 +170,38 @@ describe("The Vault UI & Theme Specification (T020 & T021)", () => {
     assert.equal(isVaultPasscodeValid(""), false);
     assert.equal(isVaultPasscodeValid("   "), false);
     assert.equal(maskWithAsterisks("swish"), "*****");
+  });
+
+  it("TOD-104 invite code box is a real visible text input: typed characters, caret and focus ring show on a phone", () => {
+    const noop = () => {};
+    const html = renderToStaticMarkup(
+      <VaultGateScreen
+        authMode="signup"
+        authName=""
+        authEmail=""
+        authPassword=""
+        authError={null}
+        inviteCode="made-up-code"
+        onChangeMode={noop}
+        onChangeName={noop}
+        onChangeEmail={noop}
+        onChangePassword={noop}
+        onSubmitAuth={() => false}
+        onUnlock={noop}
+      />,
+    );
+    const input = /<input[^>]*id="vault-invite-code"[^>]*>/.exec(html)?.[0] ?? "";
+    assert.match(input, /type="text"/, "characters are shown, not masked");
+    assert.match(input, /value="made-up-code"/);
+    assert.doesNotMatch(input, /opacity-0/, "the input itself is visible, so the caret is too");
+    assert.match(input, /text-base/, "16px so iOS does not zoom");
+    assert.match(input, /h-12/, "48px tall touch target");
+    assert.match(input, /focus:shadow-/, "visible focus ring");
+    assert.match(input, /autoCapitalize="none"/i);
+    assert.match(input, /autoCorrect="off"/i);
+    assert.match(input, /spellCheck="false"/i);
+    assert.match(html, /<label[^>]*for="vault-invite-code"[^>]*>Invite code<\/label>/);
+    assert.doesNotMatch(html, /\*{3,}/, "no asterisk stand-in for the invite code");
   });
 
   it("formats byte sizes and resolves file owner names from vaultMembers or fallback", async () => {
