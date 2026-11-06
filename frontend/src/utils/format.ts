@@ -1,3 +1,5 @@
+import type { FileItem } from "@bpackz/shared";
+
 export function formatBytes(bytes: number): string {
   if (bytes <= 0) return "0 B";
   const units = ["B", "KB", "MB", "GB"];
@@ -38,6 +40,27 @@ export async function computeBlobSha256(
     return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
   }
   return computeDeterministicSha256(fallbackName, fallbackSize);
+}
+
+/**
+ * TOD-105: put the file an upload just returned into the list at once, instead of waiting for
+ * the rest of the batch and a full vault refetch. Uses the server's row as is (status included).
+ */
+export function showUploadedFile(
+  setFilesByFolder: (
+    update: (prev: Record<string, FileItem[]>) => Record<string, FileItem[]>,
+  ) => void,
+  file: FileItem,
+  activeVaultId: string | null,
+): FileItem {
+  if (file.vaultId === activeVaultId) {
+    const key = file.folderId ?? "root";
+    setFilesByFolder((prev) => ({
+      ...prev,
+      [key]: [...(prev[key] ?? []).filter((f) => f.id !== file.id), file],
+    }));
+  }
+  return file;
 }
 
 export function createSampleWavBlob(): Blob {

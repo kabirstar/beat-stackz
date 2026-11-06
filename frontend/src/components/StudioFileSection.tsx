@@ -143,7 +143,7 @@ export function StudioFileCard({
           {isProcessing && (
             <span className="mono-meta text-[9px] uppercase px-2 py-0.5 rounded-md border shrink-0 font-semibold bg-amber-500/15 text-amber-800 border-amber-500/40 inline-flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse" />
-              Verifying
+              Processing
             </span>
           )}
           {isFailed && (

@@ -32,6 +32,7 @@ import {
   createSampleWavBlob,
   formatBytes,
   parseStudioFileDisplay,
+  showUploadedFile,
 } from "./utils/format.ts";
 import {
   classifyFlStudioStem,
@@ -992,7 +993,7 @@ export function App() {
       sha256,
     });
 
-    if (init.dedup) return init.file;
+    if (init.dedup) return showUploadedFile(setFilesByFolder, init.file, activeVaultId);
 
     const partNumbers = Array.from({ length: init.partCount }, (_, i) => i + 1);
     const signed = await api.uploads.sign(targetVaultId, init.uploadId, {
@@ -1014,7 +1015,7 @@ export function App() {
       completedParts.push({ partNumber: p.partNumber, etag });
     }
 
-    return api.uploads.complete(targetVaultId, init.uploadId, {
+    const uploaded = await api.uploads.complete(targetVaultId, init.uploadId, {
       key: init.key,
       folderId: targetFolderId,
       name,
@@ -1022,6 +1023,7 @@ export function App() {
       sha256,
       parts: completedParts,
     });
+    return showUploadedFile(setFilesByFolder, uploaded, activeVaultId);
   };
 
   const ensureInProgressSongEcosystem = useCallback(
