@@ -23,6 +23,43 @@ export function maskWithAsterisks(input: string): string {
   return "*".repeat(input.length);
 }
 
+// Invite code box (TOD-104): a real, visible text input. An invite code is not a password,
+// so the typed characters show, with the native caret and a focus ring.
+export function InviteCodeField({
+  value,
+  hasError,
+  onChange,
+}: {
+  value: string;
+  hasError: boolean;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <>
+      <label htmlFor="vault-invite-code" className="sr-only">
+        Invite code
+      </label>
+      <input
+        id="vault-invite-code"
+        type="text"
+        required
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Invite code"
+        autoComplete="off"
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
+        className={`mono-meta w-full h-12 rounded-2xl border px-4 text-base text-center select-text caret-[#16132b] placeholder:text-[#16132b]/55 focus:outline-none focus:bg-white focus:shadow-[0_0_0_3px_rgba(22,19,43,0.35)] transition-all duration-200 ${
+          hasError
+            ? "border-red-500 text-red-600 bg-red-50/30"
+            : "border-[#16132b]/30 text-[#16132b] bg-[#faf9f6] focus:border-[#16132b]"
+        }`}
+      />
+    </>
+  );
+}
+
 export interface VaultGateScreenProps {
   authMode: "signin" | "signup";
   authName: string;
@@ -114,7 +151,6 @@ export function VaultGateScreen({
     }
   };
 
-  const maskedInviteAsterisks = maskWithAsterisks(inviteCode);
   const maskedAsterisks = maskWithAsterisks(authPassword);
   const unlocking = status === "unlocking";
   const activeError = gateStep === "invite" ? inviteError : authError;
@@ -170,39 +206,14 @@ export function VaultGateScreen({
               autoComplete="off"
               className="w-full flex flex-col items-center gap-4"
             >
-              {/* Invite Code Box (Masks Characters as '*') */}
-              <div className="relative w-full">
-                <div
-                  data-testid="vault-gate-asterisks"
-                  className={`w-full h-12 sm:h-13 rounded-2xl bg-[#faf9f6] border flex items-center justify-center px-4 transition-all duration-200 ${
-                    activeError
-                      ? "border-red-500 text-red-600 bg-red-50/30"
-                      : "border-[#16132b]/15 text-[#16132b] focus-within:border-[#16132b] focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(22,19,43,0.05)]"
-                  }`}
-                >
-                  {maskedInviteAsterisks.length > 0 ? (
-                    <span className="mono-meta text-lg sm:text-xl tracking-[0.32em] truncate pt-0.5">
-                      {maskedInviteAsterisks}
-                    </span>
-                  ) : (
-                    <span className="text-sm text-[#16132b]/40">
-                      Invite code
-                    </span>
-                  )}
-                </div>
-                <input
-                  type="password"
-                  required
-                  aria-label="Vault Invite Code"
-                  value={inviteCode}
-                  onChange={(e) => {
-                    setInviteCode(e.target.value);
-                    if (inviteError) setInviteError(null);
-                  }}
-                  autoComplete="off"
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-text"
-                />
-              </div>
+              <InviteCodeField
+                value={inviteCode}
+                hasError={!!activeError}
+                onChange={(val) => {
+                  setInviteCode(val);
+                  if (inviteError) setInviteError(null);
+                }}
+              />
 
               {activeError && (
                 <div className="text-xs font-medium text-red-600 -my-1">
