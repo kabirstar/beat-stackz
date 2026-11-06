@@ -156,7 +156,7 @@ export function VaultGateScreen({
   const activeError = gateStep === "invite" ? inviteError : authError;
 
   return (
-    <div
+    <div data-look="paper"
       className={`min-h-[100dvh] w-full flex flex-col items-center justify-center px-5 py-10 relative overflow-hidden select-none transition-colors duration-500 ease-out ${
         unlocking ? "bg-[#edeae4]" : "bg-[#ffffff]"
       }`}

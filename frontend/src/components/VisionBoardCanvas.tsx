@@ -1,16 +1,14 @@
 import { useRef, useState } from "react";
 import type { FileItem } from "@bpackz/shared";
-import { UserAvatarBadge } from "../HardwareIcons.tsx";
 import { formatBytes, parseStudioFileDisplay } from "../utils/format.ts";
 import {
   STICKY_NOTE_COLORS,
-  type HardwareThemeSlot,
   type StickyColorKey,
   type VisionBoardFileNode,
   type VisionBoardNote,
   type VisionBoardVaultState,
 } from "../vaultTheme.ts";
-import { StudioIcon } from "./StudioPrimitives.tsx";
+import { StudioIcon, UserAvatarBadge } from "./StudioPrimitives.tsx";
 
 const MINI_WAVE = [32, 68, 45, 88, 60, 95, 52, 74, 40, 82, 58, 90, 48, 66];
 const COLOR_ORDER: StickyColorKey[] = ["canary", "coral", "mint", "lavender"];
@@ -21,7 +19,7 @@ export function VisionBoardCanvas({
   currentUserName,
   playingFileId,
   playProgress,
-  accentTheme,
+  accentColor,
   onUpdateBoard,
   onTogglePlayFile,
   onUploadSongToBoard,
@@ -31,7 +29,7 @@ export function VisionBoardCanvas({
   currentUserName: string;
   playingFileId: string | null;
   playProgress: number;
-  accentTheme: HardwareThemeSlot;
+  accentColor: string;
   onUpdateBoard: (next: VisionBoardVaultState) => void;
   onTogglePlayFile: (fileId: string, fallbackName: string, fallbackSize: number) => void;
   onUploadSongToBoard: () => void;
@@ -236,9 +234,9 @@ export function VisionBoardCanvas({
           <span
             className="mono-meta text-[10px] uppercase px-2.5 py-1 rounded-full font-semibold"
             style={{
-              background: accentTheme.chassisBg,
-              color: accentTheme.accentPrimary,
-              border: `1px solid ${accentTheme.accentPrimary}`,
+              background: "var(--bg)",
+              color: "var(--ink)",
+              border: `1px solid ${accentColor}`,
             }}
           >
             ∞ Collab Vision Board
@@ -250,10 +248,10 @@ export function VisionBoardCanvas({
 
         {/* Right Zoom & Coordinate HUD */}
         <div className="flex items-center gap-1.5">
-          <span className="mono-meta text-[10px] text-[var(--ink-soft)] px-2 py-1 rounded-lg bg-[#f4f1eb] border border-[var(--hair)]">
+          <span className="mono-meta text-[10px] text-[var(--ink-soft)] px-2 py-1 rounded-lg bg-[var(--bg)] border border-[var(--hair)]">
             X:{Math.round(-pan.x)} Y:{Math.round(-pan.y)}
           </span>
-          <div className="inline-flex items-center rounded-xl bg-[#f4f1eb] p-0.5 border border-[var(--hair)]">
+          <div className="inline-flex items-center rounded-xl bg-[var(--bg)] p-0.5 border border-[var(--hair)]">
             <button
               type="button"
               onClick={() => setZoom((z) => Math.max(0.55, Number((z - 0.1).toFixed(2))))}
@@ -280,7 +278,7 @@ export function VisionBoardCanvas({
               setPan({ x: 20, y: 16 });
               setZoom(1);
             }}
-            className="px-2.5 py-1.5 rounded-xl bg-[#f4f1eb] border border-[var(--hair)] mono-meta text-[10px] uppercase cursor-pointer hover:border-[var(--ink)]"
+            className="px-2.5 py-1.5 rounded-xl bg-[var(--bg)] border border-[var(--hair)] mono-meta text-[10px] uppercase cursor-pointer hover:border-[var(--ink)]"
           >
             Center
           </button>
@@ -296,9 +294,9 @@ export function VisionBoardCanvas({
         onWheel={handleWheel}
         className="relative w-full h-[640px] sm:h-[700px] rounded-3xl border border-[var(--ink)]/20 overflow-hidden select-none cursor-grab active:cursor-grabbing shadow-inner"
         style={{
-          backgroundColor: "#e8e4dc",
+          backgroundColor: "var(--bg)",
           backgroundImage:
-            "radial-gradient(circle, rgba(22, 19, 43, 0.22) 1.25px, transparent 1.25px)",
+            "radial-gradient(circle, color-mix(in srgb, var(--ink) 25%, transparent) 1.25px, transparent 1.25px)",
           backgroundSize: `${Math.round(24 * zoom)}px ${Math.round(24 * zoom)}px`,
           backgroundPosition: `${pan.x}px ${pan.y}px`,
           touchAction: "none",
@@ -331,12 +329,12 @@ export function VisionBoardCanvas({
                   <path
                     d={`M ${x1} ${y1} C ${x1} ${(y1 + y2) / 2}, ${x2} ${(y1 + y2) / 2}, ${x2} ${y2}`}
                     fill="none"
-                    stroke="rgba(22, 19, 43, 0.22)"
+                    stroke="color-mix(in srgb, var(--ink) 25%, transparent)"
                     strokeWidth="2"
                     strokeDasharray="5 5"
                   />
-                  <circle cx={x1} cy={y1} r="4" fill={accentTheme.accentPrimary} />
-                  <circle cx={x2} cy={y2} r="4" fill={accentTheme.accentPrimary} />
+                  <circle cx={x1} cy={y1} r="4" fill={accentColor} />
+                  <circle cx={x2} cy={y2} r="4" fill={accentColor} />
                 </g>
               );
             })}
@@ -484,7 +482,7 @@ export function VisionBoardCanvas({
                   <div className="flex items-center gap-2">
                     <span
                       className="w-2 h-2 rounded-full"
-                      style={{ background: accentTheme.accentPrimary }}
+                      style={{ background: accentColor }}
                     />
                     <span className="mono-meta text-[9px] uppercase text-[var(--ink)] font-semibold">
                       Pinned Track · Drag to Move
@@ -507,7 +505,7 @@ export function VisionBoardCanvas({
                 </div>
 
                 {/* Song Player & Waveform Strip */}
-                <div className="p-3.5 flex items-center gap-3 border-b border-[var(--hair)] bg-[#f4f1eb]">
+                <div className="p-3.5 flex items-center gap-3 border-b border-[var(--hair)] bg-[var(--bg)]">
                   <button
                     type="button"
                     onClick={() =>
@@ -545,8 +543,8 @@ export function VisionBoardCanvas({
                             style={{
                               height: `${Math.max(3, Math.round(h * 0.15))}px`,
                               background: active
-                                ? accentTheme.accentPrimary
-                                : "rgba(22,19,43,0.25)",
+                                ? accentColor
+                                : "color-mix(in srgb, var(--ink) 25%, transparent)",
                             }}
                           />
                         );
@@ -589,7 +587,7 @@ export function VisionBoardCanvas({
                                 <span
                                   className="mono-meta text-[9px] px-1.5 py-0.2 rounded font-semibold"
                                   style={{
-                                    background: `${accentTheme.accentPrimary}22`,
+                                    background: `${accentColor}22`,
                                     color: "var(--ink)",
                                   }}
                                 >
@@ -692,7 +690,7 @@ export function VisionBoardCanvas({
             </button>
 
             {trackPickerOpen && (
-              <div className="absolute bottom-11 left-0 w-64 rounded-2xl bg-[#edeae4] text-[#16132b] border border-[var(--ink)]/20 shadow-2xl p-2 space-y-1 z-30">
+              <div className="absolute bottom-11 left-0 w-64 rounded-2xl bg-[var(--card-deep)] text-[var(--ink)] border border-[var(--hair)] shadow-2xl p-2 space-y-1 z-30">
                 <div className="px-2 py-1 mono-meta text-[9px] uppercase text-[var(--ink-soft)] flex items-center justify-between">
                   <span>Pin Track to Vision Board</span>
                   <button

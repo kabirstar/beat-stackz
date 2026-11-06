@@ -1,8 +1,7 @@
 import type { FileItem, User, VaultMember } from "@bpackz/shared";
-import { UserAvatarBadge } from "../HardwareIcons.tsx";
 import { formatBytes } from "../utils/format.ts";
 import { describeFileMeta, resolveFileOwnerName } from "../vaultTheme.ts";
-import { StudioIcon } from "./StudioPrimitives.tsx";
+import { StudioIcon, UserAvatarBadge } from "./StudioPrimitives.tsx";
 
 function formatClock(sec: number): string {
   const s = Math.max(0, Math.floor(sec));
@@ -42,7 +41,7 @@ export function BottomTransportPlayer({
 }) {
   const hasDuration = !!durationSec && Number.isFinite(durationSec);
   return (
-    <div className="fixed bottom-[calc(4.15rem+env(safe-area-inset-bottom))] left-2.5 right-2.5 sm:bottom-0 sm:left-0 sm:right-0 z-40 px-3.5 sm:px-8 py-2.5 sm:pt-2.5 sm:pb-[calc(0.75rem+env(safe-area-inset-bottom))] rounded-2xl sm:rounded-none shadow-2xl sm:shadow-none bg-[#e4e0d8]/96 backdrop-blur-xl border border-[var(--ink)]/20 sm:border-x-0 sm:border-b-0 sm:border-t sm:border-[var(--hair)] flex flex-wrap items-center justify-between gap-x-2.5 sm:gap-3 overflow-hidden">
+    <div className="bs-player px-3.5 sm:px-8 py-2.5 flex flex-wrap items-center justify-between gap-x-2.5 sm:gap-3 overflow-hidden">
       <div className="flex items-center gap-3 min-w-0 flex-1 max-w-xs">
         <UserAvatarBadge
           byName={resolveFileOwnerName(playingFile.createdBy, vaultMembers, currentUser)}
@@ -64,6 +63,8 @@ export function BottomTransportPlayer({
             type="button"
             onClick={onToggleLoop}
             title="Loop"
+            aria-label="Loop"
+            aria-pressed={loopEnabled}
             className={`icon-btn w-7 h-7 ${loopEnabled ? "icon-btn-active" : ""}`}
           >
             <StudioIcon name="loop" className="w-3.5 h-3.5" />
@@ -73,6 +74,7 @@ export function BottomTransportPlayer({
             type="button"
             onClick={onTogglePause ?? onClose}
             title={isPaused ? "Play" : "Pause"}
+            aria-label={isPaused ? "Play" : "Pause"}
             className="icon-btn icon-btn-active w-9 h-9"
           >
             <StudioIcon name={isPaused ? "play" : "pause"} />
@@ -89,7 +91,7 @@ export function BottomTransportPlayer({
                 className="flex-1 rounded-xs cursor-pointer transition"
                 style={{
                   height: `${Math.max(5, Math.round(h * 0.22))}px`,
-                  background: active ? "var(--ink)" : "rgba(22,19,43,0.2)",
+                  background: active ? "var(--ink)" : "color-mix(in srgb, var(--ink) 25%, transparent)",
                 }}
               />
             );
@@ -102,6 +104,7 @@ export function BottomTransportPlayer({
           type="button"
           onClick={() => onShare(playingFile)}
           title="Share"
+            aria-label="Share"
           className="icon-btn w-8 h-8"
         >
           <StudioIcon name="share" className="w-3.5 h-3.5" />
@@ -110,6 +113,7 @@ export function BottomTransportPlayer({
           type="button"
           onClick={() => onDownload(playingFile)}
           title="Download"
+            aria-label="Download"
           className="icon-btn w-8 h-8"
         >
           <StudioIcon name="download" className="w-3.5 h-3.5" />
@@ -118,6 +122,7 @@ export function BottomTransportPlayer({
           type="button"
           onClick={onClose}
           title="Close player"
+            aria-label="Close player"
           className="icon-btn w-8 h-8"
         >
           ×
