@@ -67,7 +67,8 @@ it looks like a finished product.
 - The screens redone, keeping the idea: folder icons, vault door, colours,
   animations
 - Works well in a phone browser
-- Themes and icon order saved to the account
+- Themes and icon order saved to the account (the Night/Paper switch itself
+  ships earlier, per browser; see "Redesign decisions")
 - Vault history a user can see
 - Keyboard and screen reader basics
 
@@ -93,7 +94,8 @@ Done when: you can find any file in seconds and play it instantly.
 - Tags, BPM and key, typed in and detected
 - Smaller streaming copy for fast playback, and MP3 download
 - Upload a whole folder; download a folder as a zip
-- Playlists, favourites, recents, notes, cover art
+- Playlists, favourites, recents saved to the account, notes, cover art
+  (last-opened ordering ships earlier, per browser; see "Redesign decisions")
 - Previews for video, images and PDFs
 - Stem splitting and mastering (needs a call)
 
@@ -167,6 +169,22 @@ a rewrite, mainly through usernames and public profiles.
 | The look | Speed and clarity win over the 3D look. The vault door stays on every visit, redone. Everything already built stays; anything saved only in the browser moves to the account. |
 | Never | A site full of half-baked features. |
 
+## Redesign decisions (Kabir, 2026-11-06 UTC)
+
+Kabir typed these in the brain chat on the evening of 2026-11-05 US Central.
+
+- **Build order.** Build the approved redesign screens in this order, one pull
+  request per screen, without asking Kabir each time: vault home (TOD-108),
+  player (TOD-109), vault door (TOD-110), then share page (TOD-111). The share
+  page waits on his answer in "Still open for Kabir".
+- **Direction.** Night is the default, Paper is an option. One line-icon set
+  replaces the 3D objects. Existing fonts. A three-pane vault home, like Spotify.
+- **Full-screen song view: yes.** It is part of the player redesign (TOD-109).
+- **Last-opened ordering in the library: yes.** A per-browser version ships with
+  the vault home. Saving it to the account stays in 2B.
+- **Night/Paper theme switch: yes.** A per-browser version ships with the vault
+  home. Themes saved to the account stay in 1B.
+
 ## Claude's five changes (accepted by Kabir, 5 Nov)
 
 The fifth change, stem splitting and mastering, is under "Still open for
@@ -197,6 +215,11 @@ Kabir" below.
    staging copy of the site" and 2C says "the live site updates per milestone,
    from staging". But ADR 0005 v2 (PR #66, 2026-10-29, from Swish) removed
    staging, so `main` deploys straight to production. Not resolved here.
+3. **Share page redesign (TOD-111). Kabir asked to be asked first.** It needs a
+   contract change: the sharer's display name on the public share response, and
+   a per-link "download allowed" flag. Also needs a decision on how share links
+   people already hold behave once those exist. Nothing is built until he
+   answers.
 
 ## What it costs each month
 
