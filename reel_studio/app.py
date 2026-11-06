@@ -262,26 +262,32 @@ HTML_TEMPLATE = r"""
   <title>REEL STUDIO — Cinematic Event & Temple Recap Editor</title>
   <style>
     :root {
-      --bg: #09090d;
-      --panel: #12121a;
-      --panel2: #181824;
-      --panel3: #1f1f2e;
-      --border: #2a2a3d;
+      /* Calibrated Rec.709 Neutral Zinc Studio Palette (Frame.io V4 / Resolve 20) */
+      --bg: #0a0a0c;
+      --panel: #111115;
+      --panel2: #17171c;
+      --panel3: #1f1f26;
+      --border: #26262f;
+      --border-strong: #343442;
       --gold: #f59e0b;
       --gold-light: #fbbf24;
-      --accent: #ff2a85;
-      --purple: #8b5cf6;
-      --cyan: #06b6d4;
+      --accent: #f59e0b;
+      --purple: #a1a1aa;
+      --cyan: #38bdf8;
       --green: #10b981;
       --red: #ef4444;
-      --text: #f4f4f8;
-      --muted: #94a3b8;
+      --text: #f4f4f6;
+      --muted: #8e8e99;
+      --mono: 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Text', sans-serif;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       background: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
+      font-family: var(--sans);
+      font-variant-numeric: tabular-nums;
+      -webkit-font-smoothing: antialiased;
       min-height: 100vh;
       width: 100%;
       max-width: 100vw;
@@ -293,14 +299,14 @@ HTML_TEMPLATE = r"""
     }
 
     header {
-      min-height: 56px;
+      min-height: 50px;
       height: auto;
-      background: linear-gradient(90deg, #13111c 0%, #191424 50%, #12121a 100%);
+      background: var(--panel);
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 8px 16px;
+      padding: 6px 14px;
       gap: 10px;
       flex-shrink: 0;
       flex-wrap: wrap;
@@ -312,65 +318,68 @@ HTML_TEMPLATE = r"""
       display: flex;
       align-items: center;
       gap: 10px;
-      font-weight: 800;
-      font-size: 15px;
-      letter-spacing: 0.4px;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
     .brand-badge {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      color: #111;
-      padding: 3px 9px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: 0.6px;
+      background: var(--gold);
+      color: #09090b;
+      padding: 2px 7px;
+      border-radius: 3px;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
     }
     .toolbar-group {
       display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 6px;
       flex-wrap: wrap;
     }
     .btn {
       background: var(--panel2);
       color: var(--text);
       border: 1px solid var(--border);
-      padding: 6px 11px;
-      border-radius: 8px;
-      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 11px;
       font-weight: 600;
+      letter-spacing: 0.02em;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      transition: all 0.15s ease;
+      transition: background 0.12s ease, border-color 0.12s ease;
       white-space: nowrap;
       text-decoration: none;
     }
-    .btn:hover { background: var(--panel3); border-color: #3f3f5a; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn:hover { background: var(--panel3); border-color: var(--border-strong); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
     .btn-gold {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      color: #09090d;
-      border: none;
+      background: rgba(245, 158, 11, 0.14);
+      color: var(--gold-light);
+      border: 1px solid rgba(245, 158, 11, 0.5);
       font-weight: 700;
     }
-    .btn-gold:hover { filter: brightness(1.08); }
+    .btn-gold:hover { background: rgba(245, 158, 11, 0.22); border-color: var(--gold); }
     .btn-primary {
-      background: linear-gradient(135deg, #ff2a85, #7c3aed);
-      color: #fff;
-      border: none;
+      background: var(--gold);
+      color: #09090b;
+      border: 1px solid #fbbf24;
       font-weight: 700;
     }
-    .btn-primary:hover { filter: brightness(1.1); }
+    .btn-primary:hover { background: #fbbf24; }
     .btn-download {
-      background: rgba(16, 185, 129, 0.18);
-      border: 1px solid var(--green);
-      color: #6ee7b7;
+      background: rgba(16, 185, 129, 0.14);
+      border: 1px solid rgba(16, 185, 129, 0.55);
+      color: #34d399;
       font-weight: 700;
     }
     .btn-active {
-      background: rgba(245, 158, 11, 0.18);
+      background: rgba(245, 158, 11, 0.16);
       border-color: var(--gold);
       color: var(--gold-light);
     }
@@ -378,9 +387,9 @@ HTML_TEMPLATE = r"""
       background: var(--panel2);
       color: var(--text);
       border: 1px solid var(--border);
-      padding: 6px 10px;
-      border-radius: 8px;
-      font-size: 12px;
+      padding: 5px 9px;
+      border-radius: 5px;
+      font-size: 11px;
       outline: none;
       max-width: 220px;
     }
@@ -389,42 +398,45 @@ HTML_TEMPLATE = r"""
     }
 
     .status-bar {
-      min-height: 28px;
-      background: #0d0d14;
+      min-height: 26px;
+      background: #0d0d10;
       border-bottom: 1px solid var(--border);
-      padding: 4px 16px;
+      padding: 4px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 11.5px;
+      font-family: var(--mono);
+      font-size: 10.5px;
       color: var(--muted);
       flex-shrink: 0;
       flex-wrap: wrap;
       gap: 8px;
     }
 
-    /* Mobile / Tablet Workspace Tab Switcher (CapCut Web style) */
+    /* Mobile / Tablet Workspace Tab Switcher */
     .mobile-workspace-tabs {
       display: none;
-      background: #101018;
+      background: var(--panel);
       border-bottom: 1px solid var(--border);
       padding: 6px 12px;
       gap: 6px;
     }
     .mobile-tab-btn {
       flex: 1;
-      padding: 7px 10px;
-      border-radius: 8px;
+      padding: 6px 10px;
+      border-radius: 5px;
       border: 1px solid var(--border);
       background: var(--panel2);
       color: var(--muted);
-      font-size: 12px;
+      font-family: var(--mono);
+      font-size: 11px;
       font-weight: 700;
+      letter-spacing: 0.04em;
       cursor: pointer;
       text-align: center;
     }
     .mobile-tab-btn.active {
-      background: rgba(245, 158, 11, 0.18);
+      background: rgba(245, 158, 11, 0.16);
       border-color: var(--gold);
       color: var(--gold-light);
     }
@@ -446,33 +458,35 @@ HTML_TEMPLATE = r"""
     .col-left { border-right: 1px solid var(--border); }
     .col-right { border-left: 1px solid var(--border); overflow-y: auto; }
     .panel-header {
-      padding: 10px 14px;
+      padding: 8px 12px;
       background: var(--panel2);
       border-bottom: 1px solid var(--border);
-      font-size: 12px;
+      font-family: var(--mono);
+      font-size: 10.5px;
       font-weight: 700;
+      text-transform: uppercase;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.06em;
     }
 
     .dropzone {
       margin: 10px;
-      padding: 14px 10px;
-      border: 1.5px dashed #3b3b54;
-      border-radius: 10px;
-      background: rgba(245, 158, 11, 0.04);
+      padding: 12px 10px;
+      border: 1px dashed var(--border-strong);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.015);
       text-align: center;
       cursor: pointer;
       transition: all 0.15s;
     }
     .dropzone:hover, .dropzone.dragover {
       border-color: var(--gold);
-      background: rgba(245, 158, 11, 0.10);
+      background: rgba(245, 158, 11, 0.06);
     }
-    .dropzone-title { font-size: 12.5px; font-weight: 700; color: var(--gold-light); margin-bottom: 4px; }
-    .dropzone-sub { font-size: 11px; color: var(--muted); }
+    .dropzone-title { font-size: 11.5px; font-weight: 700; color: var(--gold-light); margin-bottom: 3px; }
+    .dropzone-sub { font-size: 10.5px; color: var(--muted); }
 
     .clip-list {
       flex: 1;
@@ -800,11 +814,12 @@ HTML_TEMPLATE = r"""
       background: var(--panel);
       border: 1px solid var(--border);
       padding: 6px 12px;
-      border-radius: 9px;
+      border-radius: 6px;
       gap: 10px;
     }
     .timecode {
-      font-family: 'SF Mono', Menlo, monospace;
+      font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
       font-size: 12px;
       color: var(--gold-light);
       font-weight: 700;
@@ -812,22 +827,24 @@ HTML_TEMPLATE = r"""
     .trimmer-box {
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 6px;
       padding: 8px 12px;
     }
     .trimmer-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 11px;
+      font-family: var(--mono);
+      font-size: 10.5px;
       color: var(--muted);
       margin-bottom: 6px;
     }
     #trimCanvas {
       width: 100%;
       height: 56px;
-      background: #0c0c14;
-      border-radius: 7px;
+      background: #0b0b0e;
+      border: 1px solid var(--border);
+      border-radius: 5px;
       cursor: ew-resize;
       display: block;
     }
@@ -837,10 +854,11 @@ HTML_TEMPLATE = r"""
       border-bottom: 1px solid var(--border);
     }
     .sec-title {
-      font-size: 11.5px;
+      font-family: var(--mono);
+      font-size: 10.5px;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.6px;
+      letter-spacing: 0.06em;
       color: var(--gold-light);
       margin-bottom: 9px;
       display: flex;
@@ -853,8 +871,8 @@ HTML_TEMPLATE = r"""
     .form-row label {
       display: flex;
       justify-content: space-between;
-      font-size: 11.5px;
-      color: #cbd5e1;
+      font-size: 11px;
+      color: #d4d4d8;
       margin-bottom: 4px;
       font-weight: 600;
     }
@@ -864,8 +882,8 @@ HTML_TEMPLATE = r"""
       color: var(--text);
       border: 1px solid var(--border);
       padding: 6px 10px;
-      border-radius: 7px;
-      font-size: 12px;
+      border-radius: 5px;
+      font-size: 11.5px;
     }
     .form-row input[type="range"] {
       width: 100%;
@@ -881,9 +899,9 @@ HTML_TEMPLATE = r"""
     .chip {
       background: var(--panel2);
       border: 1px solid var(--border);
-      color: #e2e8f0;
+      color: #e4e4e7;
       padding: 4px 8px;
-      border-radius: 6px;
+      border-radius: 4px;
       font-size: 10.5px;
       cursor: pointer;
       transition: all 0.12s;
@@ -895,28 +913,30 @@ HTML_TEMPLATE = r"""
 
     .storyboard-dock {
       height: 184px;
-      background: #0d0d14;
+      background: #0d0d10;
       border-top: 1px solid var(--border);
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
     }
     .dock-header {
-      height: 34px;
+      height: 32px;
       padding: 0 14px;
       background: var(--panel2);
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 12px;
+      font-family: var(--mono);
+      font-size: 11px;
       font-weight: 700;
+      letter-spacing: 0.04em;
     }
     .storyboard-ribbon {
       flex: 1;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       padding: 10px 14px;
       overflow-x: auto;
       overflow-y: hidden;
@@ -925,8 +945,8 @@ HTML_TEMPLATE = r"""
       width: 182px;
       height: 126px;
       background: var(--panel2);
-      border: 2px solid var(--border);
-      border-radius: 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
@@ -935,10 +955,10 @@ HTML_TEMPLATE = r"""
       position: relative;
       transition: transform 0.12s, border-color 0.12s;
     }
-    .sb-card:hover { border-color: #4f4f72; }
+    .sb-card:hover { border-color: var(--border-strong); }
     .sb-card.active {
       border-color: var(--gold);
-      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+      box-shadow: 0 0 0 1px var(--gold);
     }
     .sb-card.dragging { opacity: 0.45; transform: scale(0.96); }
     .sb-thumb-wrap {
@@ -957,46 +977,51 @@ HTML_TEMPLATE = r"""
       position: absolute;
       top: 5px;
       left: 5px;
-      background: rgba(9, 9, 13, 0.85);
+      background: rgba(10, 10, 12, 0.88);
       color: var(--gold-light);
-      font-size: 10px;
+      font-family: var(--mono);
+      font-size: 9.5px;
       font-weight: 800;
-      padding: 2px 6px;
-      border-radius: 5px;
+      padding: 2px 5px;
+      border-radius: 3px;
       border: 1px solid rgba(245, 158, 11, 0.4);
     }
     .sb-speed-badge {
       position: absolute;
       top: 5px;
       right: 5px;
-      background: rgba(124, 58, 237, 0.88);
-      color: #fff;
-      font-size: 9.5px;
+      background: rgba(23, 23, 28, 0.92);
+      border: 1px solid var(--border-strong);
+      color: #e4e4e7;
+      font-family: var(--mono);
+      font-size: 9px;
       font-weight: 800;
       padding: 2px 5px;
-      border-radius: 4px;
+      border-radius: 3px;
     }
     .sb-dur-badge {
       position: absolute;
       bottom: 4px;
       right: 5px;
-      background: rgba(9, 9, 13, 0.85);
+      background: rgba(10, 10, 12, 0.88);
       color: #fff;
-      font-size: 10px;
+      font-family: var(--mono);
+      font-size: 9.5px;
       font-weight: 700;
       padding: 1px 5px;
-      border-radius: 4px;
+      border-radius: 3px;
     }
     .sb-vol-badge {
       position: absolute;
       bottom: 4px;
       left: 5px;
-      background: rgba(9, 9, 13, 0.82);
+      background: rgba(10, 10, 12, 0.85);
       color: #34d399;
-      font-size: 9.5px;
+      font-family: var(--mono);
+      font-size: 9px;
       font-weight: 700;
       padding: 1px 5px;
-      border-radius: 4px;
+      border-radius: 3px;
     }
     .sb-body {
       flex: 1;
@@ -1013,6 +1038,7 @@ HTML_TEMPLATE = r"""
       gap: 4px;
     }
     .sb-fname {
+      font-family: var(--mono);
       font-weight: 700;
       white-space: nowrap;
       overflow: hidden;
@@ -1041,7 +1067,7 @@ HTML_TEMPLATE = r"""
       padding: 1px 4px;
       border-radius: 4px;
     }
-    .sb-icon-btn:hover { background: #2c2c40; color: #fff; }
+    .sb-icon-btn:hover { background: var(--panel3); color: #fff; }
 
     .agents-drawer {
       position: fixed;
@@ -1049,10 +1075,10 @@ HTML_TEMPLATE = r"""
       right: 18px;
       width: 390px;
       max-height: 360px;
-      background: #14141f;
-      border: 1px solid var(--gold);
-      border-radius: 12px;
-      box-shadow: 0 16px 40px rgba(0,0,0,0.75);
+      background: var(--panel);
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.85);
       z-index: 100;
       display: none;
       flex-direction: column;
@@ -1068,27 +1094,27 @@ HTML_TEMPLATE = r"""
     .agent-item {
       background: var(--panel2);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 6px;
       padding: 8px 10px;
       font-size: 11px;
     }
     .progress-track {
-      height: 5px;
-      background: #252538;
-      border-radius: 3px;
+      height: 4px;
+      background: #22222a;
+      border-radius: 2px;
       overflow: hidden;
       margin-top: 5px;
     }
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, var(--gold), var(--accent));
+      background: var(--gold);
       transition: width 0.25s ease;
     }
 
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.75);
+      background: rgba(0, 0, 0, 0.78);
       backdrop-filter: blur(4px);
       z-index: 200;
       display: none;
@@ -1097,52 +1123,55 @@ HTML_TEMPLATE = r"""
     }
     .modal-card {
       background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 14px;
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
       width: 520px;
       max-width: 94vw;
       padding: 20px;
       max-height: 88vh;
       overflow-y: auto;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.85);
     }
 
-    /* CapCut / Instagram Reels Segmented Full-Reel Progress Bar */
+    /* Segmented Full-Reel Progress Bar */
     .reel-progress-ribbon {
       display: flex;
       align-items: center;
       gap: 3px;
       height: 22px;
-      background: #0d0d16;
+      background: #0d0d10;
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 5px;
       padding: 3px 6px;
       overflow: hidden;
       flex-shrink: 0;
     }
     .reel-seg-pill {
       height: 100%;
-      border-radius: 4px;
-      background: #232336;
+      border-radius: 3px;
+      background: var(--panel2);
+      border: 1px solid var(--border);
       position: relative;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-family: var(--mono);
       font-size: 9px;
       font-weight: 800;
       color: rgba(255,255,255,0.75);
       overflow: hidden;
-      transition: filter 0.12s, transform 0.12s;
+      transition: filter 0.12s, border-color 0.12s;
       min-width: 14px;
     }
     .reel-seg-pill:hover {
-      filter: brightness(1.25);
+      border-color: var(--border-strong);
+      filter: brightness(1.15);
     }
     .reel-seg-pill.active-seg {
-      background: linear-gradient(90deg, rgba(245, 158, 11, 0.88), rgba(255, 42, 133, 0.88));
-      color: #fff;
-      box-shadow: 0 0 8px rgba(245, 158, 11, 0.55);
+      background: rgba(245, 158, 11, 0.24);
+      border-color: var(--gold);
+      color: var(--gold-light);
     }
 
     /* Responsive Tablet & Mobile Breakpoints */
@@ -1160,7 +1189,7 @@ HTML_TEMPLATE = r"""
       .mobile-workspace-tabs {
         display: flex;
         position: sticky;
-        top: 56px;
+        top: 50px;
         z-index: 75;
       }
       body.mobile-tab-mode .col-left,
@@ -1174,7 +1203,7 @@ HTML_TEMPLATE = r"""
     }
     @media (max-width: 768px) {
       header { padding: 8px 10px; gap: 6px; }
-      .brand { font-size: 13px; }
+      .brand { font-size: 12px; }
       .toolbar-group { width: 100%; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 2px; }
       .btn { padding: 5px 9px; font-size: 11px; }
       .transport-bar { flex-wrap: wrap; }
@@ -1189,71 +1218,71 @@ HTML_TEMPLATE = r"""
   <header>
     <div class="brand">
       <span class="brand-badge">REEL STUDIO</span>
-      <span>🏛️ Cinematic Event & Temple Recap</span>
+      <span>EVENT &amp; TEMPLE NLE</span>
     </div>
 
     <div class="toolbar-group">
       <button id="btnRatio916" class="btn btn-active" onclick="setAspectRatio('9:16')" title="9:16 Vertical Reel (1080x1920)">
-        📱 9:16 Vertical
+        9:16 VERTICAL
       </button>
       <button id="btnRatio169" class="btn" onclick="setAspectRatio('16:9')" title="16:9 Horizontal Recap (1920x1080)">
-        🖥️ 16:9 Horizontal
+        16:9 HORIZONTAL
       </button>
 
       <select id="defaultFitSelect" class="input-select" onchange="updateProjectSettings()" title="How horizontal clips fit inside a vertical reel">
-        <option value="blur_pad">🌫️ Blurred Backdrop Fill</option>
-        <option value="cover">🔍 Smart Center Crop</option>
+        <option value="blur_pad">FIT: BLURRED BACKDROP</option>
+        <option value="cover">FIT: CENTER CROP</option>
       </select>
 
       <select id="highlightModeSelect" class="input-select" title="Highlight Story & Pacing Mode">
-        <option value="instagram_cinematic">🎬 Instagram Cinematic (1 Cut/Clip + Slow-Mo)</option>
-        <option value="dynamic_35">⚡ Peak Highlights (~3.5s)</option>
-        <option value="fast_25">🔥 Fast Action Reel (~2.5s)</option>
-        <option value="cinematic_50">🌅 Long Scenic Cuts (~4.5s)</option>
-        <option value="speech_aware">🗣️ Speech & Chant Aware</option>
-        <option value="full">🎞️ Full Untrimmed Clips</option>
+        <option value="instagram_cinematic">MODE: CINEMATIC (1 CUT/CLIP + SLOW-MO)</option>
+        <option value="dynamic_35">MODE: PEAK HIGHLIGHTS (~3.5S)</option>
+        <option value="fast_25">MODE: FAST ACTION (~2.5S)</option>
+        <option value="cinematic_50">MODE: LONG SCENIC (~4.5S)</option>
+        <option value="speech_aware">MODE: SPEECH &amp; CHANT AWARE</option>
+        <option value="full">MODE: FULL UNTRIMMED</option>
       </select>
       <button class="btn btn-gold" onclick="autoPickHighlights()">
-        ✨ Build Cinematic Storyboard
+        BUILD STORYBOARD
       </button>
     </div>
 
     <div class="toolbar-group">
       <button class="btn" onclick="openMusicBannerModal()">
-        🎵 Music & Event Banner
+        AUDIO &amp; BANNER
       </button>
       <button class="btn" onclick="toggleAgentsDrawer()">
-        🤖 Agents <span id="agentCountBadge" class="badge badge-gold">0</span>
+        WORKERS <span id="agentCountBadge" class="badge badge-gold">0</span>
       </button>
       <details style="position:relative;">
-        <summary class="btn" style="list-style:none;" title="Keyboard Shortcuts">⌨️ Keys</summary>
-        <div style="position:absolute;right:0;top:36px;z-index:120;background:#141422;border:1px solid var(--border);border-radius:10px;padding:10px 12px;width:235px;box-shadow:0 12px 30px rgba(0,0,0,0.75);font-size:11px;display:flex;flex-direction:column;gap:5px;">
-          <div style="font-weight:800;color:var(--gold-light);margin-bottom:2px;">⌨️ Studio Shortcuts</div>
+        <summary class="btn" style="list-style:none;" title="Keyboard Shortcuts">KEYS</summary>
+        <div style="position:absolute;right:0;top:36px;z-index:120;background:var(--panel);border:1px solid var(--border-strong);border-radius:6px;padding:10px 12px;width:235px;box-shadow:0 12px 30px rgba(0,0,0,0.85);font-size:11px;display:flex;flex-direction:column;gap:5px;">
+          <div style="font-family:var(--mono);font-weight:800;color:var(--gold-light);margin-bottom:2px;">STUDIO SHORTCUTS</div>
           <div style="display:flex;justify-content:space-between;"><span>Play / Pause Reel</span><code>Space</code></div>
           <div style="display:flex;justify-content:space-between;"><span>Prev / Next Scene</span><code>← / →</code></div>
           <div style="display:flex;justify-content:space-between;"><span>Loop Active Cut</span><code>L</code></div>
         </div>
       </details>
       <button id="exportBtn" class="btn btn-primary" onclick="exportReelNow()">
-        🚀 Export 1080p MP4
+        RENDER 1080P MP4
       </button>
       <a id="headerDownloadReelBtn" class="btn btn-download" href="/output/cinematic_temple_reel_1080p.mp4" download style="display:none;">
-        ⬇️ Download MP4
+        ↓ DOWNLOAD MP4
       </a>
     </div>
   </header>
 
   <!-- STATUS BAR -->
   <div class="status-bar">
-    <span id="statusBanner">Ready — 1 Best Highlight Per Clip (No Reused Clips) • Clean Regular Cuts (Zero Black Flash) • Slow-Motion & Native Audio!</span>
-    <span id="projectSummaryTag">0 Clips • 0.0s Total Reel • 100% Native Event Audio</span>
+    <span id="statusBanner">READY — 1 HIGHLIGHT PER CLIP • ZERO BLACK FRAMES • NATIVE EVENT AUDIO</span>
+    <span id="projectSummaryTag">0 CLIPS • 0.0S TOTAL REEL • 100% NATIVE AUDIO</span>
   </div>
 
-  <!-- MOBILE / TABLET WORKSPACE SWITCHER (CapCut Web style) -->
+  <!-- MOBILE / TABLET WORKSPACE SWITCHER -->
   <div class="mobile-workspace-tabs">
-    <button type="button" class="mobile-tab-btn" id="mobTabMedia" onclick="switchMobileTab('media')">📂 Media Bin</button>
-    <button type="button" class="mobile-tab-btn active" id="mobTabStage" onclick="switchMobileTab('stage')">🎬 Stage &amp; Trimmer</button>
-    <button type="button" class="mobile-tab-btn" id="mobTabInspector" onclick="switchMobileTab('inspector')">🎛️ Cut Inspector</button>
+    <button type="button" class="mobile-tab-btn" id="mobTabMedia" onclick="switchMobileTab('media')">MEDIA POOL</button>
+    <button type="button" class="mobile-tab-btn active" id="mobTabStage" onclick="switchMobileTab('stage')">PROGRAM &amp; TRIMMER</button>
+    <button type="button" class="mobile-tab-btn" id="mobTabInspector" onclick="switchMobileTab('inspector')">CUT INSPECTOR</button>
   </div>
 
   <!-- 3-COLUMN STUDIO WORKSPACE -->
@@ -1262,17 +1291,17 @@ HTML_TEMPLATE = r"""
     <!-- LEFT COLUMN: EVENT CLIP LIBRARY -->
     <div class="col-panel col-left">
       <div class="panel-header">
-        <span>📂 EVENT CLIPS (<span id="clipCountLabel">0</span>)</span>
+        <span>MEDIA POOL (<span id="clipCountLabel">0</span>)</span>
         <div style="display:flex; gap:5px;">
-          <button class="btn" style="padding:3px 8px; font-size:11px;" onclick="syncClipsFolder()" title="Scan input/clips/ folder">
-            🔄 Scan Folder
+          <button class="btn" style="padding:3px 8px; font-size:10.5px;" onclick="syncClipsFolder()" title="Scan input/clips/ folder">
+            SCAN FOLDER
           </button>
         </div>
       </div>
 
       <div id="clipDropzone" class="dropzone" onclick="document.getElementById('clipFileInput').click()">
-        <div class="dropzone-title">➕ Drop Event Videos & Photos Here</div>
-        <div class="dropzone-sub">or click to browse (.MOV, .MP4, .JPG, .PNG, .HEIC) — Videos + Living Photos</div>
+        <div class="dropzone-title">+ INGEST EVENT VIDEOS &amp; PHOTOS</div>
+        <div class="dropzone-sub">Drop or browse (.MOV, .MP4, .JPG, .PNG, .HEIC)</div>
         <input id="clipFileInput" type="file" multiple accept="video/*,image/*,.mov,.mp4,.jpg,.jpeg,.png,.heic,.webp" style="display:none" onchange="uploadSelectedFiles(this.files)" />
       </div>
 
@@ -1316,43 +1345,43 @@ HTML_TEMPLATE = r"""
         </div>
       </div>
 
-      <!-- Segmented Full-Reel Progress Bar (CapCut / Instagram Reels style) -->
+      <!-- Segmented Full-Reel Progress Bar -->
       <div class="reel-progress-ribbon" id="reelProgressRibbon" title="Click any scene segment to jump directly to that cut"></div>
 
       <!-- Transport Controls -->
       <div class="transport-bar">
         <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-          <button class="btn" onclick="stepStoryboard(-1)" title="Previous Cut (Left Arrow)">⏮</button>
+          <button class="btn" onclick="stepStoryboard(-1)" title="Previous Cut (Left Arrow)">◀</button>
           <button id="playPauseBtn" class="btn btn-gold" onclick="togglePlayReel()" style="min-width:130px; justify-content:center;">
-            ▶ Play Full Reel
+            ▶ PLAY REEL
           </button>
           <button id="loopClipBtn" class="btn" onclick="toggleLoopCurrentClip()" title="Loop Current Selected Cut (L)">
-            🔁 Loop Cut
+            ⟲ LOOP CUT
           </button>
-          <button class="btn" onclick="stepStoryboard(1)" title="Next Cut (Right Arrow)">⏭</button>
+          <button class="btn" onclick="stepStoryboard(1)" title="Next Cut (Right Arrow)">▶</button>
         </div>
 
-        <div id="activeClipBanner" style="font-size:12px; font-weight:700; color:#e2e8f0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-          No cut selected
+        <div id="activeClipBanner" style="font-family:var(--mono); font-size:11px; font-weight:700; color:#e4e4e7; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+          NO CUT SELECTED
         </div>
 
         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
           <div class="timecode" id="timecodeDisplay">00:00.0 / 00:00.0</div>
-          <button class="btn btn-primary" style="padding:5px 10px;font-size:11px;" onclick="exportReelNow()">🚀 Export MP4</button>
-          <a id="transportDownloadReelBtn" class="btn btn-download" style="padding:5px 10px;font-size:11px;display:none;" href="/output/cinematic_temple_reel_1080p.mp4" download>⬇️ Download MP4</a>
+          <button class="btn btn-primary" style="padding:5px 10px;font-size:11px;" onclick="exportReelNow()">RENDER MP4</button>
+          <a id="transportDownloadReelBtn" class="btn btn-download" style="padding:5px 10px;font-size:11px;display:none;" href="/output/cinematic_temple_reel_1080p.mp4" download>↓ DOWNLOAD MP4</a>
         </div>
       </div>
 
       <!-- Interactive 4Hz Visual + Audio Excitement Trimmer -->
       <div class="trimmer-box">
         <div class="trimmer-header">
-          <span id="trimmerTitle">📈 4Hz Action Motion (Gold) + Native Audio Excitement (Cyan) — Drag [IN / OUT] Handles</span>
-          <div style="display:flex; gap:6px;">
-            <button class="btn" style="padding:2px 7px; font-size:10.5px;" onclick="snapSelectedToPeak()">✨ Peak Highlight</button>
-            <button class="btn" style="padding:2px 7px; font-size:10.5px;" onclick="snapSelectedToSpeech()">🗣️ Spoken Moment</button>
-            <button class="btn" style="padding:2px 7px; font-size:10.5px;" onclick="expandSelectedFullClip()">↔ Full Clip</button>
-            <button class="btn" style="padding:2px 7px; font-size:10.5px;" onclick="splitSelectedClipAtPlayhead()">✂️ Split</button>
-            <button class="btn" style="padding:2px 7px; font-size:10.5px;" onclick="duplicateSelectedClip()">⧉ Reuse Clip</button>
+          <span id="trimmerTitle">4HZ MOTION (AMBER) + AUDIO RMS (CYAN) — DRAG [IN / OUT] HANDLES</span>
+          <div style="display:flex; gap:5px; flex-wrap:wrap;">
+            <button class="btn" style="padding:2px 7px; font-size:10px;" onclick="snapSelectedToPeak()">PEAK HIGHLIGHT</button>
+            <button class="btn" style="padding:2px 7px; font-size:10px;" onclick="snapSelectedToSpeech()">SPEECH PEAK</button>
+            <button class="btn" style="padding:2px 7px; font-size:10px;" onclick="expandSelectedFullClip()">FULL CLIP</button>
+            <button class="btn" style="padding:2px 7px; font-size:10px;" onclick="splitSelectedClipAtPlayhead()">✂ SPLIT</button>
+            <button class="btn" style="padding:2px 7px; font-size:10px;" onclick="duplicateSelectedClip()">+ DUPLICATE</button>
           </div>
         </div>
         <canvas id="trimCanvas" width="900" height="56"></canvas>
@@ -1362,52 +1391,52 @@ HTML_TEMPLATE = r"""
     <!-- RIGHT COLUMN: PER-CLIP SPEED, AUDIO, TEXT OVERLAY & VISUAL INSPECTOR -->
     <div class="col-panel col-right">
       <div class="panel-header">
-        <span>🎛️ CUT INSPECTOR & CINEMATICS</span>
+        <span>CUT INSPECTOR</span>
         <span id="inspClipBadge" class="badge badge-gold">—</span>
       </div>
 
       <!-- 1. Cinematic Speed, Slow-Motion & Look -->
       <div class="inspector-section">
         <div class="sec-title">
-          <span>🎬 1. Speed, Slow-Mo & Film Grade</span>
+          <span>01 / SPEED, SLOW-MO &amp; GRADE</span>
         </div>
 
         <div class="form-row">
           <label>
             <span>Playback Speed / Slow-Motion</span>
-            <span id="inspEffectiveDurLabel" style="color:#c4b5fd; font-size:10.5px;"></span>
+            <span id="inspEffectiveDurLabel" style="color:var(--gold-light); font-family:var(--mono); font-size:10.5px;"></span>
           </label>
           <select id="inspSpeedMode" onchange="onInspectorLookChange()">
-            <option value="1.0x">▶️ 1.0x Real-Time (Natural Pace)</option>
-            <option value="0.70x">🎬 0.70x Cinematic Slow-Mo (Silky Smooth)</option>
-            <option value="0.55x">✨ 0.55x Dreamy Slow-Mo (Sacred / Hero Moment)</option>
-            <option value="speed_ramp">⚡ Hero Speed-Ramp (Fast 1.35x ➜ 0.55x Slow-Mo)</option>
-            <option value="1.25x">🔥 1.25x Energetic Fast Cut</option>
+            <option value="1.0x">1.0x Real-Time (Natural Pace)</option>
+            <option value="0.70x">0.70x Cinematic Slow-Mo (Optical Smooth)</option>
+            <option value="0.55x">0.55x Hero Slow-Mo (Sacred / Peak Moment)</option>
+            <option value="speed_ramp">Speed-Ramp (1.35x → 0.55x Hero Slow-Mo)</option>
+            <option value="1.25x">1.25x Fast Cut</option>
           </select>
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
           <div class="form-row">
-            <label><span>Cinematic Look / Motion</span></label>
+            <label><span>Look / Camera Motion</span></label>
             <select id="inspEffect" onchange="onInspectorLookChange()">
-              <option value="cinematic_film">🎞️ Cinematic Warm Film</option>
-              <option value="warm_temple">🪔 Sacred Temple Gold Glow</option>
-              <option value="photo_parallax_in">📸 3D Photo Push-In + Gold Frame</option>
-              <option value="photo_polaroid_gold">🖼️ Sacred Gold Frame Showcase</option>
-              <option value="photo_reveal_out">🌅 Photo Pull-Back Reveal</option>
-              <option value="photo_pan_drift">🎥 Photo Floating Drift</option>
-              <option value="ken_burns_in">🎥 Dynamic Gimbal Push-In</option>
-              <option value="ken_burns_out">🎥 Gimbal Pull-Back Reveal</option>
-              <option value="punch_zoom">💥 Scroll-Stopper Punch Zoom</option>
-              <option value="cinema_glow">✨ Crisp Cinema Contrast</option>
-              <option value="none">Clean Unfiltered</option>
+              <option value="cinematic_film">Cinematic Warm Film</option>
+              <option value="warm_temple">Sacred Temple Gold Grade</option>
+              <option value="photo_parallax_in">3D Photo Push-In + Gold Frame</option>
+              <option value="photo_polaroid_gold">Gold Frame Showcase</option>
+              <option value="photo_reveal_out">Photo Pull-Back Reveal</option>
+              <option value="photo_pan_drift">Photo Floating Drift</option>
+              <option value="ken_burns_in">Gimbal Push-In</option>
+              <option value="ken_burns_out">Gimbal Pull-Back Reveal</option>
+              <option value="punch_zoom">Punch Zoom</option>
+              <option value="cinema_glow">Crisp Cinema Contrast</option>
+              <option value="none">Rec.709 Clean Unfiltered</option>
             </select>
           </div>
           <div class="form-row">
             <label><span>Cut Transition</span></label>
             <select id="inspTransition" onchange="onInspectorLookChange()">
-              <option value="none">Clean Regular Cut (Zero Flash)</option>
-              <option value="flash_white">Subtle Warm Exposure Cut</option>
+              <option value="none">Hard Cut (Zero Flash)</option>
+              <option value="flash_white">Warm Exposure Cut</option>
             </select>
           </div>
         </div>
@@ -1416,21 +1445,21 @@ HTML_TEMPLATE = r"""
           <label><span>Aspect Ratio Framing</span></label>
           <select id="inspFitMode" onchange="onInspectorLookChange()">
             <option value="auto">Use Project Default</option>
-            <option value="blur_pad">🌫️ Blurred Backdrop Fill (No Crop)</option>
-            <option value="cover">🔍 Smart Center Fill (Full Bleed)</option>
+            <option value="blur_pad">Blurred Backdrop Fill (No Crop)</option>
+            <option value="cover">Center Crop Fill (Full Bleed)</option>
           </select>
         </div>
       </div>
 
       <!-- 1B. Scrapbook Photo Pop-Up Overlay (Flashes ON TOP of Playing Video) -->
-      <div class="inspector-section" style="background: rgba(245, 158, 11, 0.04);">
+      <div class="inspector-section" style="background: rgba(245, 158, 11, 0.03);">
         <div class="sec-title">
-          <span>📸 Scrapbook Photo Pop-Up (On Video)</span>
+          <span>02 / SCRAPBOOK PHOTO OVERLAY</span>
           <span id="inspScrapbookBadge" class="badge badge-gold">OFF</span>
         </div>
 
         <div class="form-row">
-          <label><span>Flash Photo Over This Video Cut</span></label>
+          <label><span>Overlay Photo on Active Cut</span></label>
           <select id="inspScrapbookPhoto" onchange="onInspectorScrapbookChange()">
             <option value="">— None (Video Only) —</option>
           </select>
@@ -1438,27 +1467,27 @@ HTML_TEMPLATE = r"""
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
           <div class="form-row">
-            <label><span>Scrapbook Frame</span></label>
+            <label><span>Frame Style</span></label>
             <select id="inspScrapbookStyle" onchange="onInspectorScrapbookChange()">
-              <option value="polaroid_tape">🗂️ Polaroid + Gold Tape</option>
-              <option value="gold_foil">🪔 Sacred Gold Foil Card</option>
-              <option value="vintage_print">📜 Warm Vintage Print</option>
+              <option value="polaroid_tape">Polaroid + Gold Tape</option>
+              <option value="gold_foil">Sacred Gold Foil Card</option>
+              <option value="vintage_print">Warm Vintage Print</option>
             </select>
           </div>
           <div class="form-row">
             <label><span>Pop-Up Timing</span></label>
             <select id="inspScrapbookTiming" onchange="onInspectorScrapbookChange()">
-              <option value="pop_after_1s">⚡ Short Flash (~1.2s)</option>
-              <option value="pop_early">⚡ Quick Flash (~0.85s)</option>
-              <option value="full">🖼️ Whole Cut Duration</option>
+              <option value="pop_after_1s">Short Flash (~1.2s)</option>
+              <option value="pop_early">Quick Flash (~0.85s)</option>
+              <option value="full">Whole Cut Duration</option>
             </select>
           </div>
         </div>
 
         <div class="form-row" style="margin-bottom:2px;">
           <label>
-            <span>Scrapbook Tilt Angle</span>
-            <span id="inspScrapbookTiltLabel" style="color:var(--gold-light); font-weight:800;">-3.0°</span>
+            <span>Tilt Angle</span>
+            <span id="inspScrapbookTiltLabel" style="color:var(--gold-light); font-family:var(--mono); font-weight:800;">-3.0°</span>
           </label>
           <input id="inspScrapbookTilt" type="range" min="-8" max="8" step="0.5" value="-3.0" oninput="onInspectorScrapbookChange()" />
         </div>
@@ -1467,32 +1496,32 @@ HTML_TEMPLATE = r"""
       <!-- 2. Original Clip Audio & Volume -->
       <div class="inspector-section">
         <div class="sec-title">
-          <span>🔊 2. Original Native Audio</span>
-          <button class="btn" style="padding:2px 7px; font-size:10px;" onclick="applyVolumeToAllClips()">Apply % to All</button>
+          <span>03 / NATIVE CLIP AUDIO</span>
+          <button class="btn" style="padding:2px 7px; font-size:10px;" onclick="applyVolumeToAllClips()">APPLY TO ALL</button>
         </div>
 
         <div class="form-row">
           <label>
-            <span>Native Event Audio Volume</span>
-            <span id="volPctLabel" style="color:var(--gold-light); font-weight:800;">100%</span>
+            <span>Clip Gain</span>
+            <span id="volPctLabel" style="color:var(--gold-light); font-family:var(--mono); font-weight:800;">100%</span>
           </label>
           <input id="inspVolumeSlider" type="range" min="0" max="200" step="5" value="100" oninput="onInspectorAudioChange()" />
         </div>
 
         <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:4px;">
-          <label style="display:flex; align-items:center; gap:6px; font-size:11.5px; cursor:pointer;">
+          <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
             <input id="inspMuteCheck" type="checkbox" onchange="onInspectorAudioChange()" />
-            <span>🔇 Mute this cut's audio</span>
+            <span>Mute cut audio</span>
           </label>
-          <span id="inspTranscriptHint" style="font-size:10.5px; color:#c4b5fd;"></span>
+          <span id="inspTranscriptHint" style="font-size:10.5px; color:var(--muted);"></span>
         </div>
       </div>
 
       <!-- 3. Per-Clip Text & Title Overlays -->
       <div class="inspector-section">
         <div class="sec-title">
-          <span>🏷️ 3. Text & Title Overlay</span>
-          <button class="btn" style="padding:2px 7px; font-size:10px;" onclick="clearClipOverlayText()">Clear</button>
+          <span>04 / LOWER-THIRD &amp; TITLE OVERLAY</span>
+          <button class="btn" style="padding:2px 7px; font-size:10px;" onclick="clearClipOverlayText()">CLEAR</button>
         </div>
 
         <div class="form-row">
@@ -1506,14 +1535,14 @@ HTML_TEMPLATE = r"""
         </div>
 
         <div class="form-row">
-          <label><span>Quick Temple & Event Presets</span></label>
+          <label><span>Quick Event Presets</span></label>
           <div class="preset-chips">
-            <span class="chip" onclick="applyCaptionPreset('🏺 Sacred Kalasha Procession', 'Ceremonial Temple Entry')">🏺 Kalasha Procession</span>
-            <span class="chip" onclick="applyCaptionPreset('🔥 Sacred Yagna & Homa', 'Vedic Fire Ceremony')">🔥 Sacred Yagna</span>
-            <span class="chip" onclick="applyCaptionPreset('🎶 Bhajan & Kirtan', 'Devotional Satsang & Tabla')">🎶 Bhajan & Tabla</span>
-            <span class="chip" onclick="applyCaptionPreset('🙏 Sanctum Darshan & Pooja', 'Divine Blessings & Prayers')">🙏 Darshan & Pooja</span>
-            <span class="chip" onclick="applyCaptionPreset('🪔 Maha Aarti & Archana', 'Sacred Lamp Ceremony')">🪔 Maha Aarti</span>
-            <span class="chip" onclick="ClearAllCaptionsInReel()">🧹 Clear All Captions</span>
+            <span class="chip" onclick="applyCaptionPreset('Sacred Kalasha Procession', 'Ceremonial Temple Entry')">Kalasha Procession</span>
+            <span class="chip" onclick="applyCaptionPreset('Sacred Yagna & Homa', 'Vedic Fire Ceremony')">Sacred Yagna</span>
+            <span class="chip" onclick="applyCaptionPreset('Bhajan & Kirtan', 'Devotional Satsang & Tabla')">Bhajan &amp; Tabla</span>
+            <span class="chip" onclick="applyCaptionPreset('Sanctum Darshan & Pooja', 'Divine Blessings & Prayers')">Darshan &amp; Pooja</span>
+            <span class="chip" onclick="applyCaptionPreset('Maha Aarti & Archana', 'Sacred Lamp Ceremony')">Maha Aarti</span>
+            <span class="chip" onclick="ClearAllCaptionsInReel()">Clear All</span>
           </div>
         </div>
 
@@ -1529,10 +1558,10 @@ HTML_TEMPLATE = r"""
           <div class="form-row">
             <label><span>Style Theme</span></label>
             <select id="inspOverlayStyle" onchange="onInspectorOverlayChange()">
-              <option value="temple_gold">🪔 Temple Gold & Crimson</option>
-              <option value="pill_dark">🌑 Dark Glass Pill</option>
-              <option value="editorial_box">📜 Editorial Ivory & Gold</option>
-              <option value="minimal_glow">✨ Minimal Cinema Glow</option>
+              <option value="temple_gold">Temple Gold &amp; Crimson</option>
+              <option value="pill_dark">Dark Glass Pill</option>
+              <option value="editorial_box">Editorial Ivory &amp; Gold</option>
+              <option value="minimal_glow">Minimal Cinema Glow</option>
             </select>
           </div>
         </div>
@@ -1562,13 +1591,13 @@ HTML_TEMPLATE = r"""
   <div class="storyboard-dock">
     <div class="dock-header">
       <div style="display:flex; align-items:center; gap:12px;">
-        <span>🎞️ MULTI-SCENE STORYBOARD RIBBON (<span id="sbCountLabel">0</span> CUTS)</span>
-        <span style="font-size:11px; color:var(--muted); font-weight:500;">Long clips are automatically split into multiple non-overlapping scenes & interleaved with Slow-Mo!</span>
+        <span>MULTI-SCENE STORYBOARD (<span id="sbCountLabel">0</span> CUTS)</span>
+        <span style="font-size:10.5px; color:var(--muted); font-weight:500;">Non-overlapping scene cuts interleaved with optical slow-motion</span>
       </div>
-      <div style="display:flex; align-items:center; gap:8px;">
-        <button class="btn" style="padding:3px 9px; font-size:11px;" onclick="autoPickHighlights()">🎬 Re-Weave Multi-Scene Reel</button>
-        <button class="btn" style="padding:3px 9px; font-size:11px;" onclick="sortStoryboard('chronological')">📂 Sort by Filename</button>
-        <button class="btn" style="padding:3px 9px; font-size:11px;" onclick="sortStoryboard('energy')">🔥 Sort by Peak Energy</button>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <button class="btn" style="padding:3px 9px; font-size:10.5px;" onclick="autoPickHighlights()">RE-WEAVE STORYBOARD</button>
+        <button class="btn" style="padding:3px 9px; font-size:10.5px;" onclick="sortStoryboard('chronological')">SORT: CHRONOLOGICAL</button>
+        <button class="btn" style="padding:3px 9px; font-size:10.5px;" onclick="sortStoryboard('energy')">SORT: PEAK ENERGY</button>
       </div>
     </div>
     <div id="storyboardRibbon" class="storyboard-ribbon"></div>
@@ -1577,7 +1606,7 @@ HTML_TEMPLATE = r"""
   <!-- AGENT SWARM DRAWER -->
   <div id="agentsDrawer" class="agents-drawer">
     <div class="panel-header">
-      <span>🤖 PARALLEL AGENT SWARM TELEMETRY</span>
+      <span>PARALLEL WORKER TELEMETRY</span>
       <button class="btn" style="padding:2px 7px; font-size:11px;" onclick="toggleAgentsDrawer(false)">✕</button>
     </div>
     <div id="agentsList" class="agents-list"></div>

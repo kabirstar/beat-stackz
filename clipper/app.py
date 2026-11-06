@@ -290,18 +290,20 @@ HTML_TEMPLATE = """
   <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
   <style>
     :root {
-      --bg: #09090d;
-      --panel: #12121a;
-      --panel2: #181824;
-      --border: #27273a;
-      --accent: #ff2a85;
-      --accent2: #7c3aed;
-      --cyan: #06b6d4;
+      --bg: #0a0a0c;
+      --panel: #111115;
+      --panel2: #17171c;
+      --panel3: #1f1f26;
+      --border: #26262f;
+      --accent: #f59e0b;
+      --accent2: #d97706;
+      --cyan: #38bdf8;
       --green: #10b981;
       --amber: #f59e0b;
       --red: #ef4444;
-      --text: #f3f4f6;
-      --muted: #9ca3af;
+      --text: #ececef;
+      --muted: #8e8e99;
+      --mono: "SF Mono", "JetBrains Mono", "Fira Code", ui-monospace, monospace;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
@@ -310,18 +312,19 @@ HTML_TEMPLATE = """
       min-height: 100vh;
       overflow-x: hidden;
       overflow-y: auto;
-      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      font-variant-numeric: tabular-nums;
       background: var(--bg);
       color: var(--text);
       display: flex;
       flex-direction: column;
+      -webkit-font-smoothing: antialiased;
     }
     header {
-      min-height: 52px;
+      min-height: 48px;
       height: auto;
-      padding: 8px 14px;
-      background: rgba(18, 18, 26, 0.96);
-      backdrop-filter: blur(8px);
+      padding: 6px 14px;
+      background: #0e0e12;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
@@ -336,39 +339,99 @@ HTML_TEMPLATE = """
       z-index: 80;
     }
     .brand { display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; }
-    .brand h1 { font-size: 15px; font-weight: 800; letter-spacing: 0.02em; white-space: nowrap; }
+    .brand h1 {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: #fff;
+    }
+    .tally-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--amber);
+      box-shadow: 0 0 6px rgba(245, 158, 11, 0.7);
+      display: inline-block;
+    }
+    .studio-tag {
+      font-family: var(--mono);
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: #1a1a22;
+      border: 1px solid #2e2e3a;
+      color: var(--muted);
+    }
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       flex-wrap: wrap;
       min-width: 0;
       justify-content: flex-end;
     }
     .btn {
-      padding: 6px 10px; border-radius: 7px; border: 1px solid var(--border);
-      background: var(--panel2); color: var(--text); font-size: 12px; font-weight: 600;
-      cursor: pointer; transition: all 0.14s; display: inline-flex; align-items: center; gap: 5px;
-      white-space: nowrap; text-decoration: none;
+      padding: 5px 9px;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      font-variant-numeric: tabular-nums;
+      cursor: pointer;
+      transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      text-decoration: none;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
     }
-    .btn:hover { border-color: #4b5563; background: #222233; }
-    .btn-step1 { border-color: rgba(6, 182, 212, 0.5); }
-    .btn-step2 { border-color: rgba(16, 185, 129, 0.5); }
-    .btn-agents { border-color: var(--accent2); }
-    .btn-danger { border-color: rgba(239, 68, 68, 0.45); color: #fca5a5; }
-    .btn-danger:hover { background: rgba(239, 68, 68, 0.2); border-color: var(--red); }
+    .btn:hover { border-color: #3f3f4e; background: var(--panel3); color: #fff; }
+    .btn-step1 { border-color: #333342; }
+    .btn-step2 { border-color: #333342; }
+    .btn-agents { font-family: var(--mono); font-size: 10.5px; }
+    .btn-danger { border-color: rgba(239, 68, 68, 0.4); color: #fca5a5; }
+    .btn-danger:hover { background: rgba(239, 68, 68, 0.16); border-color: var(--red); }
     .btn-primary {
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border: none; color: #fff;
-      box-shadow: 0 2px 10px rgba(255, 42, 133, 0.35);
+      background: var(--amber);
+      border: 1px solid #fbbf24;
+      color: #09090b;
+      font-weight: 800;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    }
+    .btn-primary:hover {
+      background: #fbbf24;
+      border-color: #fde68a;
+      color: #000;
     }
     .btn-download {
-      background: rgba(16, 185, 129, 0.18);
-      border: 1px solid var(--green);
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.45);
       color: #6ee7b7;
+      font-family: var(--mono);
+      font-size: 10.5px;
     }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    select.btn { padding-right: 6px; max-width: 190px; overflow: hidden; text-overflow: ellipsis; }
+    .btn:disabled { opacity: 0.38; cursor: not-allowed; }
+    select.btn { padding-right: 6px; max-width: 185px; overflow: hidden; text-overflow: ellipsis; }
+    kbd, code.kbd-chip {
+      font-family: var(--mono);
+      font-size: 9.5px;
+      padding: 1px 4px;
+      border-radius: 3px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: inherit;
+    }
 
     /* Live Parallel Agents Floating Drawer */
     .agents-drawer {
@@ -441,13 +504,13 @@ HTML_TEMPLATE = """
 
     /* Left Column: Big 16:9 Master Video Player */
     .monitor-pane {
-      background: #0b0b11;
+      background: #0c0c0f;
       border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
       min-width: 0;
       padding: 10px 14px;
-      gap: 8px;
+      gap: 7px;
     }
     .monitor-topbar {
       display: flex;
@@ -461,12 +524,14 @@ HTML_TEMPLATE = """
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: #161625;
-      border: 1px solid var(--cyan);
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 800;
+      background: #16161c;
+      border: 1px solid #2e2e3a;
+      padding: 3px 9px;
+      border-radius: 4px;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
       color: #fff;
       white-space: nowrap;
     }
@@ -478,8 +543,8 @@ HTML_TEMPLATE = """
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #000;
-      border-radius: 10px;
+      background: #040406;
+      border-radius: 6px;
       border: 1px solid var(--border);
       position: relative;
       overflow: hidden;
@@ -509,14 +574,14 @@ HTML_TEMPLATE = """
       gap: 6px;
     }
     .hud-chip {
-      padding: 3px 9px;
-      background: rgba(9, 9, 15, 0.82);
-      backdrop-filter: blur(4px);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      border-radius: 6px;
-      font-size: 11px;
+      padding: 3px 8px;
+      background: rgba(10, 10, 13, 0.86);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 4px;
+      font-family: var(--mono);
+      font-size: 10.5px;
       font-weight: 700;
-      color: #fff;
+      color: #e4e4e7;
     }
     .monitor-lyric-overlay {
       position: absolute;
@@ -525,7 +590,7 @@ HTML_TEMPLATE = """
       right: 12px;
       padding: 5px 10px;
       background: rgba(9, 9, 15, 0.84);
-      border-radius: 7px;
+      border-radius: 5px;
       font-size: 12px;
       font-weight: 700;
       text-align: center;
@@ -541,9 +606,13 @@ HTML_TEMPLATE = """
       justify-content: space-between;
       gap: 6px;
       flex-wrap: wrap;
+      background: #111115;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 8px;
     }
 
-    /* Right Column: Simple Camera Angle Switcher */
+    /* Right Column: Broadcast Multiviewer Camera Angle Switcher */
     .take-picker-pane {
       display: flex;
       flex-direction: column;
@@ -552,7 +621,7 @@ HTML_TEMPLATE = """
       background: var(--bg);
     }
     .pane-toolbar {
-      padding: 10px 14px;
+      padding: 8px 14px;
       background: var(--panel);
       border-bottom: 1px solid var(--border);
       display: flex;
@@ -563,47 +632,47 @@ HTML_TEMPLATE = """
     }
     .range-pill {
       display: inline-flex; align-items: center; gap: 5px;
-      background: #0d0d14; border: 1px solid var(--border);
-      padding: 3px 8px; border-radius: 7px; font-size: 11px;
+      background: #0d0d12; border: 1px solid var(--border);
+      padding: 3px 8px; border-radius: 5px; font-size: 11px; font-family: var(--mono);
     }
     .range-pill input[type="number"] {
       width: 54px; background: var(--panel2); border: 1px solid var(--border);
-      color: #fff; padding: 2px 4px; border-radius: 4px; font-size: 11px; font-weight: 600;
+      color: #fff; padding: 2px 4px; border-radius: 4px; font-size: 11px; font-weight: 600; font-family: var(--mono);
     }
     .takes-scroll {
       flex: 1;
       min-height: 0;
       overflow-y: auto;
-      padding: 12px;
+      padding: 10px 12px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
     .takes-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
+      gap: 8px;
       align-items: start;
     }
     .take-card {
       background: var(--panel);
-      border: 2px solid var(--border);
-      border-radius: 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       cursor: pointer;
       flex-shrink: 0;
-      transition: border-color 0.12s ease, transform 0.12s ease;
+      transition: border-color 0.12s ease, background 0.12s ease;
     }
     .take-card:hover {
-      border-color: var(--cyan);
-      transform: translateY(-1px);
+      border-color: var(--amber);
+      background: #16161d;
     }
     .take-card.active-take {
       border-color: var(--green);
-      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.35);
-      background: #121c19;
+      box-shadow: inset 0 0 0 1px var(--green);
+      background: #101915;
     }
     .take-video-wrap {
       position: relative;
@@ -623,15 +692,19 @@ HTML_TEMPLATE = """
       position: absolute;
       top: 6px;
       left: 6px;
-      padding: 3px 7px;
-      border-radius: 5px;
-      font-size: 10px;
-      font-weight: 800;
-      background: rgba(6, 182, 212, 0.94);
-      color: #000;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: var(--mono);
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      background: rgba(12, 12, 16, 0.90);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #e4e4e7;
     }
     .take-card.active-take .take-key-badge {
       background: var(--green);
+      border-color: #34d399;
       color: #031911;
     }
     .take-energy-badge {
@@ -639,18 +712,20 @@ HTML_TEMPLATE = """
       top: 6px;
       right: 6px;
       padding: 2px 6px;
-      border-radius: 5px;
-      font-size: 10px;
-      font-weight: 800;
-      background: rgba(9, 9, 15, 0.85);
-      color: var(--amber);
+      border-radius: 3px;
+      font-family: var(--mono);
+      font-size: 9.5px;
+      font-weight: 700;
+      background: rgba(10, 10, 14, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #cbd5e1;
     }
     .take-body {
-      padding: 7px 9px;
+      padding: 6px 8px;
       font-size: 11px;
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 4px;
     }
     .take-title {
       font-weight: 700;
@@ -671,12 +746,12 @@ HTML_TEMPLATE = """
       text-overflow: ellipsis;
     }
     .color-dot {
-      width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0;
+      width: 7px; height: 7px; border-radius: 2px; display: inline-block; flex-shrink: 0;
     }
     details.broll-drawer {
-      background: #101018;
+      background: #101015;
       border: 1px solid var(--border);
-      border-radius: 9px;
+      border-radius: 6px;
       padding: 8px 10px;
     }
     details.broll-drawer summary {
@@ -694,7 +769,7 @@ HTML_TEMPLATE = """
       color: var(--text);
     }
 
-    /* Ultra-Simple Multi-Track Bottom Timeline */
+    /* Multi-Track Bottom Timeline */
     .timeline-dock {
       min-height: 158px;
       max-height: 360px;
@@ -711,9 +786,9 @@ HTML_TEMPLATE = """
       max-height: 440px;
     }
     .timeline-toolbar {
-      min-height: 32px;
+      min-height: 30px;
       padding: 4px 14px;
-      background: #0e0e16;
+      background: #0d0d11;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
@@ -735,17 +810,20 @@ HTML_TEMPLATE = """
       position: relative;
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 4px;
     }
     .track-row {
       display: grid;
       grid-template-columns: 110px 1fr;
       align-items: center;
-      min-height: 32px;
+      min-height: 30px;
     }
     .track-label {
-      font-size: 11px;
+      font-family: var(--mono);
+      font-size: 10px;
       font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
       color: var(--muted);
       padding-right: 8px;
       white-space: nowrap;
@@ -757,62 +835,61 @@ HTML_TEMPLATE = """
     }
     .track-lane {
       position: relative;
-      height: 32px;
-      background: #0c0c13;
-      border-radius: 6px;
-      border: 1px solid #1e1e2e;
+      height: 30px;
+      background: #0a0a0e;
+      border-radius: 4px;
+      border: 1px solid #1e1e26;
       overflow: hidden;
     }
     .ruler-lane {
       position: relative;
-      height: 22px;
-      background: #090910;
-      border-radius: 5px;
-      border: 1px solid #1a1a28;
+      height: 20px;
+      background: #08080b;
+      border-radius: 4px;
+      border: 1px solid #1a1a22;
       overflow: hidden;
       cursor: pointer;
     }
     .ruler-tick {
       position: absolute;
       top: 2px;
-      font-size: 9.5px;
-      font-family: monospace;
-      color: #64748b;
+      font-size: 9px;
+      font-family: var(--mono);
+      color: #71717a;
       transform: translateX(3px);
       pointer-events: none;
-      border-left: 1px solid rgba(148, 163, 184, 0.25);
+      border-left: 1px solid rgba(161, 161, 170, 0.22);
       padding-left: 3px;
-      height: 18px;
+      height: 16px;
     }
     .bass-hit-pin {
       position: absolute;
       bottom: 0;
-      width: 3px;
-      height: 9px;
+      width: 2px;
+      height: 8px;
       background: var(--amber);
-      border-radius: 2px 2px 0 0;
       opacity: 0.85;
       pointer-events: none;
     }
     .lyrics-lane {
       position: relative;
-      height: 26px;
-      background: #0b0b14;
-      border-radius: 5px;
-      border: 1px solid #1c1c2b;
+      height: 24px;
+      background: #0a0a0f;
+      border-radius: 4px;
+      border: 1px solid #1c1c24;
       overflow: hidden;
     }
     .lyric-chip {
       position: absolute;
-      top: 3px;
-      bottom: 3px;
-      background: rgba(6, 182, 212, 0.14);
-      border: 1px solid rgba(6, 182, 212, 0.42);
-      color: #a5f3fc;
+      top: 2px;
+      bottom: 2px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #d4d4d8;
       font-size: 9.5px;
       font-weight: 600;
       padding: 0 5px;
-      border-radius: 4px;
+      border-radius: 3px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -821,15 +898,16 @@ HTML_TEMPLATE = """
       cursor: pointer;
     }
     .lyric-chip:hover {
-      background: rgba(6, 182, 212, 0.28);
-      border-color: var(--cyan);
+      background: rgba(245, 158, 11, 0.16);
+      border-color: var(--amber);
       color: #fff;
     }
     .clip-bar {
       position: absolute;
       top: 4px;
       bottom: 4px;
-      border-radius: 4px;
+      border-radius: 3px;
+      font-family: var(--mono);
       font-size: 9.5px;
       font-weight: 700;
       color: #fff;
@@ -847,9 +925,9 @@ HTML_TEMPLATE = """
       position: absolute;
       top: 0;
       bottom: 0;
-      background: rgba(6, 182, 212, 0.22);
-      border-left: 2px solid var(--cyan);
-      border-right: 2px solid var(--cyan);
+      background: rgba(245, 158, 11, 0.16);
+      border-left: 1.5px solid var(--amber);
+      border-right: 1.5px solid var(--amber);
       pointer-events: none;
       z-index: 25;
     }
@@ -857,9 +935,8 @@ HTML_TEMPLATE = """
       position: absolute;
       top: 0;
       bottom: 0;
-      width: 2px;
-      background: #ff2a85;
-      box-shadow: 0 0 8px rgba(255, 42, 133, 0.9);
+      width: 1.5px;
+      background: #ef4444;
       pointer-events: none;
       z-index: 30;
     }
@@ -868,18 +945,18 @@ HTML_TEMPLATE = """
       position: absolute;
       top: 0;
       left: -4px;
-      width: 10px;
-      height: 8px;
-      background: #ff2a85;
+      width: 9px;
+      height: 7px;
+      background: #ef4444;
       clip-path: polygon(0 0, 100% 0, 50% 100%);
     }
-    /* Master Monitor Interactive Scrubber Bar (Runway / DaVinci Cut Style) */
+    /* Master Monitor Interactive Scrubber Bar (DaVinci Resolve Cut Style) */
     .master-scrub-wrap {
       position: relative;
-      height: 18px;
-      background: #12121e;
+      height: 16px;
+      background: #111116;
       border: 1px solid var(--border);
-      border-radius: 999px;
+      border-radius: 4px;
       cursor: pointer;
       overflow: hidden;
       display: flex;
@@ -892,18 +969,16 @@ HTML_TEMPLATE = """
       top: 0;
       bottom: 0;
       width: 0%;
-      background: linear-gradient(90deg, rgba(6, 182, 212, 0.38), rgba(255, 42, 133, 0.55));
+      background: rgba(245, 158, 11, 0.28);
       pointer-events: none;
     }
     .master-scrub-thumb {
       position: absolute;
-      top: 1px;
-      bottom: 1px;
-      width: 4px;
-      background: #fff;
-      border-radius: 2px;
-      box-shadow: 0 0 8px #ff2a85;
-      transform: translateX(-2px);
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #ef4444;
+      transform: translateX(-1px);
       pointer-events: none;
       z-index: 5;
     }
@@ -911,31 +986,30 @@ HTML_TEMPLATE = """
       position: absolute;
       top: 2px;
       bottom: 2px;
-      width: 4px;
-      border-radius: 2px;
-      background: #e879f9;
-      box-shadow: 0 0 6px rgba(232, 121, 249, 0.9);
+      width: 3px;
+      border-radius: 1px;
+      background: var(--amber);
       pointer-events: none;
       z-index: 3;
     }
     .take-energy-meter {
-      height: 3px;
+      height: 2px;
       width: 100%;
-      background: #1a1a28;
-      border-radius: 99px;
+      background: #1e1e26;
+      border-radius: 2px;
       overflow: hidden;
-      margin-top: 3px;
+      margin-top: 2px;
     }
     .take-energy-meter-fill {
       height: 100%;
-      background: linear-gradient(90deg, var(--cyan), var(--amber));
-      border-radius: 99px;
+      background: var(--amber);
+      border-radius: 2px;
     }
     .filter-pill-group {
       display: inline-flex;
-      background: #0d0d15;
+      background: #0c0c10;
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 5px;
       padding: 2px;
       gap: 2px;
     }
@@ -943,23 +1017,25 @@ HTML_TEMPLATE = """
       background: transparent;
       border: none;
       color: var(--muted);
-      font-size: 10.5px;
+      font-family: var(--mono);
+      font-size: 10px;
       font-weight: 700;
+      letter-spacing: 0.03em;
       padding: 3px 8px;
-      border-radius: 6px;
+      border-radius: 3px;
       cursor: pointer;
     }
     .filter-pill.active {
-      background: var(--panel2);
+      background: var(--panel3);
       color: #fff;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
     }
     .assembled-seg {
       position: absolute;
       top: 2px;
       bottom: 2px;
-      border-radius: 4px;
-      font-size: 10px;
+      border-radius: 3px;
+      font-family: var(--mono);
+      font-size: 9.5px;
       font-weight: 700;
       color: #fff;
       display: flex;
@@ -967,76 +1043,75 @@ HTML_TEMPLATE = """
       padding: 0 5px;
       cursor: pointer;
       overflow: hidden;
-      border: 1px solid rgba(0, 0, 0, 0.55);
+      border: 1px solid rgba(0, 0, 0, 0.65);
     }
     .assembled-seg.selected {
-      outline: 2px solid #fff;
+      outline: 1.5px solid #fff;
       z-index: 15;
     }
 
-    /* Second & Clip Navigator Timeline (Directly under AI Morph Transitions Bar) */
+    /* Second & Clip Navigator Timeline (Unified Studio NLE Console Strip) */
     .clip-timeline-nav-wrap {
-      background: #10101a;
-      border: 1px solid rgba(6, 182, 212, 0.42);
-      border-radius: 9px;
-      padding: 7px 10px;
+      background: #111115;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 9px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
       flex-shrink: 0;
     }
     .second-pills-strip {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
       overflow-x: auto;
-      padding-bottom: 3px;
+      padding-bottom: 2px;
       scrollbar-width: thin;
     }
     .sec-nav-pill {
       padding: 2px 6px;
-      font-size: 10px;
-      font-family: monospace;
+      font-size: 9.5px;
+      font-family: var(--mono);
       font-weight: 700;
-      border-radius: 5px;
-      background: #171726;
-      border: 1px solid #28283e;
+      border-radius: 3px;
+      background: #16161c;
+      border: 1px solid #24242e;
       color: var(--muted);
       cursor: pointer;
       flex-shrink: 0;
       user-select: none;
-      transition: all 0.12s ease;
+      transition: all 0.1s ease;
     }
     .sec-nav-pill.major-sec {
-      border-color: rgba(6, 182, 212, 0.45);
-      color: #cbd5e1;
-      background: #1a1d2e;
+      border-color: #383846;
+      color: #d4d4d8;
+      background: #1b1b23;
     }
     .sec-nav-pill:hover {
-      border-color: var(--cyan);
+      border-color: var(--amber);
       color: #fff;
-      background: rgba(6, 182, 212, 0.22);
+      background: rgba(245, 158, 11, 0.16);
     }
     .sec-nav-pill.active-sec {
-      background: var(--cyan);
-      border-color: #fff;
-      color: #03151a;
-      box-shadow: 0 0 8px rgba(6, 182, 212, 0.65);
+      background: var(--amber);
+      border-color: #fbbf24;
+      color: #09090b;
     }
     .triller-segment-strip {
       display: flex;
       align-items: stretch;
-      gap: 6px;
+      gap: 5px;
       overflow-x: auto;
-      padding-bottom: 4px;
+      padding-bottom: 3px;
       scrollbar-width: thin;
     }
     .triller-cut-pill {
-      min-width: 138px;
-      max-width: 175px;
-      background: #161624;
-      border: 1px solid #2b2b42;
-      border-radius: 7px;
+      min-width: 142px;
+      max-width: 178px;
+      background: #16161c;
+      border: 1px solid #272732;
+      border-radius: 5px;
       padding: 5px 8px;
       display: flex;
       flex-direction: column;
@@ -1044,75 +1119,77 @@ HTML_TEMPLATE = """
       cursor: pointer;
       flex-shrink: 0;
       user-select: none;
-      transition: all 0.12s ease;
+      transition: border-color 0.1s ease, background 0.1s ease;
     }
     .triller-cut-pill:hover {
-      border-color: var(--cyan);
-      background: #1c1e30;
-      transform: translateY(-1px);
+      border-color: #525266;
+      background: #1c1c25;
     }
     .triller-cut-pill.active-cut {
-      background: linear-gradient(135deg, rgba(6, 182, 212, 0.25), rgba(255, 42, 133, 0.22));
-      border: 1.5px solid var(--cyan);
-      box-shadow: 0 0 12px rgba(6, 182, 212, 0.45);
+      background: #1f1d18;
+      border: 1.5px solid var(--amber);
     }
     .triller-cut-pill.ai-cut {
-      border-color: rgba(168, 85, 247, 0.6);
-      background: rgba(147, 51, 234, 0.16);
+      border-color: #3f3f52;
+      background: #181822;
     }
     .triller-cut-pill.ai-cut.active-cut {
-      background: linear-gradient(135deg, rgba(147, 51, 234, 0.42), rgba(219, 39, 119, 0.38));
-      border-color: #f472b6;
-      box-shadow: 0 0 12px rgba(219, 39, 119, 0.55);
+      background: #221d24;
+      border-color: var(--amber);
     }
     .triller-cut-pill .seg-top {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 4px;
-      font-size: 10.5px;
-      font-weight: 800;
-      color: #fff;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      color: #f4f4f5;
     }
     .triller-cut-pill .angles-badge {
-      font-size: 9.5px;
+      font-family: var(--mono);
+      font-size: 9px;
       font-weight: 700;
-      padding: 1px 5px;
-      border-radius: 4px;
-      background: rgba(6, 182, 212, 0.18);
-      color: #67e8f9;
-      border: 1px solid rgba(6, 182, 212, 0.35);
+      padding: 1px 4px;
+      border-radius: 3px;
+      background: #22222c;
+      color: #a1a1aa;
+      border: 1px solid #323240;
     }
     .triller-cut-pill .seg-clip {
       display: flex;
       align-items: center;
       gap: 5px;
-      font-size: 10px;
-      color: #cbd5e1;
+      font-family: var(--mono);
+      font-size: 9.5px;
+      color: #a1a1aa;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .take-replace-cta {
-      margin-top: 4px;
-      padding: 5px 8px;
-      border-radius: 6px;
-      font-size: 10.5px;
-      font-weight: 800;
+      margin-top: 3px;
+      padding: 4px 7px;
+      border-radius: 4px;
+      font-family: var(--mono);
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
       text-align: center;
-      background: rgba(6, 182, 212, 0.16);
-      border: 1px solid rgba(6, 182, 212, 0.45);
-      color: #67e8f9;
-      transition: all 0.12s ease;
+      background: #18181f;
+      border: 1px solid #2d2d3a;
+      color: #d4d4d8;
+      transition: all 0.1s ease;
     }
     .take-card:hover .take-replace-cta {
-      background: var(--cyan);
-      border-color: #fff;
-      color: #021318;
+      background: var(--amber);
+      border-color: #fbbf24;
+      color: #09090b;
     }
     .take-card.active-take .take-replace-cta {
-      background: rgba(16, 185, 129, 0.22);
-      border-color: var(--green);
+      background: rgba(16, 185, 129, 0.16);
+      border-color: rgba(16, 185, 129, 0.5);
       color: #6ee7b7;
     }
 
@@ -1204,70 +1281,70 @@ HTML_TEMPLATE = """
 <body>
   <header>
     <div class="brand">
-      <h1>🎬 CLIPPER</h1>
-      <span id="projectMeta" style="font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:42vw;">Upload Song to Begin</span>
+      <h1><span class="tally-dot"></span> CLIPPER <span class="studio-tag">MULTICAM NLE</span></h1>
+      <span id="projectMeta" style="font-family:var(--mono);font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:40vw;">NO AUDIO MASTER LOADED</span>
     </div>
     <div class="header-actions">
-      <button class="btn btn-step1" onclick="openSongModal()">🎵 Song</button>
-      <button class="btn btn-step2" onclick="openAddClipsModal()">➕ Videos</button>
+      <button class="btn btn-step1" onclick="openSongModal()">AUDIO MASTER</button>
+      <button class="btn btn-step2" onclick="openAddClipsModal()">+ CAMERA POOL</button>
 
       <select id="cutModeSelect" class="btn" onchange="resliceWithMode(this.value, false)" title="Cut Pacing Mode">
-        <option value="lyrics_808" selected>Pace: Lyrics + 808s</option>
-        <option value="lyrics_only">Pace: Lyrics Only</option>
-        <option value="beat_808">Pace: 808 Hits Only</option>
-        <option value="2s">Pace: ~2s Cuts</option>
-        <option value="4s">Pace: ~4s Cuts</option>
+        <option value="lyrics_808" selected>PACE: LYRICS + 808</option>
+        <option value="lyrics_only">PACE: LYRICS ONLY</option>
+        <option value="beat_808">PACE: 808 HITS ONLY</option>
+        <option value="2s">PACE: 2.0s CUTS</option>
+        <option value="4s">PACE: 4.0s CUTS</option>
       </select>
 
-      <button class="btn" onclick="resliceWithMode(document.getElementById('cutModeSelect').value, true)" id="resliceBtn" disabled title="Randomize camera angles while prioritizing high energy">
-        🎲 Re-Cut
+      <button class="btn" onclick="resliceWithMode(document.getElementById('cutModeSelect').value, true)" id="resliceBtn" disabled title="Re-assign camera angles while preserving cut timing">
+        RE-CUT ANGLES
       </button>
 
       <select id="colorGradeSelect" class="btn" onchange="onMasterLookChange()" title="Master Cinema Color Grade & Multi-Cam Auto Match">
-        <option value="none" selected>🎨 Grade: Off (Original)</option>
-        <option value="kodak_2383">🎞️ Grade: Kodak 2383 + Cam Match</option>
-        <option value="night_trap">🌙 Grade: Night Trap (Teal &amp; Amber)</option>
-        <option value="bleach_bypass">🖤 Grade: Bleach Bypass (Gritty)</option>
-        <option value="warm_vintage">☀️ Grade: Warm 16mm Gold</option>
+        <option value="none" selected>LUT: REC.709 (BYPASS)</option>
+        <option value="kodak_2383">LUT: KODAK 2383 + MATCH</option>
+        <option value="night_trap">LUT: TEAL &amp; AMBER</option>
+        <option value="bleach_bypass">LUT: BLEACH BYPASS</option>
+        <option value="warm_vintage">LUT: 16MM WARM GOLD</option>
       </select>
 
       <select id="qualityModeSelect" class="btn" onchange="onMasterLookChange()" title="AMD FidelityFX CAS Sharpening + 3D Temporal Low-Light Denoise">
-        <option value="cas_crisp" selected>⚡ FidelityFX CAS + 3D Denoise</option>
-        <option value="ultra_cinema">💎 Ultra Detail + Denoise</option>
-        <option value="none">⚡ Enhance: Off</option>
+        <option value="cas_crisp" selected>DSP: CAS + 3D DENOISE</option>
+        <option value="ultra_cinema">DSP: ULTRA DETAIL</option>
+        <option value="none">DSP: BYPASS</option>
       </select>
 
-      <button class="btn btn-agents" onclick="toggleAgentsDrawer()" id="agentsToggleBtn" title="Background Sync Agents">
-        🤖 <span id="runningAgentsCount">0</span>
+      <button class="btn btn-agents" onclick="toggleAgentsDrawer()" id="agentsToggleBtn" title="Background Sync & Render Workers">
+        WORKERS [<span id="runningAgentsCount">0</span>]
       </button>
 
       <details style="position:relative;">
-        <summary class="btn" style="list-style:none;" title="Keyboard Shortcuts Cheat-Sheet">⌨️ Keys</summary>
-        <div style="position:absolute;right:0;top:36px;z-index:95;background:#141422;border:1px solid var(--border);border-radius:10px;padding:10px 12px;width:250px;box-shadow:0 12px 30px rgba(0,0,0,0.7);font-size:11px;display:flex;flex-direction:column;gap:5px;">
-          <div style="font-weight:800;color:var(--cyan);margin-bottom:2px;">⌨️ NLE Keyboard Shortcuts</div>
-          <div style="display:flex;justify-content:space-between;"><span>Play / Pause Master</span><code>Space</code></div>
-          <div style="display:flex;justify-content:space-between;"><span>Prev / Next Cut</span><code>← / →</code></div>
-          <div style="display:flex;justify-content:space-between;"><span>Hot-Swap Angle 1–9</span><code>1 – 9</code></div>
-          <div style="display:flex;justify-content:space-between;"><span>Loop Active Cut</span><code>L</code></div>
-          <div style="display:flex;justify-content:space-between;"><span>Split Cut at Playhead</span><code>S</code></div>
-          <div style="display:flex;justify-content:space-between;"><span>Set In / Out Point</span><code>I / O</code></div>
+        <summary class="btn" style="list-style:none;" title="NLE Keyboard Shortcuts">KEYS</summary>
+        <div style="position:absolute;right:0;top:34px;z-index:95;background:#141419;border:1px solid var(--border);border-radius:6px;padding:10px 12px;width:250px;box-shadow:0 12px 30px rgba(0,0,0,0.75);font-size:11px;display:flex;flex-direction:column;gap:6px;">
+          <div style="font-family:var(--mono);font-size:10px;font-weight:800;letter-spacing:0.05em;color:var(--amber);margin-bottom:2px;">NLE KEYBOARD SHORTCUTS</div>
+          <div style="display:flex;justify-content:space-between;"><span>Play / Pause Program</span><kbd>Space</kbd></div>
+          <div style="display:flex;justify-content:space-between;"><span>Prev / Next Cut</span><kbd>← / →</kbd></div>
+          <div style="display:flex;justify-content:space-between;"><span>Switch Camera 1–9</span><kbd>1 – 9</kbd></div>
+          <div style="display:flex;justify-content:space-between;"><span>Loop Active Cut</span><kbd>L</kbd></div>
+          <div style="display:flex;justify-content:space-between;"><span>Razor Split at Playhead</span><kbd>S</kbd></div>
+          <div style="display:flex;justify-content:space-between;"><span>Mark In / Out Point</span><kbd>I / O</kbd></div>
         </div>
       </details>
 
-      <button class="btn btn-primary" onclick="exportFinalVideo()" id="exportBtn" disabled>🎬 Export MP4</button>
-      <a class="btn btn-download" id="headerDownloadMp4Link" href="/output/triller_horizontal_1793849733.mp4" download style="display:inline-flex;">⬇️ Download MP4</a>
+      <button class="btn btn-primary" onclick="exportFinalVideo()" id="exportBtn" disabled>RENDER MP4</button>
+      <a class="btn btn-download" id="headerDownloadMp4Link" href="/output/triller_horizontal_1793849733.mp4" download style="display:inline-flex;">↓ EXPORTED MP4</a>
     </div>
   </header>
 
   <!-- Live Parallel Worker Agents Drawer -->
   <div class="agents-drawer" id="agentsDrawer">
     <div class="agents-drawer-header">
-      <span>🤖 Parallel Sync &amp; Render Agents</span>
+      <span style="font-family:var(--mono);font-size:11px;letter-spacing:0.04em;">BACKGROUND SYNC &amp; RENDER WORKERS</span>
       <button class="btn" style="padding:2px 7px;font-size:11px;" onclick="toggleAgentsDrawer()">✕</button>
     </div>
     <div class="agents-list" id="agentsList">
       <div style="color:var(--muted);font-size:11px;text-align:center;padding:12px;">
-        Idle — Upload clips or export video to spin up parallel worker agents.
+        Idle — Upload camera clips or render master MP4 to dispatch parallel workers.
       </div>
     </div>
   </div>
@@ -1277,10 +1354,10 @@ HTML_TEMPLATE = """
     <div class="monitor-pane">
       <div class="monitor-topbar">
         <div style="display:flex;align-items:center;gap:8px;min-width:0;">
-          <span class="cut-pill-header" id="activeCutIndexLabel">🎯 Cut #1</span>
-          <span id="segReasonBadge" style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></span>
+          <span class="cut-pill-header" id="activeCutIndexLabel">CUT 01</span>
+          <span id="segReasonBadge" style="font-family:var(--mono);font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></span>
         </div>
-        <span id="timecodeDisplay" style="font-family:monospace;font-size:12px;font-weight:700;color:var(--cyan);">00.00s / 00.00s</span>
+        <span id="timecodeDisplay" style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--amber);">00.00s / 00.00s</span>
       </div>
 
       <div class="monitor-stage-wrap">
@@ -1288,102 +1365,102 @@ HTML_TEMPLATE = """
           <video id="programVideo" playsinline muted style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:2;background:transparent;"></video>
           <video id="programVideoBuffer" playsinline muted preload="auto" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:1;opacity:0;pointer-events:none;background:transparent;"></video>
           <div class="monitor-hud" style="z-index:10;">
-            <span class="hud-chip" id="activeClipHud">Clip: —</span>
-            <span class="hud-chip" id="activeAiHud" style="display:none;background:linear-gradient(135deg,#9333ea,#db2777);border-color:#f472b6;color:#fff;box-shadow:0 0 14px rgba(219,39,119,0.7);">✨ AI MORPH ACTIVE</span>
-            <span class="hud-chip" id="activeSyncHud" style="color:var(--green);">🔒 Seamless Master</span>
+            <span class="hud-chip" id="activeClipHud">SRC: —</span>
+            <span class="hud-chip" id="activeAiHud" style="display:none;background:#1f1924;border-color:var(--amber);color:var(--amber);">◆ MORPH TRANSITION ACTIVE</span>
+            <span class="hud-chip" id="activeSyncHud" style="color:var(--green);">● MASTER LOCK</span>
           </div>
         </div>
       </div>
 
-      <!-- Interactive Runway/DaVinci-Style Master Scrubber with AI Transition Pins -->
-      <div class="master-scrub-wrap" id="masterScrubWrap" title="Click or drag to scrub master timeline (Purple pins = ✨ AI Morph Transitions)">
+      <!-- Interactive DaVinci-Style Master Scrubber with Morph Transition Pins -->
+      <div class="master-scrub-wrap" id="masterScrubWrap" title="Click or drag to scrub master timeline (Amber pins = Frame-to-Frame Morph Transitions)">
         <div class="master-scrub-fill" id="masterScrubFill"></div>
         <div id="masterScrubPins" style="position:absolute;inset:0;pointer-events:none;"></div>
         <div class="master-scrub-thumb" id="masterScrubThumb"></div>
       </div>
 
-      <!-- Dedicated AI Transitions Bar so user can see and jump to every AI effect -->
-      <div id="aiTransitionsBarWrap" style="background:#11111b;border:1px solid rgba(168,85,247,0.45);border-radius:9px;padding:7px 10px;display:flex;flex-direction:column;gap:5px;flex-shrink:0;">
+      <!-- Dedicated Morph Transitions Strip -->
+      <div id="aiTransitionsBarWrap" style="background:#111115;border:1px solid var(--border);border-radius:6px;padding:6px 9px;display:flex;flex-direction:column;gap:5px;flex-shrink:0;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:11px;font-weight:800;color:#e9d5ff;display:flex;align-items:center;gap:6px;">
-            ✨ AI Morph Transitions in Timeline (<span id="aiTransCountBadge">0</span>)
-            <span style="font-weight:500;color:var(--muted);font-size:10px;">— Click any badge to preview &amp; play through the transition</span>
+          <span style="font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:0.04em;color:#d4d4d8;display:flex;align-items:center;gap:6px;">
+            ◆ MORPH TRANSITIONS (<span id="aiTransCountBadge">0</span>)
+            <span style="font-family:sans-serif;font-weight:500;color:var(--muted);font-size:10px;letter-spacing:0;">— Click any transition to audition with 0.8s lead-in</span>
           </span>
-          <span id="seamlessModeBadge" style="font-size:10px;color:var(--green);font-weight:700;">⚡ Zero-Flash Master Playback</span>
+          <span id="seamlessModeBadge" style="font-family:var(--mono);font-size:9.5px;color:var(--green);font-weight:700;">● ZERO-FLASH MASTER</span>
         </div>
-        <div id="aiTransitionsPills" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;"></div>
+        <div id="aiTransitionsPills" style="display:flex;gap:5px;overflow-x:auto;padding-bottom:2px;"></div>
       </div>
 
-      <!-- Second & Clip Navigator Timeline directly under the AI Animation Timeline -->
+      <!-- Second & Clip Navigator Timeline directly under the Morph Transitions Strip -->
       <div class="clip-timeline-nav-wrap" id="clipTimelineNavigatorWrap">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
-          <span style="font-size:11px;font-weight:800;color:var(--cyan);display:flex;align-items:center;gap:6px;">
-            🎬 Second &amp; Clip Timeline (<span id="clipNavTotalCount">0</span> Clips)
-            <span style="font-weight:500;color:var(--muted);font-size:10px;">— Click any second or clip card to preview available clips &amp; replace</span>
+          <span style="font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:0.04em;color:#d4d4d8;display:flex;align-items:center;gap:6px;">
+            SECOND &amp; CUT NAVIGATOR (<span id="clipNavTotalCount">0</span> CUTS)
+            <span style="font-family:sans-serif;font-weight:500;color:var(--muted);font-size:10px;letter-spacing:0;">— Click any second or cut card to audition cameras &amp; swap</span>
           </span>
           <div style="display:flex;align-items:center;gap:4px;">
-            <button type="button" class="btn" style="padding:2px 6px;font-size:10px;" onclick="stepSecond(-1)" title="Jump back 1 second">-1s</button>
-            <div style="display:inline-flex;align-items:center;gap:2px;background:#0b0b13;border:1px solid var(--border);border-radius:6px;padding:1px 6px;font-size:10.5px;">
-              <span style="color:var(--muted);">⏱️</span>
-              <input type="number" id="quickSecJumpInput" min="0" step="1" value="0" onchange="jumpToSecond(parseFloat(this.value)||0)" style="width:42px;background:transparent;border:none;color:var(--cyan);font-family:monospace;font-weight:800;font-size:11px;text-align:right;outline:none;" title="Type any second to jump directly to that timestamp" />
-              <span style="color:var(--muted);font-family:monospace;">s</span>
+            <button type="button" class="btn" style="padding:2px 6px;font-size:10px;font-family:var(--mono);" onclick="stepSecond(-1)" title="Step back 1 second">-1s</button>
+            <div style="display:inline-flex;align-items:center;gap:2px;background:#0a0a0d;border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:10px;">
+              <span style="color:var(--muted);font-family:var(--mono);">TC</span>
+              <input type="number" id="quickSecJumpInput" min="0" step="1" value="0" onchange="jumpToSecond(parseFloat(this.value)||0)" style="width:40px;background:transparent;border:none;color:var(--amber);font-family:var(--mono);font-weight:700;font-size:10.5px;text-align:right;outline:none;" title="Enter second to jump directly to timestamp" />
+              <span style="color:var(--muted);font-family:var(--mono);">s</span>
             </div>
-            <button type="button" class="btn" style="padding:2px 6px;font-size:10px;" onclick="stepSecond(1)" title="Jump forward 1 second">+1s</button>
+            <button type="button" class="btn" style="padding:2px 6px;font-size:10px;font-family:var(--mono);" onclick="stepSecond(1)" title="Step forward 1 second">+1s</button>
           </div>
         </div>
-        <div class="second-pills-strip" id="secondPillsStrip" title="Click any second to jump to that timestamp and select its clip"></div>
-        <div class="triller-segment-strip" id="trillerSegmentStrip" title="Click any clip to see all available clips for that section on the right and replace it in 1 click"></div>
+        <div class="second-pills-strip" id="secondPillsStrip" title="Click any second to jump to that timestamp and select its cut"></div>
+        <div class="triller-segment-strip" id="trillerSegmentStrip" title="Click any cut to audition all available camera angles on the right and replace in 1 click"></div>
       </div>
 
       <div class="transport-bar">
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-          <button class="btn" onclick="stepCutSelection(-1)" title="Previous Cut (Left Arrow)">⬅️ Prev</button>
-          <button class="btn btn-primary" id="playPauseBtn" onclick="togglePlay()" style="min-width:120px;justify-content:center;">
-            ▶️ Play (Space)
+        <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+          <button class="btn" onclick="stepCutSelection(-1)" title="Previous Cut (Left Arrow)">◀ PREV</button>
+          <button class="btn btn-primary" id="playPauseBtn" onclick="togglePlay()" style="min-width:128px;justify-content:center;">
+            ▶ PLAY <kbd>Space</kbd>
           </button>
-          <button class="btn" id="loopCutBtn" onclick="loopSelectedRange()" title="Loop just this cut with song audio (Key: L)">
-            🔁 Loop Cut
+          <button class="btn" id="loopCutBtn" onclick="loopSelectedRange()" title="Loop active cut with master audio (Key: L)">
+            ⟲ LOOP CUT <kbd>L</kbd>
           </button>
-          <button class="btn" onclick="stepCutSelection(1)" title="Next Cut (Right Arrow)">Next ➡️</button>
+          <button class="btn" onclick="stepCutSelection(1)" title="Next Cut (Right Arrow)">NEXT ▶</button>
         </div>
 
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-          <button class="btn" onclick="splitSegmentAtPlayhead()" title="Split current cut at playhead (Key: S)">✂️ Split</button>
-          <button class="btn" style="border-color:rgba(168,85,247,0.65);background:rgba(124,58,237,0.20);color:#e9d5ff;" onclick="openAiTransitionModal()">
-            ✨ AI Transition
+        <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+          <button class="btn" onclick="splitSegmentAtPlayhead()" title="Razor split current cut at playhead (Key: S)">✂ SPLIT <kbd>S</kbd></button>
+          <button class="btn" onclick="openAiTransitionModal()" title="Insert frame-to-frame AI morph transition">
+            ◆ ADD MORPH FX
           </button>
-          <button class="btn btn-primary" onclick="exportFinalVideo()" id="transportExportBtn">🎬 Export MP4</button>
-          <a class="btn btn-download" id="transportDownloadMp4Link" href="/output/triller_horizontal_1793849733.mp4" download>⬇️ Download MP4</a>
+          <button class="btn btn-primary" onclick="exportFinalVideo()" id="transportExportBtn">RENDER MP4</button>
+          <a class="btn btn-download" id="transportDownloadMp4Link" href="/output/triller_horizontal_1793849733.mp4" download>↓ MP4</a>
         </div>
       </div>
     </div>
 
-    <!-- Right Column: Camera Angles for Current Cut -->
+    <!-- Right Column: Broadcast Multiviewer Camera Angles for Current Cut -->
     <div class="take-picker-pane">
       <div class="pane-toolbar" style="flex-wrap:wrap;">
         <div style="min-width:0;flex:1;">
-          <div style="font-size:13px;font-weight:800;color:#fff;" id="syncBinTitle">🎥 Choose Camera Angle</div>
+          <div style="font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:0.03em;color:#fff;" id="syncBinTitle">MULTICAM ANGLE VIEWER</div>
           <div style="font-size:11px;color:var(--muted);" id="syncBinSubtitle">
-            Click a clip (or press <code>1–9</code>) to switch it into the video
+            Select a camera monitor (or press <kbd>1–9</kbd>) to switch the active cut
           </div>
         </div>
 
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
           <div class="filter-pill-group" title="Filter Multicam Angles">
-            <button type="button" class="filter-pill active" id="angleFilterAll" onclick="setAngleFilter('all')">All</button>
-            <button type="button" class="filter-pill" id="angleFilterSynced" onclick="setAngleFilter('synced')">🔒 Synced</button>
-            <button type="button" class="filter-pill" id="angleFilterEnergy" onclick="setAngleFilter('energy')">⚡ Peak</button>
+            <button type="button" class="filter-pill active" id="angleFilterAll" onclick="setAngleFilter('all')">ALL</button>
+            <button type="button" class="filter-pill" id="angleFilterSynced" onclick="setAngleFilter('synced')">SYNCED</button>
+            <button type="button" class="filter-pill" id="angleFilterEnergy" onclick="setAngleFilter('energy')">PEAK</button>
           </div>
 
           <details style="position:relative;flex-shrink:0;">
-            <summary class="btn" style="font-size:11px;padding:4px 8px;list-style:none;">⚙️ Timing</summary>
-            <div style="position:absolute;right:0;top:32px;z-index:60;background:#151523;border:1px solid var(--border);border-radius:10px;padding:10px;width:270px;box-shadow:0 10px 28px rgba(0,0,0,0.65);display:flex;flex-direction:column;gap:8px;">
+            <summary class="btn" style="font-size:10.5px;padding:4px 8px;list-style:none;font-family:var(--mono);">IN / OUT</summary>
+            <div style="position:absolute;right:0;top:30px;z-index:60;background:#141419;border:1px solid var(--border);border-radius:6px;padding:10px;width:270px;box-shadow:0 10px 28px rgba(0,0,0,0.75);display:flex;flex-direction:column;gap:8px;">
               <div class="range-pill" style="justify-content:space-between;">
-                <span>In</span>
+                <span>IN</span>
                 <input type="number" step="0.05" id="selStartInput" value="0.00" onchange="onManualRangeChange()" />
-                <span>Out</span>
+                <span>OUT</span>
                 <input type="number" step="0.05" id="selEndInput" value="2.00" onchange="onManualRangeChange()" />
-                <span id="selDurLabel" style="color:var(--cyan);font-weight:700;">(2.0s)</span>
+                <span id="selDurLabel" style="color:var(--amber);font-weight:700;">(2.0s)</span>
               </div>
               <select id="segEffectSelect" class="btn" onchange="updateSelectedSegmentEffect(this.value)" style="display:none;">
                 <option value="none" selected>None</option>
@@ -1403,40 +1480,40 @@ HTML_TEMPLATE = """
   <!-- Multi-Track Bottom Timeline with Ruler + 808 Pins + Lyrics + Multicam Drawer -->
   <div class="timeline-dock" id="timelineDock">
     <div class="timeline-toolbar">
-      <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
-        <strong>🎞️ Timeline</strong>
-        <button class="btn btn-primary" style="padding:1px 6px;font-size:10px;" onclick="setTimelineZoom(1)" id="zoomBtn1">1x</button>
-        <button class="btn" style="padding:1px 6px;font-size:10px;" onclick="setTimelineZoom(2)" id="zoomBtn2">2x</button>
-        <button class="btn" style="padding:1px 6px;font-size:10px;" onclick="setTimelineZoom(4)" id="zoomBtn4">4x</button>
-        <button class="btn" style="padding:1px 6px;font-size:10px;" onclick="setTimelineZoom(8)" id="zoomBtn8">8x</button>
-        <button class="btn" style="padding:1px 7px;font-size:10px;border-color:rgba(6,182,212,0.5);" onclick="toggleLyricsLane()" id="toggleLyricsBtn">🎤 Hide Lyrics</button>
-        <button class="btn" style="padding:1px 7px;font-size:10px;" onclick="toggleAllCameraTracks()" id="toggleTracksBtn">📊 Show All Camera Tracks</button>
-        <span id="segCountLabel" style="color:var(--muted);font-size:11px;"></span>
-        <span id="bassCountLabel" style="color:var(--amber);font-size:10.5px;font-weight:700;"></span>
-        <span id="phraseCountLabel" style="color:var(--cyan);font-size:10.5px;"></span>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <strong style="font-family:var(--mono);font-size:10.5px;letter-spacing:0.05em;">MASTER TIMELINE</strong>
+        <button class="btn btn-primary" style="padding:1px 6px;font-size:10px;font-family:var(--mono);" onclick="setTimelineZoom(1)" id="zoomBtn1">1x</button>
+        <button class="btn" style="padding:1px 6px;font-size:10px;font-family:var(--mono);" onclick="setTimelineZoom(2)" id="zoomBtn2">2x</button>
+        <button class="btn" style="padding:1px 6px;font-size:10px;font-family:var(--mono);" onclick="setTimelineZoom(4)" id="zoomBtn4">4x</button>
+        <button class="btn" style="padding:1px 6px;font-size:10px;font-family:var(--mono);" onclick="setTimelineZoom(8)" id="zoomBtn8">8x</button>
+        <button class="btn" style="padding:1px 7px;font-size:10px;" onclick="toggleLyricsLane()" id="toggleLyricsBtn">HIDE LYRICS</button>
+        <button class="btn" style="padding:1px 7px;font-size:10px;" onclick="toggleAllCameraTracks()" id="toggleTracksBtn">SHOW CAMERA LANES</button>
+        <span id="segCountLabel" style="font-family:var(--mono);color:var(--muted);font-size:10.5px;"></span>
+        <span id="bassCountLabel" style="font-family:var(--mono);color:var(--amber);font-size:10.5px;font-weight:700;"></span>
+        <span id="phraseCountLabel" style="font-family:var(--mono);color:var(--muted);font-size:10.5px;"></span>
       </div>
-      <div id="statusBanner" style="color:var(--cyan);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Ready</div>
+      <div id="statusBanner" style="font-family:var(--mono);font-size:10.5px;color:var(--amber);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">READY</div>
     </div>
 
     <div class="timeline-scroll" id="timelineScroll">
       <div class="timeline-zoom-inner" id="timelineZoomInner">
-        <div class="track-row" style="min-height:22px;">
-          <div class="track-label" style="font-size:10px;">⏱️ Ruler / 808s</div>
+        <div class="track-row" style="min-height:20px;">
+          <div class="track-label">TC / 808</div>
           <div class="ruler-lane" id="rulerLane"></div>
         </div>
-        <div class="track-row" id="lyricsTrackRow" style="min-height:26px;">
-          <div class="track-label" style="font-size:10px;color:var(--cyan);">🎤 Lyrics</div>
+        <div class="track-row" id="lyricsTrackRow" style="min-height:24px;">
+          <div class="track-label">LYRICS</div>
           <div class="lyrics-lane" id="lyricsLane"></div>
         </div>
 
         <div class="track-row">
-          <div class="track-label">🎵 Song Audio</div>
-          <div class="track-lane" id="waveformContainer" style="height:32px;cursor:pointer;"></div>
+          <div class="track-label">AUDIO WAV</div>
+          <div class="track-lane" id="waveformContainer" style="height:30px;cursor:pointer;"></div>
         </div>
 
         <div class="track-row">
-          <div class="track-label" style="color:#fff;">🎬 Video Cuts</div>
-          <div class="track-lane" id="assembledLane" style="height:32px;background:#141422;"></div>
+          <div class="track-label" style="color:#fff;">PROGRAM V1</div>
+          <div class="track-lane" id="assembledLane" style="height:30px;background:#111116;"></div>
         </div>
 
         <div id="clipLanesContainer" style="display:none;"></div>
@@ -1697,13 +1774,13 @@ HTML_TEMPLATE = """
       wsRegions = WaveSurfer.Regions.create();
       wavesurfer = WaveSurfer.create({
         container: '#waveformContainer',
-        waveColor: '#4f46e5',
-        progressColor: '#ff2a85',
-        cursorColor: '#ff2a85',
-        height: 32,
+        waveColor: '#52525b',
+        progressColor: '#f59e0b',
+        cursorColor: '#ef4444',
+        height: 30,
         barWidth: 2,
         barGap: 1,
-        barRadius: 2,
+        barRadius: 1,
         normalize: true,
         interact: true,
         plugins: [wsRegions],
@@ -1742,14 +1819,14 @@ HTML_TEMPLATE = """
             if (entry && entry.vid && !entry.vid.paused) entry.vid.pause();
           });
         }
-        document.getElementById('playPauseBtn').textContent = '⏸️ Pause (Space)';
+        document.getElementById('playPauseBtn').innerHTML = '⏸ PAUSE <kbd>Space</kbd>';
         syncProgramMonitor(wavesurfer.getCurrentTime(), true);
       });
 
       wavesurfer.on('pause', () => {
         isPlaying = false;
         loopMode = false;
-        document.getElementById('playPauseBtn').textContent = '▶️ Play Master (Space)';
+        document.getElementById('playPauseBtn').innerHTML = '▶ PLAY <kbd>Space</kbd>';
         programVideo.pause();
       });
     }
@@ -1783,7 +1860,7 @@ HTML_TEMPLATE = """
         activeWsRegion = wsRegions.addRegion({
           start: start,
           end: end,
-          color: 'rgba(6, 182, 212, 0.24)',
+          color: 'rgba(245, 158, 11, 0.22)',
           drag: false,
           resize: false,
         });
@@ -1811,7 +1888,7 @@ HTML_TEMPLATE = """
       container.innerHTML = '';
 
       if (aiSegs.length === 0) {
-        container.innerHTML = '<span style="font-size:11px;color:var(--muted);">No AI transitions yet — click "✨ AI Transition" above to add one between any two cuts.</span>';
+        container.innerHTML = '<span style="font-size:10.5px;color:var(--muted);font-family:var(--mono);">NO MORPH TRANSITIONS IN TIMELINE — CLICK "◆ ADD MORPH FX" BELOW TO INSERT</span>';
         return;
       }
 
@@ -1828,26 +1905,26 @@ HTML_TEMPLATE = """
         btn.className = 'btn ai-trans-pill';
         btn.dataset.segId = s.id;
         btn.style.cssText = `
-          padding: 4px 9px;
-          font-size: 11px;
-          border-radius: 7px;
+          padding: 3px 8px;
+          font-size: 10px;
+          font-family: var(--mono);
+          border-radius: 4px;
           white-space: nowrap;
           flex-shrink: 0;
           display: inline-flex;
           align-items: center;
           gap: 5px;
-          background: ${isCurrent ? 'linear-gradient(135deg, #9333ea, #db2777)' : 'rgba(147, 51, 234, 0.16)'};
-          border: 1px solid ${isCurrent ? '#f9a8d4' : 'rgba(168, 85, 247, 0.55)'};
-          color: #fff;
-          box-shadow: ${isCurrent ? '0 0 12px rgba(219, 39, 119, 0.6)' : 'none'};
+          background: ${isCurrent ? '#262118' : '#16161c'};
+          border: 1px solid ${isCurrent ? '#f59e0b' : '#2c2c38'};
+          color: #f4f4f5;
         `;
         btn.innerHTML = `
-          <span style="color:#f472b6;font-weight:800;">✨ #${aiIdx + 1}</span>
-          <strong>Cut #${item.cutNumber}</strong>
-          <span style="color:#67e8f9;font-family:monospace;">${s.song_start.toFixed(1)}s–${s.song_end.toFixed(1)}s (${dur}s)</span>
-          <span style="color:#e9d5ff;font-size:10px;">${cleanPair}</span>
+          <span style="color:var(--amber);font-weight:800;">◆ FX ${String(aiIdx + 1).padStart(2, '0')}</span>
+          <strong>CUT ${String(item.cutNumber).padStart(2, '0')}</strong>
+          <span style="color:#a1a1aa;">${s.song_start.toFixed(1)}s–${s.song_end.toFixed(1)}s (${dur}s)</span>
+          <span style="color:#d4d4d8;font-size:9.5px;">${cleanPair}</span>
         `;
-        btn.title = `Click to jump to ${Math.max(0, s.song_start - 0.8).toFixed(1)}s and watch AI Transition #${aiIdx + 1} (Cut #${item.cutNumber})`;
+        btn.title = `Jump to ${Math.max(0, s.song_start - 0.8).toFixed(1)}s and audition Morph Transition #${aiIdx + 1} (Cut #${item.cutNumber})`;
         btn.addEventListener('click', () => {
           selectedSegId = s.id;
           setSelectionRange(s.song_start, s.song_end, false);
@@ -1886,8 +1963,8 @@ HTML_TEMPLATE = """
       // Highlight active AI transition pill if any
       document.querySelectorAll('.ai-trans-pill').forEach(btn => {
         const active = btn.dataset.segId === seg.id;
-        btn.style.background = active ? 'linear-gradient(135deg, #9333ea, #db2777)' : 'rgba(147, 51, 234, 0.16)';
-        btn.style.borderColor = active ? '#f9a8d4' : 'rgba(168, 85, 247, 0.55)';
+        btn.style.background = active ? '#262118' : '#16161c';
+        btn.style.borderColor = active ? '#f59e0b' : '#2c2c38';
       });
 
       // Highlight active Second pill in #secondPillsStrip
@@ -1903,11 +1980,12 @@ HTML_TEMPLATE = """
 
       const rawClipTime = seg.clip_in + Math.max(0, t - seg.song_start);
       const targetClipTime = Math.min(Math.max(0, rawClipTime), Math.max(0, seg.clip_out - 0.04));
+      const cleanHudName = String(seg.clip_filename || '').replace('✨ AI_TRANS ', 'MORPH: ');
       document.getElementById('activeClipHud').textContent =
-        `🎬 ${seg.clip_filename} (${seg.song_start.toFixed(1)}s–${seg.song_end.toFixed(1)}s)`;
+        `SRC: ${cleanHudName} [${seg.song_start.toFixed(1)}s–${seg.song_end.toFixed(1)}s]`;
       const canUseMasterForSeg = useSeamlessMaster && Boolean(project.latest_export_url) && !loopMode && seg.cut_reason !== 'manual';
       document.getElementById('activeSyncHud').textContent =
-        loopMode ? '🔁 Looping Replaced/Selected Cut' : (canUseMasterForSeg ? '⚡ Seamless Master (0 Flash)' : '🔒 Live Synced Clip');
+        loopMode ? '⟲ LOOP AUDITION' : (canUseMasterForSeg ? '● MASTER LOCK (0 FLASH)' : '● LIVE SYNC LOCK');
 
       // Live browser preview of segment visual effect
       applyLiveMonitorEffect(seg, t - seg.song_start);
@@ -1979,7 +2057,7 @@ HTML_TEMPLATE = """
       if (!row) return;
       const hidden = row.style.display === 'none';
       row.style.display = hidden ? 'grid' : 'none';
-      if (btn) btn.textContent = hidden ? '🎤 Hide Lyrics' : '🎤 Show Lyrics';
+      if (btn) btn.textContent = hidden ? 'HIDE LYRICS' : 'SHOW LYRICS';
     }
 
     function toggleAllCameraTracks() {
@@ -1990,11 +2068,11 @@ HTML_TEMPLATE = """
       if (showing) {
         lanes.style.display = 'none';
         dock.classList.remove('expanded-tracks');
-        btn.textContent = '📊 Show All Camera Tracks';
+        btn.textContent = 'SHOW CAMERA LANES';
       } else {
         lanes.style.display = 'block';
         dock.classList.add('expanded-tracks');
-        btn.textContent = '🔼 Hide Camera Tracks';
+        btn.textContent = 'HIDE CAMERA LANES';
       }
     }
 
@@ -2173,17 +2251,17 @@ HTML_TEMPLATE = """
       if (matchSeg) {
         document.getElementById('segEffectSelect').value = matchSeg.effect || 'none';
         document.getElementById('activeCutIndexLabel').textContent =
-          `🎯 Cut #${segIdx + 1} of ${totalCuts} (${matchSeg.song_start.toFixed(1)}s–${matchSeg.song_end.toFixed(1)}s)`;
+          `CUT ${String(segIdx + 1).padStart(2, '0')} / ${String(totalCuts).padStart(2, '0')} [${matchSeg.song_start.toFixed(1)}s–${matchSeg.song_end.toFixed(1)}s]`;
         document.getElementById('syncBinTitle').textContent =
-          `🎥 Available Clips for Cut #${segIdx + 1} (${matchSeg.song_start.toFixed(1)}s–${matchSeg.song_end.toFixed(1)}s)`;
+          `MULTICAM ANGLES — CUT ${String(segIdx + 1).padStart(2, '0')} (${matchSeg.song_start.toFixed(1)}s–${matchSeg.song_end.toFixed(1)}s)`;
         document.getElementById('segReasonBadge').textContent =
           formatCutReason(matchSeg.cut_reason);
       } else {
         document.getElementById('activeCutIndexLabel').textContent =
-          `🎯 Custom Window (${selStart.toFixed(1)}s–${selEnd.toFixed(1)}s)`;
+          `WINDOW [${selStart.toFixed(1)}s–${selEnd.toFixed(1)}s]`;
         document.getElementById('syncBinTitle').textContent =
-          `🎥 Available Clips for ${selStart.toFixed(1)}s–${selEnd.toFixed(1)}s`;
-        document.getElementById('segReasonBadge').textContent = 'Custom Window';
+          `MULTICAM ANGLES — ${selStart.toFixed(1)}s–${selEnd.toFixed(1)}s`;
+        document.getElementById('segReasonBadge').textContent = 'MANUAL WINDOW';
       }
 
       syncWavesurferRegion(selStart, selEnd);
@@ -2281,12 +2359,12 @@ HTML_TEMPLATE = """
 
         const pill = document.createElement('div');
         pill.className = 'triller-cut-pill' + (isAi ? ' ai-cut' : '') + (isSel ? ' active-cut' : '');
-        const cColor = isAi ? '#e879f9' : (clipColorMap[seg.clip_id] || '#ff2a85');
-        const cleanName = String(seg.clip_filename || '').replace('✨ AI_TRANS ', '✨ ');
+        const cColor = isAi ? '#f59e0b' : (clipColorMap[seg.clip_id] || '#38bdf8');
+        const cleanName = String(seg.clip_filename || '').replace('✨ AI_TRANS ', 'MORPH: ');
         pill.innerHTML = `
           <div class="seg-top">
-            <span>${isAi ? '✨' : '🎬'} Cut #${idx + 1} • ${seg.song_start.toFixed(1)}s–${seg.song_end.toFixed(1)}s</span>
-            <span class="angles-badge">🎥 ${alignedCount || 1} clip${alignedCount === 1 ? '' : 's'}</span>
+            <span>${isAi ? '◆' : ''} CUT ${String(idx + 1).padStart(2, '0')} · ${seg.song_start.toFixed(1)}s–${seg.song_end.toFixed(1)}s</span>
+            <span class="angles-badge">${alignedCount || 1} CAM${alignedCount === 1 ? '' : 'S'}</span>
           </div>
           <div class="seg-clip">
             <span class="color-dot" style="background:${cColor}"></span>
@@ -2306,12 +2384,12 @@ HTML_TEMPLATE = """
     }
 
     function formatCutReason(r) {
-      if (r === 'ai_transition') return '✨ AI Frame-to-Frame Transition';
-      if (r === 'lyric+808') return '🎤 Lyric Line + 🥁 808 Hit';
-      if (r === 'lyric_line' || r === 'lyric_end') return '🎤 Lyric Line Boundary';
-      if (r === '808_hit') return '🥁 808 Bass Hit';
-      if (r === 'manual') return '✋ User Selected Angle';
-      return r || 'Beat / Lyric';
+      if (r === 'ai_transition') return '◆ FRAME-TO-FRAME MORPH';
+      if (r === 'lyric+808') return 'LYRIC PHRASE + 808 TRANSIENT';
+      if (r === 'lyric_line' || r === 'lyric_end') return 'LYRIC PHRASE BOUNDARY';
+      if (r === '808_hit') return '808 SUB-BASS TRANSIENT';
+      if (r === 'manual') return 'MANUAL CAMERA SWITCH';
+      return r || 'BEAT / LYRIC CUT';
     }
 
     function onManualRangeChange() {
@@ -2568,18 +2646,19 @@ HTML_TEMPLATE = """
       const { clip, coversActiveSong, defaultClipIn, winEnergy } = item;
       const energyPct = Math.round(winEnergy * 100);
       const isCurrentActive = clip.clip_id === activeClipId;
+      const camLabel = hotKeyNum ? `CAM 0${hotKeyNum}` : 'CAM';
 
       const keyLabel = hotKeyNum
-        ? (isCurrentActive ? `✓ ACTIVE IN TIMELINE [Key ${hotKeyNum}]` : `Press [${hotKeyNum}] or Click to Replace`)
-        : (isCurrentActive ? '✓ ACTIVE IN TIMELINE' : 'Click to Replace');
+        ? (isCurrentActive ? `● ON PROGRAM [${hotKeyNum}]` : `${camLabel} [KEY ${hotKeyNum}]`)
+        : (isCurrentActive ? '● ON PROGRAM' : 'STANDBY ANGLE');
 
       const subInfo = coversActiveSong
-        ? `🔒 Synced Section @ ${defaultClipIn.toFixed(1)}s–${(defaultClipIn + winDur).toFixed(1)}s`
-        : `🎞️ B-Roll (Song @ ${clip.active_song_start.toFixed(1)}s–${clip.active_song_end.toFixed(1)}s)`;
+        ? `SYNC ${defaultClipIn.toFixed(1)}s–${(defaultClipIn + winDur).toFixed(1)}s`
+        : `B-ROLL (${clip.active_song_start.toFixed(1)}s–${clip.active_song_end.toFixed(1)}s)`;
 
       const ctaText = isCurrentActive
-        ? `✓ Current Clip in ${cutNumberLabel || 'Selected Cut'}`
-        : `🔄 Click to Replace ${cutNumberLabel || 'Selected Cut'} with This Section (${defaultClipIn.toFixed(1)}s–${(defaultClipIn + winDur).toFixed(1)}s)`;
+        ? `● LIVE ON PROGRAM — ${cutNumberLabel || 'ACTIVE CUT'}`
+        : `SWITCH ${cutNumberLabel || 'CUT'} TO ${clip.filename} (${defaultClipIn.toFixed(1)}s–${(defaultClipIn + winDur).toFixed(1)}s)`;
 
       let entry = angleCardCache[clip.clip_id];
       if (!entry) {
@@ -2595,9 +2674,9 @@ HTML_TEMPLATE = """
             <div class="take-title">
               <span style="display:flex;align-items:center;gap:5px;overflow:hidden;">
                 <span class="color-dot" style="background:${clip.color}"></span>
-                <span title="${clip.filename}" style="overflow:hidden;text-overflow:ellipsis;">${clip.filename}</span>
+                <span title="${clip.filename}" style="font-family:var(--mono);font-size:10.5px;overflow:hidden;text-overflow:ellipsis;">${clip.filename}</span>
               </span>
-              <span class="take-subinfo" style="font-size:10px;font-weight:700;"></span>
+              <span class="take-subinfo" style="font-family:var(--mono);font-size:9.5px;font-weight:700;"></span>
             </div>
             <div class="take-energy-meter">
               <div class="take-energy-meter-fill"></div>
@@ -2643,7 +2722,7 @@ HTML_TEMPLATE = """
       entry.winDur = winDur;
       entry.card.className = 'take-card' + (isCurrentActive ? ' active-take' : '');
       entry.keyBadge.textContent = keyLabel;
-      entry.energyBadge.textContent = `⚡ ${energyPct}% Energy`;
+      entry.energyBadge.textContent = `SIG ${energyPct}%`;
       entry.subInfoEl.textContent = subInfo;
       entry.subInfoEl.style.color = coversActiveSong ? 'var(--green)' : 'var(--muted)';
       if (entry.energyMeterFill) {
@@ -2683,8 +2762,8 @@ HTML_TEMPLATE = """
       const brollContainer = document.getElementById('brollContainer');
 
       if (!project || !project.clips || !project.clips.length) {
-        grid.innerHTML = `<div style="color:var(--muted);font-size:13px;grid-column:1/-1;padding:32px;text-align:center;">
-          No video clips in project. Click <strong>➕ Manage Videos</strong> to launch parallel Sync Agents.
+        grid.innerHTML = `<div style="color:var(--muted);font-size:12px;grid-column:1/-1;padding:32px;text-align:center;font-family:var(--mono);">
+          NO CAMERA SOURCES IN POOL — CLICK "+ CAMERA POOL" TO SYNC CLIPS
         </div>`;
         if (brollContainer) brollContainer.innerHTML = '';
         return;
@@ -2695,7 +2774,7 @@ HTML_TEMPLATE = """
       );
       const activeSeg = activeSegIdx >= 0 ? project.segments[activeSegIdx] : null;
       const activeClipId = activeSeg ? activeSeg.clip_id : null;
-      const cutNumberLabel = activeSegIdx >= 0 ? `Cut #${activeSegIdx + 1}` : `${selStart.toFixed(1)}s–${selEnd.toFixed(1)}s`;
+      const cutNumberLabel = activeSegIdx >= 0 ? `CUT ${String(activeSegIdx + 1).padStart(2, '0')}` : `${selStart.toFixed(1)}s–${selEnd.toFixed(1)}s`;
       const winDur = Math.max(0.15, selEnd - selStart);
 
       const syncedClips = project.clips.filter(c => c.is_synced_take);
@@ -2717,8 +2796,8 @@ HTML_TEMPLATE = """
       const subtitle = document.getElementById('syncBinSubtitle');
       if (subtitle) {
         subtitle.innerHTML = directCount > 0
-          ? `<strong style="color:var(--green);">${directCount} Available Synced Clip${directCount === 1 ? '' : 's'}</strong> for ${cutNumberLabel} (${selStart.toFixed(1)}s–${selEnd.toFixed(1)}s) • <strong>Click any video preview below to replace ${cutNumberLabel}</strong>`
-          : `<span style="color:var(--amber);">Instrumental / Outro Section — Click any clip preview below to replace ${cutNumberLabel}</span>`;
+          ? `<span style="color:var(--green);font-family:var(--mono);font-weight:700;">● ${directCount} SYNCED CAMERA${directCount === 1 ? '' : 'S'}</span> FOR ${cutNumberLabel} (${selStart.toFixed(1)}s–${selEnd.toFixed(1)}s) · Click any monitor or press <kbd>1–${Math.min(9, scoredClips.length)}</kbd> to switch`
+          : `<span style="color:var(--amber);font-family:var(--mono);">INSTRUMENTAL / B-ROLL WINDOW</span> · Click any monitor below to replace ${cutNumberLabel}`;
       }
 
       if (brollContainer) brollContainer.innerHTML = '';

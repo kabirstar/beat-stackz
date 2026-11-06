@@ -94,3 +94,10 @@
   - Combine **Hero Speed-Ramps (`speed_ramp`)** on procession/entry shots, **1.0x Real-Time** on rhythmic/musical shots (Tabla, Bhajan clapping), and **0.70x Silky Slow-Mo** on sacred sanctum/shrine reveals.
 - **Normalize Every Segment Before Concat**:
   - Every segment rendered by `_render_single_storyboard_segment` must output identical `1080x1920` (or `1920x1080`), `30 fps`, `yuv420p`, `h264_videotoolbox` video and `44100 Hz` stereo AAC audio so `concat=n=N:v=1:a=1` never stutters or drops frames.
+
+## 8. Anti-"AI Slop" Studio NLE Design System Overhaul
+- **Problem**: Neon pink/purple button gradients (`#ff2a85` to `#7c3aed`), purple-tinted headers (`#13111c`), and emoji-stuffed controls gave the editor a generic "AI-generated SaaS template" look and skewed color perception next to the video viewport.
+- **Solution**:
+  - Replaced tinted surfaces and neon gradients with a calibrated **Rec.709 Neutral Zinc Studio Palette** (`--bg: #0a0a0c`, `--panel: #111115`, `--panel2: #17171c`, `--panel3: #1f1f26`, `--border: #26262f`, Industrial Amber `--gold: #f59e0b`, Tally Emerald `--green: #10b981`).
+  - Applied `font-variant-numeric: tabular-nums` and `--mono` (`SF Mono`, `JetBrains Mono`) to all timecode displays, storyboard cut badges, and inspector readouts.
+  - Replaced emoji-heavy toolbar and inspector labels with crisp NLE console headings (`9:16 VERTICAL`, `16:9 HORIZONTAL`, `BUILD STORYBOARD`, `RENDER 1080P MP4`, `01 / SPEED, SLOW-MO & GRADE`, `02 / SCRAPBOOK PHOTO OVERLAY`, `03 / NATIVE CLIP AUDIO`, `04 / LOWER-THIRD & TITLE OVERLAY`).
