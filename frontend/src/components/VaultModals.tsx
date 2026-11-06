@@ -1,78 +1,73 @@
 import { useState, type FormEvent } from "react";
-import type { FileItem, Folder, Share, User, Vault, VaultMember } from "@bpackz/shared";
-import { UserAvatarBadge } from "../HardwareIcons.tsx";
+import type { FileItem, Folder, Share, User, Vault } from "@bpackz/shared";
 import { formatBytes, parseStudioFileDisplay } from "../utils/format.ts";
 import {
+  COVER_COLORS,
   describeFileMeta,
-  getOrCreateSharedVaultPalette,
   ICON_TYPES,
   resolveFileOwnerName,
-  type HardwareThemeSlot,
   type PersistedUiMeta,
 } from "../vaultTheme.ts";
-import { StudioIcon, StudioModal } from "./StudioPrimitives.tsx";
+import {
+  folderIconName,
+  StudioIcon,
+  StudioModal,
+  UserAvatarBadge,
+} from "./StudioPrimitives.tsx";
 
+/** The "+" menu: new folder, upload, new shared vault. A sheet above the dock on a phone. */
 export function PlusActionMenu({
+  vaultName,
   hasRootFolder,
-  viewingFiles,
   onCreateFolder,
   onUploadFile,
   onCreateSharedVault,
   onClose,
 }: {
+  vaultName: string;
   hasRootFolder: boolean;
-  viewingFiles: boolean;
   onCreateFolder: () => void;
   onUploadFile: () => void;
   onCreateSharedVault: () => void;
-  onClose?: () => void;
+  onClose: () => void;
 }) {
   const items = [
     {
-      icon: "folder-plus" as const,
-      title: hasRootFolder ? "New 3D Subfolder" : "New 3D Main Icon",
-      subtitle: "Custom 3D studio hardware",
+      icon: "plus" as const,
+      title: hasRootFolder ? "New subfolder" : "New folder",
+      subtitle: "Name it and pick an icon",
       onClick: onCreateFolder,
-      show: true,
     },
     {
       icon: "upload" as const,
-      title: "Upload Track / Stem",
-      subtitle: "Presigned S3 multipart upload",
+      title: "Upload track or stem",
+      subtitle: "Any file, up to 10 GB",
       onClick: onUploadFile,
-      show: true,
     },
     {
       icon: "user-plus" as const,
-      title: "New Shared Vault",
-      subtitle: "Generates random color scheme",
+      title: "New shared vault",
+      subtitle: "Invite your crew",
       onClick: onCreateSharedVault,
-      show: true,
     },
   ];
 
   return (
     <>
-      {onClose && <div className="fixed inset-0 z-40" onClick={onClose} />}
-      <div className="fixed left-3 right-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] sm:absolute sm:left-auto sm:right-0 sm:bottom-auto sm:top-12 z-50 sm:w-64 rounded-2xl bg-[#e4e0d8]/98 backdrop-blur-xl border border-[var(--ink)]/25 shadow-2xl p-2 sm:p-1.5 popover-sheet">
-        {items
-          .filter((item) => item.show)
-          .map((item) => (
-            <button
-              key={item.title}
-              type="button"
-              onClick={item.onClick}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-black/5 text-left text-xs text-[var(--ink)] cursor-pointer transition"
-            >
-              <span className="w-7 h-7 rounded-full bg-[var(--bg)] border border-[var(--hair)] flex items-center justify-center shrink-0">
-                <StudioIcon name={item.icon} className="w-3.5 h-3.5" />
-              </span>
-              <div>
-                <div className="font-medium">{item.title}</div>
-                <div className="text-[10px] text-[var(--ink-soft)]">{item.subtitle}</div>
-              </div>
-            </button>
-          ))}
+      <div className="bs-scrim" onClick={onClose} />
+      <div className="bs-pop" role="dialog" aria-label="Upload or create">
+        <span className="bs-label">Add to {vaultName}</span>
+        {items.map((item) => (
+          <button key={item.title} type="button" className="bs-li" onClick={item.onClick}>
+            <span className="bs-cv bs-cv-plain">
+              <StudioIcon name={item.icon} className="" />
+            </span>
+            <span className="bs-tx">
+              <b>{item.title}</b>
+              <small>{item.subtitle}</small>
+            </span>
+          </button>
+        ))}
       </div>
     </>
   );
@@ -141,7 +136,7 @@ export function ShareLinkRow({
             type="button"
             onClick={() => onConfirming(shareId)}
             aria-label={`Stop sharing ${label}`}
-            className={`${SHARE_ROW_BTN} border border-red-700/40 text-red-700`}
+            className={`${SHARE_ROW_BTN} border border-[var(--error)] text-[var(--error)]`}
           >
             Stop sharing
           </button>
@@ -202,7 +197,12 @@ export function ShareContextSheet({
             </div>
           </div>
         </div>
-        <button type="button" onClick={onClose} className="icon-btn w-7 h-7 text-xs shrink-0">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="icon-btn w-7 h-7 text-xs shrink-0"
+        >
           ×
         </button>
       </div>
@@ -215,6 +215,7 @@ export function ShareContextSheet({
             value={editingName}
             onChange={(e) => setEditingName(e.target.value)}
             placeholder="Rename file..."
+            aria-label="File name"
             className="flex-1 px-3 py-1.5 rounded-xl bg-[var(--card)] border border-[var(--hair)] text-xs text-[var(--ink)] focus:outline-none focus:border-[var(--ink)]"
           />
           <button
@@ -240,16 +241,7 @@ export function ShareContextSheet({
             className="flex flex-col items-center gap-1.5 group cursor-pointer shrink-0"
           >
             <div
-              className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-semibold shadow-md group-hover:scale-105 transition"
-              style={
-                otherUserName === "Todo"
-                  ? { background: "#111114", color: "#fafafa" }
-                  : {
-                      background: "#0b0a0c",
-                      color: "#ef4444",
-                      border: "2px solid #dc2626",
-                    }
-              }
+              className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-semibold bg-[var(--ink)] text-[var(--bg)]"
             >
               {otherUserName[0]}
             </div>
@@ -258,31 +250,21 @@ export function ShareContextSheet({
 
           {vaults
             .filter((v) => v.kind === "shared")
-            .map((sv) => {
-              const svPalette = getOrCreateSharedVaultPalette(sv.id, uiMeta);
-              return (
-                <button
-                  key={sv.id}
-                  type="button"
-                  onClick={() => onShareToSharedVault(file, sv.id)}
-                  className="flex flex-col items-center gap-1.5 group cursor-pointer shrink-0"
-                >
-                  <div
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-md group-hover:scale-105 transition"
-                    style={{
-                      background: svPalette[0].chassisBg,
-                      border: `2px solid ${svPalette[0].accentPrimary}`,
-                      color: svPalette[0].accentPrimary,
-                    }}
-                  >
-                    <StudioIcon name="users" className="w-5 h-5" />
-                  </div>
-                  <span className="text-[11px] font-medium text-[var(--ink)] max-w-[72px] truncate">
-                    {sv.name}
-                  </span>
-                </button>
-              );
-            })}
+            .map((sv) => (
+              <button
+                key={sv.id}
+                type="button"
+                onClick={() => onShareToSharedVault(file, sv.id)}
+                className="flex flex-col items-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <div className="w-12 h-12 rounded-[10px] flex items-center justify-center bg-[var(--card-deep)] text-[var(--ink)] border border-[var(--hair)]">
+                  <StudioIcon name="users" className="w-5 h-5" />
+                </div>
+                <span className="text-[11px] font-medium text-[var(--ink)] max-w-[72px] truncate">
+                  {sv.name}
+                </span>
+              </button>
+            ))}
         </div>
       </div>
 
@@ -352,7 +334,7 @@ export function ShareContextSheet({
             onDownload(file);
             onClose();
           }}
-          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-black/5 text-xs text-[var(--ink)] cursor-pointer transition"
+          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-[var(--card-deep)] text-xs text-[var(--ink)] cursor-pointer transition"
         >
           <span className="text-[var(--ink-soft)]">
             <StudioIcon name="download" />
@@ -363,7 +345,7 @@ export function ShareContextSheet({
         <button
           type="button"
           onClick={() => onSoftDelete(file)}
-          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-black/5 text-xs text-red-700 cursor-pointer transition"
+          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-[var(--card-deep)] text-xs text-[var(--error)] cursor-pointer transition"
         >
           <StudioIcon name="trash" />
           <span>Move to Trash</span>
@@ -379,7 +361,6 @@ export function CreateFolderModal({
   newFolderDesc,
   newFolderIconKey,
   newFolderColorIdx,
-  activePalette,
   onChangeName,
   onChangeDesc,
   onChangeIconKey,
@@ -392,7 +373,6 @@ export function CreateFolderModal({
   newFolderDesc: string;
   newFolderIconKey: string;
   newFolderColorIdx: number;
-  activePalette: HardwareThemeSlot[];
   onChangeName: (v: string) => void;
   onChangeDesc: (v: string) => void;
   onChangeIconKey: (v: string) => void;
@@ -405,7 +385,7 @@ export function CreateFolderModal({
       title={
         currentRootFolder
           ? `New Subfolder in ${currentRootFolder.name}`
-          : "New Main Screen 3D Icon"
+          : "New folder"
       }
       onClose={onClose}
     >
@@ -440,46 +420,48 @@ export function CreateFolderModal({
         </div>
         <div>
           <label className="block mono-meta text-[10px] uppercase text-[var(--ink-soft)] mb-1.5">
-            3D Studio Hardware Icon
+            Icon
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
             {ICON_TYPES.map((t) => (
               <button
                 key={t.key}
                 type="button"
+                aria-pressed={newFolderIconKey === t.key}
                 onClick={() => onChangeIconKey(t.key)}
-                className={`px-2.5 py-1.5 rounded-xl mono-meta text-[10px] uppercase border cursor-pointer transition text-left ${
+                className={`min-h-11 px-2.5 py-1.5 rounded-[10px] mono-meta text-[10px] uppercase border cursor-pointer text-left inline-flex items-center gap-2 ${
                   newFolderIconKey === t.key
                     ? "bg-[var(--ink)] text-[var(--bg)] border-[var(--ink)]"
                     : "bg-[var(--card)] text-[var(--ink)] border-[var(--hair)] hover:border-[var(--ink)]"
                 }`}
               >
+                <StudioIcon name={folderIconName(t.key)} className="w-4 h-4 shrink-0" />
                 {t.label}
               </button>
             ))}
           </div>
         </div>
         <div className="flex items-center justify-between pt-2 border-t border-[var(--hair)]">
-          <div className="flex items-center gap-2">
-            {activePalette.map((preset, idx) => (
+          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Cover colour">
+            {COVER_COLORS.map((color, idx) => (
               <button
-                key={preset.name}
+                key={color}
                 type="button"
+                aria-label={`Cover colour ${idx + 1}`}
+                aria-pressed={newFolderColorIdx === idx}
                 onClick={() => onChangeColorIdx(idx)}
-                title={preset.name}
-                className={`w-6 h-6 rounded-full cursor-pointer transition border border-black/25 ${
-                  newFolderColorIdx === idx
-                    ? "ring-2 ring-[var(--ink)] scale-110"
-                    : "opacity-75 hover:opacity-100"
+                className={`w-7 h-7 rounded-[6px] cursor-pointer ${
+                  newFolderColorIdx === idx ? "ring-2 ring-offset-2 ring-[var(--ink)]" : ""
                 }`}
-                style={{ background: preset.accentPrimary }}
+                style={{ background: color }}
               />
             ))}
           </div>
           <button
             type="button"
             onClick={onConfirm}
-            title="Create 3D Folder"
+            title="Create folder"
+            aria-label="Create folder"
             className="icon-btn icon-btn-active w-10 h-10"
           >
             <StudioIcon name="check" />
@@ -505,7 +487,7 @@ export function CreateSharedVaultModal({
     <StudioModal title="New Shared Vault" maxWidthClass="max-w-sm" onClose={onClose}>
       <div className="p-5 space-y-4">
         <p className="text-xs text-[var(--ink-soft)]">
-          Generates and saves a unique random 3D hardware color scheme for this Shared Vault.
+          A vault you and your crew both own. Invite people once it exists.
         </p>
         <div className="flex items-center gap-2">
           <input
@@ -513,180 +495,17 @@ export function CreateSharedVaultModal({
             value={newSharedVaultName}
             onChange={(e) => onChangeName(e.target.value)}
             placeholder="e.g. Summer Tape (Swish × Todo)"
+            aria-label="Shared vault name"
             className="flex-1 px-3.5 py-2 rounded-full bg-[var(--card)] border border-[var(--hair)] text-xs text-[var(--ink)] focus:outline-none focus:border-[var(--ink)]"
           />
           <button
             type="button"
             onClick={onConfirm}
-            title="Create Shared Vault"
+            title="Create shared vault"
+            aria-label="Create shared vault"
             className="icon-btn icon-btn-active"
           >
             <StudioIcon name="check" />
-          </button>
-        </div>
-      </div>
-    </StudioModal>
-  );
-}
-
-export function CollaboratorsModal({
-  vaults,
-  activeVaultId,
-  uiMeta,
-  vaultMembers,
-  inviteEmail,
-  inviteRole,
-  onSwitchSharedVault,
-  onOpenCreateSharedVault,
-  onChangeInviteEmail,
-  onChangeInviteRole,
-  onInviteMember,
-  onRemoveMember,
-  onRenameSharedVault,
-  onClose,
-}: {
-  vaults: Vault[];
-  activeVaultId: string | null;
-  uiMeta: PersistedUiMeta;
-  vaultMembers: VaultMember[];
-  inviteEmail: string;
-  inviteRole: "editor" | "viewer";
-  onSwitchSharedVault: (vaultId: string) => void;
-  onOpenCreateSharedVault: () => void;
-  onChangeInviteEmail: (v: string) => void;
-  onChangeInviteRole: (v: "editor" | "viewer") => void;
-  onInviteMember: () => void;
-  onRemoveMember?: (userId: string) => void;
-  onRenameSharedVault?: (name: string) => void;
-  onClose: () => void;
-}) {
-  const activeShared = vaults.find((v) => v.id === activeVaultId && v.kind === "shared");
-  const [vaultNameDraft, setVaultNameDraft] = useState(activeShared?.name ?? "");
-
-  return (
-    <StudioModal title="Shared Vaults & Collaborators" onClose={onClose}>
-      <div className="p-5 space-y-4">
-        <div>
-          <div className="mono-meta text-[9px] uppercase text-[var(--ink-soft)] mb-2">
-            Active Shared Vault
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {vaults
-              .filter((v) => v.kind === "shared")
-              .map((sv) => {
-                const pal = getOrCreateSharedVaultPalette(sv.id, uiMeta);
-                return (
-                  <button
-                    key={sv.id}
-                    type="button"
-                    onClick={() => {
-                      setVaultNameDraft(sv.name);
-                      onSwitchSharedVault(sv.id);
-                    }}
-                    className={`px-3 py-1.5 rounded-full text-xs flex items-center gap-2 cursor-pointer border transition ${
-                      sv.id === activeVaultId
-                        ? "bg-[var(--ink)] text-[var(--bg)] border-[var(--ink)]"
-                        : "bg-[var(--card)] text-[var(--ink)] border-[var(--hair)]"
-                    }`}
-                  >
-                    <span
-                      className="w-2.5 h-2.5 rounded-full"
-                      style={{ background: pal[0].accentPrimary }}
-                    />
-                    <span>{sv.name}</span>
-                  </button>
-                );
-              })}
-            <button
-              type="button"
-              onClick={onOpenCreateSharedVault}
-              title="Create new Shared Vault"
-              className="icon-btn w-8 h-8 text-sm"
-            >
-              +
-            </button>
-          </div>
-          {activeShared && onRenameSharedVault && (
-            <div className="flex items-center gap-2 mt-2.5">
-              <input
-                type="text"
-                value={vaultNameDraft}
-                onChange={(e) => setVaultNameDraft(e.target.value)}
-                placeholder="Rename shared vault..."
-                className="flex-1 px-3 py-1.5 rounded-full bg-[var(--card)] border border-[var(--hair)] text-xs text-[var(--ink)] focus:outline-none focus:border-[var(--ink)]"
-              />
-              <button
-                type="button"
-                disabled={!vaultNameDraft.trim() || vaultNameDraft.trim() === activeShared.name}
-                onClick={() => onRenameSharedVault(vaultNameDraft.trim())}
-                className="px-3 py-1.5 rounded-full bg-[var(--ink)] text-[var(--bg)] mono-meta text-[9px] uppercase cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                Rename
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-2 pt-2 border-t border-[var(--hair)]">
-          <div className="mono-meta text-[9px] uppercase text-[var(--ink-soft)]">Members</div>
-          {vaultMembers.map((m) => (
-            <div
-              key={m.userId}
-              className="flex items-center justify-between px-3 py-2 rounded-xl bg-[var(--card)] border border-[var(--hair)] text-xs"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <UserAvatarBadge byName={m.name ?? m.email} sizeClass="w-6 h-6 text-[10px]" />
-                <div className="truncate">
-                  <span className="font-medium text-[var(--ink)]">{m.name ?? m.email}</span>
-                  <span className="text-[var(--ink-soft)] ml-1.5">{m.email}</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span className="mono-meta text-[9px] uppercase px-2 py-0.5 rounded-full bg-[var(--card-deep)] text-[var(--ink)]">
-                  {m.role === "owner"
-                    ? "owner · full access"
-                    : m.role === "viewer"
-                      ? "viewer · view only"
-                      : "editor · full edit & dl"}
-                </span>
-                {m.role !== "owner" && onRemoveMember && (
-                  <button
-                    type="button"
-                    onClick={() => onRemoveMember(m.userId)}
-                    title={`Remove ${m.name ?? m.email}`}
-                    className="icon-btn w-6 h-6 text-xs text-red-700"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2 pt-2 border-t border-[var(--hair)]">
-          <input
-            type="email"
-            value={inviteEmail}
-            onChange={(e) => onChangeInviteEmail(e.target.value)}
-            placeholder="Invite collaborator email..."
-            className="flex-1 px-3.5 py-2 rounded-full bg-[var(--card)] border border-[var(--hair)] text-xs text-[var(--ink)] focus:outline-none focus:border-[var(--ink)]"
-          />
-          <select
-            value={inviteRole}
-            onChange={(e) => onChangeInviteRole(e.target.value as "editor" | "viewer")}
-            className="px-2.5 py-2 rounded-full bg-[var(--card)] border border-[var(--hair)] mono-meta text-[9px] uppercase text-[var(--ink)] shrink-0 cursor-pointer"
-          >
-            <option value="editor">Full Edit + DL</option>
-            <option value="viewer">View Only</option>
-          </select>
-          <button
-            type="button"
-            onClick={onInviteMember}
-            title="Add Collaborator"
-            className="icon-btn icon-btn-active"
-          >
-            <StudioIcon name="send" />
           </button>
         </div>
       </div>
@@ -754,7 +573,7 @@ export function AuthModal({
           autoComplete="new-password"
           className="w-full px-3.5 py-2 rounded-xl bg-[var(--card)] border border-[var(--hair)] text-xs text-[var(--ink)]"
         />
-        {authError && <p className="text-xs text-red-700">{authError}</p>}
+        {authError && <p className="text-xs text-[var(--error)]">{authError}</p>}
         <div className="flex items-center justify-between pt-2">
           <button
             type="button"
@@ -805,7 +624,7 @@ export function PublicShareLandingModal({
     <StudioModal title={`Public Share · /s/${token.slice(0, 12)}…`} onClose={onClose}>
       <div className="p-5 space-y-4">
         {error ? (
-          <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-xs text-red-800">
+          <div className="p-4 rounded-2xl border border-[var(--error)] text-xs text-[var(--error)]">
             {error}
           </div>
         ) : !resolvedFile || !parsed ? (
@@ -838,7 +657,7 @@ export function PublicShareLandingModal({
                   >
                     <StudioIcon name={isPlaying ? "pause" : "play"} className="w-3.5 h-3.5" />
                   </button>
-                  <div className="flex-1 flex items-center gap-0.5 h-8 px-2.5 py-1 rounded-xl bg-[#f4f1eb] border border-[var(--hair)]">
+                  <div className="flex-1 flex items-center gap-0.5 h-8 px-2.5 py-1 rounded-xl bg-[var(--bg)] border border-[var(--hair)]">
                     {waveformBars.map((h, i) => {
                       const active = isPlaying && (i / waveformBars.length) * 100 <= playProgress;
                       return (
@@ -847,7 +666,7 @@ export function PublicShareLandingModal({
                           className="flex-1 rounded-full"
                           style={{
                             height: `${Math.max(4, Math.round(h * 0.22))}px`,
-                            background: active ? "var(--ink)" : "rgba(22,19,43,0.25)",
+                            background: active ? "var(--ink)" : "color-mix(in srgb, var(--ink) 25%, transparent)",
                           }}
                         />
                       );

@@ -7,169 +7,18 @@ import {
   type VaultMember,
 } from "@bpackz/shared";
 
-export interface HardwareThemeSlot {
-  name: string;
-  chassisBg: string;
-  chassisMid: string;
-  chassisEdge: string;
-  chassisBorder: string;
-  accentPrimary: string;
-  accentSecondary: string;
-  padIdle: string;
-  knobInk: string;
-  stampColor: string;
-}
-
-// FIXED THEME 1 — SWISH: Mostly Black & Red (Stealth Matte Obsidian Black Chassis + Crimson Studio Accents)
-export const SWISH_BLACK_RED_PALETTE: HardwareThemeSlot[] = [
-  {
-    name: "Obsidian / Crimson",
-    chassisBg: "#0b0a0c",
-    chassisMid: "#151215",
-    chassisEdge: "#040405",
-    chassisBorder: "rgba(220, 38, 38, 0.34)",
-    accentPrimary: "#dc2626",
-    accentSecondary: "#27272a",
-    padIdle: "rgba(220, 38, 38, 0.14)",
-    knobInk: "#ffffff",
-    stampColor: "#ef4444",
-  },
-  {
-    name: "Stealth / Ruby",
-    chassisBg: "#0d0b0c",
-    chassisMid: "#181315",
-    chassisEdge: "#050405",
-    chassisBorder: "rgba(239, 68, 68, 0.3)",
-    accentPrimary: "#ef4444",
-    accentSecondary: "#1c1917",
-    padIdle: "rgba(239, 68, 68, 0.13)",
-    knobInk: "#09090b",
-    stampColor: "#dc2626",
-  },
-  {
-    name: "Pitch Black / Scarlet",
-    chassisBg: "#09090b",
-    chassisMid: "#141214",
-    chassisEdge: "#030304",
-    chassisBorder: "rgba(185, 28, 28, 0.38)",
-    accentPrimary: "#b91c1c",
-    accentSecondary: "#dc2626",
-    padIdle: "rgba(185, 28, 28, 0.15)",
-    knobInk: "#ffffff",
-    stampColor: "#f87171",
-  },
-  {
-    name: "Carbon / Blood Red",
-    chassisBg: "#0f0c0d",
-    chassisMid: "#1b1416",
-    chassisEdge: "#060405",
-    chassisBorder: "rgba(225, 29, 72, 0.32)",
-    accentPrimary: "#e11d48",
-    accentSecondary: "#262626",
-    padIdle: "rgba(225, 29, 72, 0.14)",
-    knobInk: "#ffffff",
-    stampColor: "#fb7185",
-  },
-  {
-    name: "Matte Black / Red",
-    chassisBg: "#0a090a",
-    chassisMid: "#161315",
-    chassisEdge: "#040304",
-    chassisBorder: "rgba(220, 38, 38, 0.35)",
-    accentPrimary: "#dc2626",
-    accentSecondary: "#991b1b",
-    padIdle: "rgba(220, 38, 38, 0.14)",
-    knobInk: "#ffffff",
-    stampColor: "#ef4444",
-  },
+/** Folder cover colours, the same in both themes. Slots 0-4 are the default folders in order. */
+export const COVER_COLORS = [
+  "#ee6a4a",
+  "#9a86ff",
+  "#3fbf9f",
+  "#f0b23a",
+  "#6a9cf5",
+  "#f3b6cf",
+  "#c3c9b3",
 ];
 
-// FIXED THEME 2 — TODO: White & Black Monochrome (Architectural Chalk White & Matte Carbon Hardware)
-export const TODO_MONOCHROME_PALETTE: HardwareThemeSlot[] = [
-  {
-    name: "Carbon / Chalk",
-    chassisBg: "#121215",
-    chassisMid: "#242429",
-    chassisEdge: "#050507",
-    chassisBorder: "rgba(255, 255, 255, 0.24)",
-    accentPrimary: "#fafafa",
-    accentSecondary: "#d4d4d8",
-    padIdle: "rgba(255, 255, 255, 0.12)",
-    knobInk: "#09090b",
-    stampColor: "#fafafa",
-  },
-  {
-    name: "Chalk / Carbon",
-    chassisBg: "#f4f4f5",
-    chassisMid: "#d4d4d8",
-    chassisEdge: "#18181b",
-    chassisBorder: "rgba(9, 9, 11, 0.25)",
-    accentPrimary: "#111114",
-    accentSecondary: "#3f3f46",
-    padIdle: "rgba(9, 9, 11, 0.1)",
-    knobInk: "#ffffff",
-    stampColor: "#111114",
-  },
-  {
-    name: "Obsidian / Ivory",
-    chassisBg: "#18181b",
-    chassisMid: "#27272a",
-    chassisEdge: "#09090b",
-    chassisBorder: "rgba(255, 255, 255, 0.24)",
-    accentPrimary: "#ffffff",
-    accentSecondary: "#a1a1aa",
-    padIdle: "rgba(255, 255, 255, 0.12)",
-    knobInk: "#09090b",
-    stampColor: "#e4e4e7",
-  },
-  {
-    name: "Ivory / Graphite",
-    chassisBg: "#fafafa",
-    chassisMid: "#e4e4e7",
-    chassisEdge: "#18181b",
-    chassisBorder: "rgba(9, 9, 11, 0.24)",
-    accentPrimary: "#09090b",
-    accentSecondary: "#52525b",
-    padIdle: "rgba(9, 9, 11, 0.1)",
-    knobInk: "#ffffff",
-    stampColor: "#09090b",
-  },
-  {
-    name: "Monolith Black",
-    chassisBg: "#0d0d10",
-    chassisMid: "#1f1f24",
-    chassisEdge: "#040405",
-    chassisBorder: "rgba(255, 255, 255, 0.26)",
-    accentPrimary: "#f4f4f5",
-    accentSecondary: "#e4e4e7",
-    padIdle: "rgba(255, 255, 255, 0.12)",
-    knobInk: "#09090b",
-    stampColor: "#ffffff",
-  },
-];
-
-export function generateRandomSharedPalette(): HardwareThemeSlot[] {
-  const baseHue = Math.floor(Math.random() * 360);
-  const step = 52 + Math.floor(Math.random() * 40);
-  const slots: HardwareThemeSlot[] = [];
-  for (let i = 0; i < 5; i++) {
-    const h1 = (baseHue + i * step) % 360;
-    const h2 = (h1 + 145) % 360;
-    slots.push({
-      name: `Shared #${i + 1}`,
-      chassisBg: `hsl(${h1}, 28%, 14%)`,
-      chassisMid: `hsl(${h1}, 32%, 22%)`,
-      chassisEdge: `hsl(${h1}, 35%, 8%)`,
-      chassisBorder: `hsla(${h1}, 75%, 65%, 0.3)`,
-      accentPrimary: `hsl(${h1}, 82%, 58%)`,
-      accentSecondary: `hsl(${h2}, 82%, 60%)`,
-      padIdle: `hsla(${h1}, 70%, 60%, 0.15)`,
-      knobInk: "#09090b",
-      stampColor: `hsl(${h2}, 85%, 70%)`,
-    });
-  }
-  return slots;
-}
+export type VaultLook = "night" | "paper";
 
 export const WAVEFORM_BARS = [
   28, 52, 68, 42, 85, 92, 61, 74, 38, 65, 88, 95, 70, 54, 80, 91, 63, 47, 76, 84,
@@ -177,31 +26,18 @@ export const WAVEFORM_BARS = [
 ];
 
 export const ICON_TYPES = [
+  { key: "beats", label: "Pads" },
+  { key: "presets", label: "Faders" },
+  { key: "vocals", label: "Mic" },
+  { key: "songs", label: "Notes" },
+  { key: "media", label: "Screen" },
   { key: "in_progress", label: "In Progress" },
   { key: "vision_board", label: "Vision Board" },
-  { key: "rap_cup", label: "Lean Cup" },
-  { key: "rap_chain", label: "Diamond Chain" },
-  { key: "rap_money", label: "Cash Stack" },
-  { key: "rap_lambo", label: "Lambo" },
-  { key: "rap_watch", label: "Bust-Down Watch" },
-  { key: "beats", label: "Drum Pads" },
-  { key: "presets", label: "Synth Knobs" },
-  { key: "vocals", label: "Studio Mic" },
-  { key: "songs", label: "Master Tape" },
-  { key: "media", label: "Camera Lens" },
-  { key: "sub_mix", label: "Mixer Faders" },
-  { key: "sub_mv", label: "Clapperboard" },
+  { key: "rap_cup", label: "Cup" },
+  { key: "rap_chain", label: "Chain" },
+  { key: "rap_money", label: "Cash" },
+  { key: "rap_watch", label: "Watch" },
 ] as const;
-
-export const SHARED_RAP_ICON_MAP: Record<string, string> = {
-  beats: "rap_cup",
-  presets: "rap_chain",
-  vocals: "rap_money",
-  songs: "rap_lambo",
-  media: "rap_watch",
-  "vision board": "vision_board",
-  "in progress": "in_progress",
-};
 
 export interface FolderUiMeta {
   by: string;
@@ -216,8 +52,8 @@ const DEFAULT_ROOT_META: Record<string, FolderUiMeta> = {
   vocals: { by: "main · adlib · bg", colorSlot: 2, iconKey: "vocals", order: 2 },
   songs: { by: "demo · mix · drop", colorSlot: 3, iconKey: "songs", order: 3 },
   media: { by: "photos · videos · covers", colorSlot: 4, iconKey: "media", order: 4 },
-  "vision board": { by: "notes · songs · threads", colorSlot: 0, iconKey: "vision_board", order: 5 },
-  "in progress": { by: "songs · stems · demo · mix", colorSlot: 1, iconKey: "in_progress", order: 6 },
+  "vision board": { by: "notes · songs · threads", colorSlot: 5, iconKey: "vision_board", order: 5 },
+  "in progress": { by: "songs · stems · demo · mix", colorSlot: 6, iconKey: "in_progress", order: 6 },
 };
 
 const DEFAULT_SUB_META: Record<string, FolderUiMeta> = {
@@ -236,7 +72,7 @@ const DEFAULT_SUB_META: Record<string, FolderUiMeta> = {
   "album covers": { by: "cover art & sleeves", colorSlot: 4, iconKey: "sub_covers", order: 4 },
 };
 
-// ADR 0002 / T026b: Key 3D hardware icons & order by `folder.kind` first (in DEFAULT_FOLDERS order)
+// ADR 0002 / T026b: Key folder icons & order by `folder.kind` first (in DEFAULT_FOLDERS order)
 const DEFAULT_KIND_ORDER = new Map<FolderKind, number>();
 DEFAULT_FOLDERS.forEach((root, rootIdx) => {
   DEFAULT_KIND_ORDER.set(root.kind, rootIdx);
@@ -426,19 +262,22 @@ export function createDefaultVisionBoardState(vaultFiles: FileItem[] = []): Visi
 
 export interface PersistedUiMeta {
   folderMeta: Record<string, FolderUiMeta>;
-  sharedVaultPalettes: Record<string, HardwareThemeSlot[]>;
   trashedByVault: Record<string, TrashedFileEntry[]>;
   shareLinkTokens: Record<string, { id: string; token: string; expiry: string; fileId: string }[]>;
   visionBoards?: Record<string, VisionBoardVaultState>;
+  /** Theme choice, kept per browser until it moves to the account. */
+  look?: VaultLook;
+  /** Last-opened keys, newest first ("go:<folderId>", "play:<fileId>", "vault:<vaultId>"). */
+  recents?: string[];
 }
 
 export function loadPersistedUiMeta(): PersistedUiMeta {
   const empty: PersistedUiMeta = {
     folderMeta: {},
-    sharedVaultPalettes: {},
     trashedByVault: {},
     shareLinkTokens: {},
     visionBoards: {},
+    recents: [],
   };
   if (typeof window === "undefined" || !window.localStorage) return empty;
   try {
@@ -447,10 +286,11 @@ export function loadPersistedUiMeta(): PersistedUiMeta {
       const parsed = JSON.parse(raw) as Partial<PersistedUiMeta>;
       return {
         folderMeta: parsed.folderMeta ?? {},
-        sharedVaultPalettes: parsed.sharedVaultPalettes ?? {},
         trashedByVault: parsed.trashedByVault ?? {},
         shareLinkTokens: parsed.shareLinkTokens ?? {},
         visionBoards: parsed.visionBoards ?? {},
+        look: parsed.look === "paper" ? "paper" : undefined,
+        recents: Array.isArray(parsed.recents) ? parsed.recents : [],
       };
     }
   } catch {
@@ -468,41 +308,55 @@ export function savePersistedUiMeta(meta: PersistedUiMeta) {
   }
 }
 
+/** Save the per-browser UI store and hand the value back, for use inside a setState updater. */
+export function persistUiMeta(meta: PersistedUiMeta): PersistedUiMeta {
+  savePersistedUiMeta(meta);
+  return meta;
+}
+
 export function resolveFolderUiMeta(
   folder: Folder,
   customMetaMap: Record<string, FolderUiMeta>,
   fallbackIndex = 0,
-  isSharedMainPage = false,
 ): FolderUiMeta {
-  const applySharedIcon = (meta: FolderUiMeta): FolderUiMeta => {
-    if (isSharedMainPage && folder.parentId === null && SHARED_RAP_ICON_MAP[meta.iconKey]) {
-      return { ...meta, iconKey: SHARED_RAP_ICON_MAP[meta.iconKey] };
-    }
-    return meta;
-  };
   const custom = customMetaMap[folder.id];
-  if (custom) return applySharedIcon(custom);
-  // T026b: Key by folder.kind first so renaming a default folder keeps its 3D icon
+  if (custom) return custom;
+  // T026b: Key by folder.kind first so renaming a default folder keeps its icon
   if (folder.kind !== null && DEFAULT_KIND_META[folder.kind]) {
-    return applySharedIcon(DEFAULT_KIND_META[folder.kind]);
+    return DEFAULT_KIND_META[folder.kind];
   }
   // Fallback to folder.name only when folder.kind is null
   const lower = folder.name.trim().toLowerCase();
   if (folder.parentId === null && DEFAULT_ROOT_META[lower]) {
-    return applySharedIcon(DEFAULT_ROOT_META[lower]);
+    return DEFAULT_ROOT_META[lower];
   }
   if (folder.parentId !== null && DEFAULT_SUB_META[lower]) {
     return DEFAULT_SUB_META[lower];
   }
-  return applySharedIcon({
-    by: folder.parentId === null ? "custom 3d folder" : "custom subfolder",
+  return {
+    by: folder.parentId === null ? "custom folder" : "custom subfolder",
     colorSlot: fallbackIndex % 5,
     iconKey: "beats",
     order: 100 + fallbackIndex,
-  });
+  };
 }
 
-// T026b: Sort defaults first in DEFAULT_FOLDERS order, then user folders by name (while respecting custom jiggle order)
+/** Cover of a folder: its own saved pick, else its parent's (a default subfolder wears the parent's cover). */
+export function resolveFolderCover(
+  folder: Folder,
+  customMetaMap: Record<string, FolderUiMeta>,
+  parent?: Folder | null,
+): { color: string; iconKey: string } {
+  const meta = resolveFolderUiMeta(customMetaMap[folder.id] || !parent ? folder : parent, customMetaMap);
+  return { color: COVER_COLORS[meta.colorSlot % COVER_COLORS.length], iconKey: meta.iconKey };
+}
+
+/** Move `key` to the front of a last-opened list (newest first, capped). */
+export function touchRecent(list: string[] | undefined, key: string, cap = 200): string[] {
+  return [key, ...(list ?? []).filter((k) => k !== key)].slice(0, cap);
+}
+
+// T026b: Sort defaults first in DEFAULT_FOLDERS order, then user folders by name (while respecting a custom drag order)
 export function sortVaultFolders(
   list: Folder[],
   customMetaMap: Record<string, FolderUiMeta> = {},
@@ -533,19 +387,6 @@ export function sortVaultFolders(
     if (aOrder !== bOrder) return aOrder - bOrder;
     return a.name.localeCompare(b.name);
   });
-}
-
-export function getOrCreateSharedVaultPalette(
-  vaultId: string,
-  meta: PersistedUiMeta,
-): HardwareThemeSlot[] {
-  if (meta.sharedVaultPalettes[vaultId]?.length === 5) {
-    return meta.sharedVaultPalettes[vaultId];
-  }
-  const generated = generateRandomSharedPalette();
-  meta.sharedVaultPalettes[vaultId] = generated;
-  savePersistedUiMeta(meta);
-  return generated;
 }
 
 export function describeFileMeta(file: FileItem): string {

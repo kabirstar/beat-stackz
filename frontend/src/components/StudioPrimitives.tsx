@@ -1,37 +1,148 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import type { Folder } from "@bpackz/shared";
-import { CreateRecordHardwareButton, RecordHardwareItem } from "../HardwareIcons.tsx";
-import {
-  resolveFolderUiMeta,
-  type FolderUiMeta,
-  type HardwareThemeSlot,
-} from "../vaultTheme.ts";
+import { resolveFolderCover, type FolderUiMeta } from "../vaultTheme.ts";
 
-export type StudioIconName =
-  | "back"
-  | "chevron-right"
-  | "home"
-  | "search"
-  | "users"
-  | "user-plus"
-  | "sign-out"
-  | "sign-in"
-  | "replay"
-  | "list"
-  | "trash"
-  | "plus"
-  | "folder-plus"
-  | "upload"
-  | "download"
-  | "share"
-  | "more"
-  | "check"
-  | "send"
-  | "restore"
-  | "link"
-  | "loop"
-  | "play"
-  | "pause";
+/** The one icon set: thin line, one colour, round ends (design system, TOD-108). */
+const ICON_PATHS = {
+  back: <polyline points="15 18 9 12 15 6" />,
+  "chevron-right": <polyline points="9 18 15 12 9 6" />,
+  home: <path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z" />,
+  search: (
+    <>
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="M16 16l4.5 4.5" />
+    </>
+  ),
+  users: (
+    <>
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.5a6.5 6.5 0 0 1 3.5 5.5" />
+    </>
+  ),
+  "user-plus": (
+    <>
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20a6.5 6.5 0 0 1 13 0M19 8v6M22 11h-6" />
+    </>
+  ),
+  "sign-out": <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />,
+  "sign-in": <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" />,
+  replay: <path d="M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />,
+  list: (
+    <>
+      <path d="M9 6h11M9 12h11M9 18h11" />
+      <circle cx="4.5" cy="6" r=".8" fill="currentColor" />
+      <circle cx="4.5" cy="12" r=".8" fill="currentColor" />
+      <circle cx="4.5" cy="18" r=".8" fill="currentColor" />
+    </>
+  ),
+  trash: <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />,
+  plus: <path d="M12 5v14M5 12h14" />,
+  upload: <path d="M12 16V5M8 9l4-4 4 4M5 19h14" />,
+  download: <path d="M12 4v11M8 11l4 4 4-4M5 19h14" />,
+  share: (
+    <>
+      <circle cx="6" cy="12" r="2.5" />
+      <circle cx="17" cy="6" r="2.5" />
+      <circle cx="17" cy="18" r="2.5" />
+      <path d="M8.2 10.8l6.6-3.6M8.2 13.2l6.6 3.6" />
+    </>
+  ),
+  more: (
+    <>
+      <circle cx="6" cy="12" r="1.2" fill="currentColor" />
+      <circle cx="12" cy="12" r="1.2" fill="currentColor" />
+      <circle cx="18" cy="12" r="1.2" fill="currentColor" />
+    </>
+  ),
+  check: <polyline points="20 6 9 17 4 12" />,
+  send: <path d="M4 12l16-7-6 16-3-6z" />,
+  link: (
+    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+  ),
+  loop: <path d="M17 3l3 3-3 3M4 11V9a3 3 0 0 1 3-3h13M7 21l-3-3 3-3M20 13v2a3 3 0 0 1-3 3H4" />,
+  play: <path d="M8 5v14l11-7z" fill="currentColor" stroke="none" />,
+  pause: <path d="M8 5v14M16 5v14" strokeWidth="2.6" />,
+  close: <path d="M6 6l12 12M18 6L6 18" />,
+  clock: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" />
+    </>
+  ),
+  beats: (
+    <>
+      <rect x="3" y="3" width="8" height="8" rx="2" />
+      <rect x="13" y="3" width="8" height="8" rx="2" />
+      <rect x="3" y="13" width="8" height="8" rx="2" />
+      <rect x="13" y="13" width="8" height="8" rx="2" />
+    </>
+  ),
+  presets: (
+    <>
+      <path d="M6 4v16M12 4v16M18 4v16" />
+      <circle cx="6" cy="9" r="2.2" fill="currentColor" />
+      <circle cx="12" cy="15" r="2.2" fill="currentColor" />
+      <circle cx="18" cy="8" r="2.2" fill="currentColor" />
+    </>
+  ),
+  vocals: (
+    <>
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6" />
+    </>
+  ),
+  songs: (
+    <>
+      <path d="M9 18V6l10-2v12" />
+      <circle cx="6.5" cy="18" r="2.5" />
+      <circle cx="16.5" cy="16" r="2.5" />
+    </>
+  ),
+  media: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2.5" />
+      <path d="M10 9.5v5l4.5-2.5z" fill="currentColor" />
+    </>
+  ),
+  board: (
+    <>
+      <rect x="5" y="4" width="14" height="17" rx="2" />
+      <path d="M9 2v4M15 2v4M9 11h6M9 15h4" />
+    </>
+  ),
+  progress: <path d="M5 20V10M12 20V4M19 20v-7" />,
+  vault: (
+    <>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <circle cx="12" cy="12" r="3.5" />
+      <path d="M12 8.5V6M12 18v-2.5" />
+    </>
+  ),
+  file: <path d="M7 3h7l4 4v14H7zM14 3v4h4" />,
+  cup: <path d="M7 8h10l-1.5 13h-7zM6 8h12M8.3 13h7.4M14 8l2-5h2.5" />,
+  chain: (
+    <>
+      <path d="M5 3c0 6 3 9 7 10 4-1 7-4 7-10" />
+      <path d="M12 13l3 3.5-3 4.5-3-4.5z" />
+    </>
+  ),
+  cash: (
+    <>
+      <rect x="3" y="5" width="18" height="10" rx="1.5" />
+      <circle cx="12" cy="10" r="2.5" />
+      <path d="M5 18h14M7 21h10" />
+    </>
+  ),
+  watch: (
+    <>
+      <circle cx="12" cy="12" r="5.5" />
+      <path d="M12 9.5V12l1.8 1.2M9 7l.7-4h4.6l.7 4M9 17l.7 4h4.6l.7-4" />
+    </>
+  ),
+};
+
+export type StudioIconName = keyof typeof ICON_PATHS;
 
 export function StudioIcon({
   name,
@@ -40,191 +151,102 @@ export function StudioIcon({
   name: StudioIconName;
   className?: string;
 }) {
-  switch (name) {
-    case "back":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-          <polyline points="15 18 9 12 15 6" />
-        </svg>
-      );
-    case "chevron-right":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <polyline points="9 18 15 12 9 6" />
-        </svg>
-      );
-    case "home":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-          <polyline points="9 22 9 12 15 12 15 22" />
-        </svg>
-      );
-    case "search":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <circle cx="11" cy="11" r="7" />
-          <line x1="20" y1="20" x2="16.2" y2="16.2" />
-        </svg>
-      );
-    case "users":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-        </svg>
-      );
-    case "user-plus":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <line x1="19" y1="8" x2="19" y2="14" />
-          <line x1="22" y1="11" x2="16" y2="11" />
-        </svg>
-      );
-    case "sign-out":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-          <polyline points="16 17 21 12 16 7" />
-          <line x1="21" y1="12" x2="9" y2="12" />
-        </svg>
-      );
-    case "sign-in":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-          <polyline points="10 17 15 12 10 7" />
-          <line x1="15" y1="12" x2="3" y2="12" />
-        </svg>
-      );
-    case "replay":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-          <path d="M3 3v5h5" />
-          <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
-          <path d="M16 16h5v5" />
-        </svg>
-      );
-    case "list":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <line x1="8" y1="6" x2="21" y2="6" />
-          <line x1="8" y1="12" x2="21" y2="12" />
-          <line x1="8" y1="18" x2="21" y2="18" />
-          <circle cx="4" cy="6" r="1" fill="currentColor" />
-          <circle cx="4" cy="12" r="1" fill="currentColor" />
-          <circle cx="4" cy="18" r="1" fill="currentColor" />
-        </svg>
-      );
-    case "trash":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <polyline points="3 6 5 6 21 6" />
-          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-        </svg>
-      );
-    case "plus":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-      );
-    case "folder-plus":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-          <line x1="12" y1="11" x2="12" y2="17" />
-          <line x1="9" y1="14" x2="15" y2="14" />
-        </svg>
-      );
-    case "upload":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="17 8 12 3 7 8" />
-          <line x1="12" y1="3" x2="12" y2="15" />
-        </svg>
-      );
-    case "download":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9">
-          <path d="M12 4v11" />
-          <polyline points="8 11 12 15 16 11" />
-          <line x1="6" y1="19" x2="18" y2="19" />
-        </svg>
-      );
-    case "share":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9">
-          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-          <polyline points="16 6 12 2 8 6" />
-          <line x1="12" y1="2" x2="12" y2="15" />
-        </svg>
-      );
-    case "more":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-          <circle cx="5" cy="12" r="1.7" />
-          <circle cx="12" cy="12" r="1.7" />
-          <circle cx="19" cy="12" r="1.7" />
-        </svg>
-      );
-    case "check":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-          <polyline points="20 6 9 17 4 12" />
-        </svg>
-      );
-    case "send":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <line x1="22" y1="2" x2="11" y2="13" />
-          <polygon points="22 2 15 22 11 13 2 9 22 2" />
-        </svg>
-      );
-    case "restore":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <polyline points="1 4 1 10 7 10" />
-          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-        </svg>
-      );
-    case "link":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-        </svg>
-      );
-    case "loop":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9">
-          <polyline points="17 1 21 5 17 9" />
-          <path d="M3 11V9a4 4 0 0 1 4-4h14" />
-          <polyline points="7 23 3 19 7 15" />
-          <path d="M21 13v2a4 4 0 0 1-4 4H3" />
-        </svg>
-      );
-    case "play":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-          <polygon points="5 3 19 12 5 21 5 3" />
-        </svg>
-      );
-    case "pause":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-          <rect x="6" y="4" width="4" height="16" rx="1" />
-          <rect x="14" y="4" width="4" height="16" rx="1" />
-        </svg>
-      );
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {ICON_PATHS[name]}
+    </svg>
+  );
+}
+
+const FOLDER_ICON_NAMES: Record<string, StudioIconName> = {
+  beats: "beats",
+  presets: "presets",
+  sub_plugin: "presets",
+  sub_preamp: "presets",
+  sub_mix: "presets",
+  vocals: "vocals",
+  sub_adlib: "vocals",
+  sub_bg: "vocals",
+  songs: "songs",
+  sub_drop: "songs",
+  media: "media",
+  sub_video: "media",
+  sub_mv: "media",
+  sub_covers: "media",
+  vision_board: "board",
+  in_progress: "progress",
+  rap_cup: "cup",
+  rap_chain: "chain",
+  rap_money: "cash",
+  rap_watch: "watch",
+};
+
+/** Line icon for a saved folder icon key; unknown keys (such as the dropped car) get the vault icon. */
+export function folderIconName(iconKey: string): StudioIconName {
+  return FOLDER_ICON_NAMES[iconKey] ?? "vault";
+}
+
+/** A colour block with a line icon, used like album art. No colour means a plain tile. */
+export function CoverTile({
+  icon,
+  color,
+  size = "",
+}: {
+  icon: StudioIconName;
+  color?: string;
+  size?: "" | "bs-cv-lg" | "bs-cv-xl" | "bs-cv-xl bs-cv-new";
+}) {
+  return (
+    <span
+      className={`bs-cv ${color ? "" : "bs-cv-plain"} ${size}`}
+      style={color ? ({ "--c": color } as CSSProperties) : undefined}
+    >
+      <StudioIcon name={icon} className="" />
+    </span>
+  );
+}
+
+export function UserAvatarBadge({
+  byName,
+  sizeClass = "w-5 h-5 text-[9px]",
+}: {
+  byName: string;
+  sizeClass?: string;
+}) {
+  const clean = (byName || "Swish").trim();
+  const lower = clean.toLowerCase();
+  const isTodo = lower.includes("todo");
+  const isSwish = lower.includes("swish") || clean.length === 0;
+  const initial = isTodo ? "T" : isSwish ? "S" : clean.charAt(0).toUpperCase();
+  let hash = 0;
+  for (let i = 0; i < lower.length; i++) {
+    hash = (hash * 31 + lower.charCodeAt(i)) | 0;
   }
+  const hue = Math.abs(hash) % 360;
+  return (
+    <span
+      title={`Added by ${clean}`}
+      className={`${sizeClass} rounded-full inline-flex items-center justify-center font-semibold shrink-0`}
+      style={
+        isTodo
+          ? { background: "#0b0a0c", color: "#ffffff" }
+          : isSwish
+            ? { background: "#0b0a0c", color: "#ff4a3d" }
+            : { background: `hsl(${hue}, 30%, 14%)`, color: `hsl(${hue}, 85%, 72%)` }
+      }
+    >
+      {initial}
+    </span>
+  );
 }
 
 export function StudioModal({
@@ -270,25 +292,55 @@ export function StudioModal({
   );
 }
 
-export function HardwareGridSection({
+/** One folder as a cover card: colour block, name, one line about what is inside. */
+export function FolderCoverCard({
+  folder,
+  folderMetaMap,
+  detail,
+  reorderMode = false,
+  isDragging = false,
+  onClick,
+  onPointerDown,
+}: {
+  folder: Folder;
+  folderMetaMap: Record<string, FolderUiMeta>;
+  detail: string;
+  reorderMode?: boolean;
+  isDragging?: boolean;
+  onClick?: () => void;
+  onPointerDown?: (e: React.PointerEvent<HTMLButtonElement>) => void;
+}) {
+  const cover = resolveFolderCover(folder, folderMetaMap);
+  return (
+    <button
+      type="button"
+      data-folder-id={folder.id}
+      draggable={false}
+      onClick={onClick}
+      onPointerDown={onPointerDown}
+      className={`bs-card ${reorderMode ? "bs-card-reorder" : ""} ${isDragging ? "bs-card-dragging" : ""}`}
+    >
+      <CoverTile icon={folderIconName(cover.iconKey)} color={cover.color} size="bs-cv-xl" />
+      <span>
+        <b>{folder.name}</b>
+        <small>{detail}</small>
+      </span>
+    </button>
+  );
+}
+
+/** The vault home grid of folder covers. Hold a card (or drag it with a mouse) to reorder. */
+export function CoverGridSection({
   folders,
   folderMetaMap,
-  activePalette,
-  animateSpawn,
-  createLabel,
-  isSharedMainPage = false,
-  folderHasPlayingTrack,
+  describeFolder,
   onSelectFolder,
   onReorderFolder,
   onCreateClick,
 }: {
   folders: Folder[];
   folderMetaMap: Record<string, FolderUiMeta>;
-  activePalette: HardwareThemeSlot[];
-  animateSpawn: boolean;
-  createLabel: string;
-  isSharedMainPage?: boolean;
-  folderHasPlayingTrack: (folder: Folder) => boolean;
+  describeFolder: (folder: Folder) => string;
   onSelectFolder: (folderId: string) => void;
   onReorderFolder?: (sourceFolderId: string, targetFolderId: string) => void;
   onCreateClick: () => void;
@@ -395,21 +447,11 @@ export function HardwareGridSection({
     };
   }, [draggingFolderId, onReorderFolder]);
 
-  const draggedFolderIdx = draggingFolderId
-    ? folders.findIndex((f) => f.id === draggingFolderId)
-    : -1;
-  const draggedFolder = draggedFolderIdx >= 0 ? folders[draggedFolderIdx] : null;
-  const draggedMeta =
-    draggedFolder && draggedFolderIdx >= 0
-      ? resolveFolderUiMeta(draggedFolder, folderMetaMap, draggedFolderIdx, isSharedMainPage)
-      : null;
-  const draggedTheme = draggedMeta
-    ? activePalette[draggedMeta.colorSlot % activePalette.length] ?? activePalette[0]
-    : activePalette[0];
+  const draggedFolder = folders.find((f) => f.id === draggingFolderId) ?? null;
 
   return (
     <section
-      className="pt-5 sm:pt-10 pb-6 sm:pb-8"
+      aria-label="Folders"
       onClick={(e) => {
         if (jiggleMode && e.target === e.currentTarget) {
           setJiggleMode(false);
@@ -418,11 +460,10 @@ export function HardwareGridSection({
         }
       }}
     >
+      <span className="bs-label">Folders</span>
       {jiggleMode && (
-        <div className="flex items-center justify-between mb-6 px-4 py-2.5 rounded-2xl bg-[var(--card)] border border-[var(--hair)] shadow-sm">
-          <span className="mono-meta text-[11px] uppercase text-[var(--ink-soft)]">
-            Drag any 3D icon into a new spot · Order saves automatically
-          </span>
+        <div className="bs-reorder-bar">
+          <span className="bs-label">Drag a folder to a new spot. The order saves by itself.</span>
           <button
             type="button"
             onClick={() => {
@@ -430,31 +471,22 @@ export function HardwareGridSection({
               setDraggingFolderId(null);
               setDragCursor(null);
             }}
-            className="px-4 py-1.5 rounded-full bg-[var(--ink)] text-[var(--bg)] mono-meta text-[11px] uppercase cursor-pointer hover:opacity-90"
+            className="bs-pill"
+            aria-pressed="true"
           >
             Done
           </button>
         </div>
       )}
-      <div
-        ref={gridRef}
-        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-3.5 gap-y-6 sm:gap-x-8 sm:gap-y-12"
-      >
-        {folders.map((folder, idx) => {
-          const meta = resolveFolderUiMeta(folder, folderMetaMap, idx, isSharedMainPage);
-          const theme = activePalette[meta.colorSlot % activePalette.length] ?? activePalette[0];
+      <div ref={gridRef} className="bs-cards">
+        {folders.map((folder) => {
           return (
-            <RecordHardwareItem
+            <FolderCoverCard
               key={folder.id}
-              folderId={folder.id}
-              name={folder.name}
-              by={meta.by}
-              iconKey={meta.iconKey}
-              idx={idx}
-              theme={theme}
-              animateSpawn={animateSpawn}
-              isPlayingFolder={folderHasPlayingTrack(folder)}
-              jiggleMode={jiggleMode}
+              folder={folder}
+              folderMetaMap={folderMetaMap}
+              detail={describeFolder(folder)}
+              reorderMode={jiggleMode}
               isDragging={draggingFolderId === folder.id}
               onPointerDown={(e) => {
                 if (e.button !== 0 && e.pointerType === "mouse") return;
@@ -492,34 +524,28 @@ export function HardwareGridSection({
             />
           );
         })}
-        <CreateRecordHardwareButton
-          label={createLabel}
-          idx={folders.length}
-          animateSpawn={animateSpawn}
-          onClick={onCreateClick}
-        />
+        <button type="button" className="bs-card" onClick={onCreateClick}>
+          <CoverTile icon="plus" size="bs-cv-xl bs-cv-new" />
+          <span>
+            <b>new folder</b>
+            <small>name it, pick an icon</small>
+          </span>
+        </button>
       </div>
 
-      {draggedFolder && draggedMeta && dragCursor && (
+      {draggedFolder && dragCursor && (
         <div
-          className="fixed z-50 pointer-events-none"
+          className="bs-drag-ghost"
           style={{
             left: `${dragCursor.x}px`,
             top: `${dragCursor.y}px`,
             width: `${dragCursor.width}px`,
-            transform: "translate(-50%, -48%) scale(1.08)",
-            filter: "drop-shadow(0 22px 32px rgba(22, 19, 43, 0.28))",
           }}
         >
-          <RecordHardwareItem
-            name={draggedFolder.name}
-            by={draggedMeta.by}
-            iconKey={draggedMeta.iconKey}
-            idx={draggedFolderIdx}
-            theme={draggedTheme}
-            animateSpawn={false}
-            isPlayingFolder={folderHasPlayingTrack(draggedFolder)}
-            onClick={() => {}}
+          <FolderCoverCard
+            folder={draggedFolder}
+            folderMetaMap={folderMetaMap}
+            detail={describeFolder(draggedFolder)}
           />
         </div>
       )}

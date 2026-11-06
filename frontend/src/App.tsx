@@ -2,31 +2,21 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FileItem, Folder, Share, User, Vault, VaultMember } from "@bpackz/shared";
 import { api, BpackzApiError } from "./api/client.ts";
 import { BottomTransportPlayer } from "./components/BottomTransportPlayer.tsx";
-import {
-  StudioFileCard,
-  StudioFileSection,
-  TrashSection,
-  type FileLayoutMode,
-} from "./components/StudioFileSection.tsx";
-import { HardwareGridSection, StudioIcon } from "./components/StudioPrimitives.tsx";
-import { VaultHeader } from "./components/VaultHeader.tsx";
+import type { LibraryPill } from "./components/LibraryPanel.tsx";
+import type { FileLayoutMode } from "./components/StudioFileSection.tsx";
+import { VaultWorkspace } from "./components/VaultWorkspace.tsx";
 import { VaultGateScreen, VAULT_GATE_SESSION_KEY } from "./components/VaultGateScreen.tsx";
 import {
   AuthModal,
-  CollaboratorsModal,
   CreateFolderModal,
   CreateSharedVaultModal,
-  PlusActionMenu,
   PublicShareLandingModal,
   ShareContextSheet,
 } from "./components/VaultModals.tsx";
-import { VisionBoardCanvas } from "./components/VisionBoardCanvas.tsx";
-import {
-  InProgressSection,
-  type InProgressSongEcosystem,
-  type LastAutoRouteSummary,
+import type {
+  InProgressSongEcosystem,
+  LastAutoRouteSummary,
 } from "./components/InProgressSection.tsx";
-import { UserAvatarBadge } from "./HardwareIcons.tsx";
 import {
   computeBlobSha256,
   createSampleWavBlob,
@@ -47,20 +37,16 @@ import {
 } from "./utils/inProgressAutoRouter.ts";
 import {
   createDefaultVisionBoardState,
-  describeFileMeta,
-  generateRandomSharedPalette,
-  getOrCreateSharedVaultPalette,
   loadPersistedUiMeta,
-  resolveFileOwnerName,
+  persistUiMeta,
   resolveFolderUiMeta,
   savePersistedUiMeta,
   sortVaultFolders,
-  SWISH_BLACK_RED_PALETTE,
-  TODO_MONOCHROME_PALETTE,
+  touchRecent,
   WAVEFORM_BARS,
-  type HardwareThemeSlot,
   type PersistedUiMeta,
   type TrashedFileEntry,
+  type VaultLook,
   type VisionBoardVaultState,
 } from "./vaultTheme.ts";
 
@@ -92,7 +78,6 @@ export function App() {
 
   const [rootId, setRootId] = useState<string | null>(null);
   const [subId, setSubId] = useState<string | null>(null);
-  const [forceFilesView, setForceFilesView] = useState(false);
   const [viewingTrash, setViewingTrash] = useState(false);
   const [visionBoardOpen, setVisionBoardOpen] = useState(false);
   const [inProgressOpen, setInProgressOpen] = useState(false);
@@ -102,12 +87,16 @@ export function App() {
   const [inProgressStatusText, setInProgressStatusText] = useState<string | null>(null);
   const [lastRouteSummary, setLastRouteSummary] = useState<LastAutoRouteSummary | null>(null);
   const [search, setSearch] = useState("");
-  const [trackFilter, setTrackFilter] = useState<"all" | "swish" | "todo">("all");
+  const [whoFilter, setWhoFilter] = useState<string | null>(null);
   const [fileLayout, setFileLayout] = useState<FileLayoutMode>("cards");
-  const [animateSpawn, setAnimateSpawn] = useState(true);
 
   const [uiMeta, setUiMeta] = useState<PersistedUiMeta>(() => loadPersistedUiMeta());
-  const [sharedDropdownOpen, setSharedDropdownOpen] = useState(false);
+  // The Shared panel starts open where it has room to dock beside the centre pane.
+  const [sharedOpen, setSharedOpen] = useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 1120,
+  );
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [libraryPill, setLibraryPill] = useState<LibraryPill | null>(null);
   const [plusMenuOpen, setPlusMenuOpen] = useState(false);
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
@@ -117,7 +106,6 @@ export function App() {
 
   const [creatingSharedVault, setCreatingSharedVault] = useState(false);
   const [newSharedVaultName, setNewSharedVaultName] = useState("");
-  const [managingMembers, setManagingMembers] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"editor" | "viewer">("editor");
 
@@ -141,6 +129,7 @@ export function App() {
   const [toast, setToast] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const uploadFolderRef = useRef<string | null>(null);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -158,6 +147,11 @@ export function App() {
     document.body.setAttribute("data-font-pair", "panchang");
     document.body.setAttribute("data-file-font", "mono");
   }, []);
+
+  const look = uiMeta.look ?? "night";
+  useEffect(() => {
+    document.documentElement.dataset.look = look;
+  }, [look]);
 
   const loadVaultContents = useCallback(
     async (vaultId: string) => {
@@ -218,19 +212,6 @@ export function App() {
         const { items: myVaults } = await api.vaults.list();
         setVaults(myVaults);
 
-        const nextMeta = loadPersistedUiMeta();
-        let metaChanged = false;
-        for (const v of myVaults) {
-          if (v.kind === "shared" && !nextMeta.sharedVaultPalettes[v.id]) {
-            nextMeta.sharedVaultPalettes[v.id] = generateRandomSharedPalette();
-            metaChanged = true;
-          }
-        }
-        if (metaChanged) {
-          savePersistedUiMeta(nextMeta);
-          setUiMeta(nextMeta);
-        }
-
         const personal = myVaults.find((v) => v.kind === "personal") ?? myVaults[0] ?? null;
         const shared = myVaults.find((v) => v.kind === "shared") ?? personal;
         const chosen = preferredMode === "shared" ? shared : personal;
@@ -275,13 +256,6 @@ export function App() {
   }, [user]);
 
   const otherUserName = currentUserKey === "swish" ? "Todo" : "Swish";
-
-  const activePalette: HardwareThemeSlot[] = useMemo(() => {
-    if (activeVault?.kind === "shared") {
-      return getOrCreateSharedVaultPalette(activeVault.id, uiMeta);
-    }
-    return currentUserKey === "todo" ? TODO_MONOCHROME_PALETTE : SWISH_BLACK_RED_PALETTE;
-  }, [activeVault, currentUserKey, uiMeta]);
 
   const currentRootFolder = useMemo(
     () => rootFolders.find((f) => f.id === rootId) ?? null,
@@ -368,14 +342,6 @@ export function App() {
     );
   }, [currentRootFolder, viewingTrash, visionBoardOpen, inProgressOpen, uiMeta.folderMeta]);
 
-  const viewingFiles = Boolean(
-    !viewingVisionBoard &&
-      !viewingInProgress &&
-      (forceFilesView ||
-        (currentRootFolder && currentSubfolders.length === 0) ||
-        (currentRootFolder && currentSubFolder)),
-  );
-
   const allVaultFilesFlat = useMemo(() => {
     const out: FileItem[] = [];
     for (const list of Object.values(filesByFolder)) {
@@ -406,13 +372,6 @@ export function App() {
   );
 
   const activeFolderId = currentSubFolder?.id ?? currentRootFolder?.id ?? null;
-
-  const activeFolderFiles = useMemo(
-    () => (activeFolderId ? filesByFolder[activeFolderId] ?? [] : []),
-    [activeFolderId, filesByFolder],
-  );
-
-  const query = search.trim().toLowerCase();
 
   const visibleRoots = useMemo(() => {
     const hasVisionFolder = rootFolders.some((f, idx) => {
@@ -459,55 +418,8 @@ export function App() {
           ]),
     ];
 
-    return combinedRoots.filter((f, idx) => {
-      if (!query) return true;
-      const meta = resolveFolderUiMeta(f, uiMeta.folderMeta, idx);
-      const subs = subfoldersByRoot[f.id] ?? [];
-      return (
-        f.name.toLowerCase().includes(query) ||
-        meta.by.toLowerCase().includes(query) ||
-        subs.some((sf) => sf.name.toLowerCase().includes(query))
-      );
-    });
-  }, [rootFolders, activeVaultId, user?.id, query, uiMeta.folderMeta, subfoldersByRoot]);
-
-  const visibleSubs = useMemo(
-    () =>
-      currentSubfolders.filter((sf, idx) => {
-        if (!query) return true;
-        const meta = resolveFolderUiMeta(sf, uiMeta.folderMeta, idx);
-        return sf.name.toLowerCase().includes(query) || meta.by.toLowerCase().includes(query);
-      }),
-    [currentSubfolders, query, uiMeta.folderMeta],
-  );
-
-  const globalMatchingFiles = useMemo(() => {
-    if (!query || viewingFiles) return [];
-    const out: FileItem[] = [];
-    for (const list of Object.values(filesByFolder)) {
-      for (const file of list) {
-        const metaStr = describeFileMeta(file).toLowerCase();
-        if (file.name.toLowerCase().includes(query) || metaStr.includes(query)) {
-          out.push(file);
-        }
-      }
-    }
-    return out;
-  }, [query, viewingFiles, filesByFolder]);
-
-  const filteredFolderFiles = useMemo(
-    () =>
-      activeFolderFiles.filter((f) => {
-        const matchesQuery =
-          !query ||
-          f.name.toLowerCase().includes(query) ||
-          describeFileMeta(f).toLowerCase().includes(query);
-        const owner = resolveFileOwnerName(f.createdBy, vaultMembers, user).toLowerCase();
-        const matchesChip = trackFilter === "all" || owner.includes(trackFilter);
-        return matchesQuery && matchesChip;
-      }),
-    [activeFolderFiles, query, trackFilter, vaultMembers, user],
-  );
+    return combinedRoots;
+  }, [rootFolders, activeVaultId, user?.id, uiMeta.folderMeta]);
 
   // Poll processing files until verification worker (or mock timer) flips them to ready/failed
   useEffect(() => {
@@ -564,118 +476,40 @@ export function App() {
     [activeVaultId, uiMeta.trashedByVault],
   );
 
-  const canGoBack = Boolean(
-    currentRootFolder || viewingTrash || visionBoardOpen || inProgressOpen,
-  );
-
-  const profileSubheading =
-    isSharedMode && activeVault ? activeVault.name : user?.name ?? "Swish";
-
-  const titleText = viewingTrash
-    ? "Trash"
-    : viewingInProgress
-      ? "In Progress"
-      : visionBoardOpen && !currentRootFolder
-        ? "Vision Board"
-        : !currentRootFolder
-          ? "The Vault"
-          : currentSubFolder?.name ?? currentRootFolder.name;
-
-  const subtitleText = useMemo(() => {
-    if (viewingTrash) return `${profileSubheading} · 30-day recovery`;
-    if (viewingInProgress)
-      return `${profileSubheading} · song ecosystems · beat · main · bg · adlib · demo · mixed`;
-    if (visionBoardOpen && !currentRootFolder) return `${profileSubheading} · notes · songs · threads`;
-    if (!currentRootFolder) return profileSubheading;
-    const target = currentSubFolder ?? currentRootFolder;
-    const meta = resolveFolderUiMeta(target, uiMeta.folderMeta, 0);
-    return `${profileSubheading} · ${meta.by}`;
-  }, [
-    viewingTrash,
-    viewingInProgress,
-    visionBoardOpen,
-    profileSubheading,
-    currentRootFolder,
-    currentSubFolder,
-    uiMeta.folderMeta,
-  ]);
-
-  const parentFolderTheme: HardwareThemeSlot = useMemo(() => {
-    if (viewingInProgress) return activePalette[1] ?? activePalette[0];
-    if (!currentRootFolder) return activePalette[0];
-    const meta = resolveFolderUiMeta(currentRootFolder, uiMeta.folderMeta, 0);
-    return activePalette[meta.colorSlot % activePalette.length] ?? activePalette[0];
-  }, [viewingInProgress, currentRootFolder, activePalette, uiMeta.folderMeta]);
-
-  const folderHasPlayingTrack = useCallback(
-    (folder: Folder) => {
-      if (!playingFile) return false;
-      if ((filesByFolder[folder.id] ?? []).some((f) => f.id === playingFile.id)) return true;
-      const subs = subfoldersByRoot[folder.id] ?? [];
-      return subs.some(
-        (sf) =>
-          (filesByFolder[sf.id] ?? []).some((f) => f.id === playingFile.id) ||
-          (subfoldersByRoot[sf.id] ?? []).some((gsf) =>
-            (filesByFolder[gsf.id] ?? []).some((f) => f.id === playingFile.id),
-          ),
-      );
-    },
-    [playingFile, filesByFolder, subfoldersByRoot],
-  );
-
-  const resetNavigation = (spawn = true) => {
+  const resetNavigation = () => {
     setRootId(null);
     setSubId(null);
-    setForceFilesView(false);
     setViewingTrash(false);
     setVisionBoardOpen(false);
     setInProgressOpen(false);
     setCreatingFolder(false);
-    setSharedDropdownOpen(false);
     setPlusMenuOpen(false);
-    setAnimateSpawn(spawn);
   };
 
-  const handleSelectProfile = async () => {
-    const personal = vaults.find((v) => v.kind === "personal") ?? vaults[0] ?? null;
-    if (!personal) {
-      setAuthModalOpen(true);
-      return;
-    }
-    setActiveVaultId(personal.id);
-    resetNavigation(true);
-    await loadVaultContents(personal.id);
-    showToast(`${user?.name ?? "My"} Vault`);
+  const touchRecentKey = (key: string) =>
+    setUiMeta((prev) => persistUiMeta({ ...prev, recents: touchRecent(prev.recents, key) }));
+
+  const goVaultHome = () => {
+    resetNavigation();
+    setSearch("");
   };
 
-  const handleSwitchSpecificSharedVault = async (vaultId: string) => {
+  const handleSwitchVault = async (vaultId: string) => {
     setActiveVaultId(vaultId);
-    resetNavigation(true);
-    setManagingMembers(false);
+    goVaultHome();
+    if (window.innerWidth < 1120) setSharedOpen(false);
+    touchRecentKey(`vault:${vaultId}`);
     await loadVaultContents(vaultId);
-    const m = await api.vaults.members(vaultId);
+    const m = await api.vaults.members(vaultId).catch(() => ({ items: [] }));
     setVaultMembers(m.items);
     const found = vaults.find((v) => v.id === vaultId);
-    if (found) showToast(`Shared Vault · ${found.name}`);
-  };
-
-  const handleBack = () => {
-    if (viewingTrash) setViewingTrash(false);
-    else if (visionBoardOpen) setVisionBoardOpen(false);
-    else if (inProgressOpen) setInProgressOpen(false);
-    else if (forceFilesView) setForceFilesView(false);
-    else if (subId) setSubId(null);
-    else setRootId(null);
-    setCreatingFolder(false);
-    setPlusMenuOpen(false);
-    setAnimateSpawn(true);
+    if (found) showToast(found.kind === "shared" ? `Shared Vault · ${found.name}` : found.name);
   };
 
   const handleOpenRoot = (id: string) => {
     if (id === "__vision_board__") {
       setRootId(null);
       setSubId(null);
-      setForceFilesView(false);
       setViewingTrash(false);
       setInProgressOpen(false);
       setVisionBoardOpen(true);
@@ -686,7 +520,6 @@ export function App() {
     if (id === "__in_progress__" || (inProgressRootFolder && id === inProgressRootFolder.id)) {
       setRootId(inProgressRootFolder ? inProgressRootFolder.id : null);
       setSubId(null);
-      setForceFilesView(false);
       setViewingTrash(false);
       setVisionBoardOpen(false);
       setInProgressOpen(true);
@@ -696,22 +529,18 @@ export function App() {
     }
     setRootId(id);
     setSubId(null);
-    setForceFilesView(false);
     setViewingTrash(false);
     setVisionBoardOpen(false);
     setInProgressOpen(false);
     setCreatingFolder(false);
     setPlusMenuOpen(false);
-    setAnimateSpawn(true);
   };
 
-  const handleOpenSub = (id: string) => {
-    setSubId(id);
-    setForceFilesView(false);
-    setViewingTrash(false);
-    setCreatingFolder(false);
-    setPlusMenuOpen(false);
-    setAnimateSpawn(true);
+  const handleOpenFolder = (root: string, sub: string | null) => {
+    handleOpenRoot(root);
+    setSubId(sub);
+    setSearch("");
+    touchRecentKey(`go:${sub ?? root}`);
   };
 
   const handleReorderFolder = useCallback(
@@ -770,7 +599,7 @@ export function App() {
     if (!activeVaultId || !newFolderName.trim()) return;
     const name = newFolderName.trim();
     const desc =
-      newFolderDesc.trim() || (currentRootFolder ? "custom subfolder" : "custom 3d folder");
+      newFolderDesc.trim() || (currentRootFolder ? "custom subfolder" : "custom folder");
 
     try {
       const folder = await api.folders.create(activeVaultId, {
@@ -796,13 +625,11 @@ export function App() {
       setCreatingFolder(false);
       setNewFolderName("");
       setNewFolderDesc("");
-      setForceFilesView(false);
-      setAnimateSpawn(true);
       await loadVaultContents(activeVaultId);
       showToast(
         currentRootFolder
-          ? `Spawned subfolder "${name}" in ${currentRootFolder.name}`
-          : `Spawned 3D icon "${name}"`,
+          ? `Created subfolder "${name}" in ${currentRootFolder.name}`
+          : `Created folder "${name}"`,
       );
     } catch (err) {
       if (err instanceof BpackzApiError) showToast(err.message);
@@ -822,26 +649,16 @@ export function App() {
         // Partner account may not be registered yet on a fresh deployment
       }
 
-      const nextMeta: PersistedUiMeta = {
-        ...uiMeta,
-        sharedVaultPalettes: {
-          ...uiMeta.sharedVaultPalettes,
-          [vault.id]: generateRandomSharedPalette(),
-        },
-      };
-      savePersistedUiMeta(nextMeta);
-      setUiMeta(nextMeta);
-
       const { items: refreshedVaults } = await api.vaults.list();
       setVaults(refreshedVaults);
       setActiveVaultId(vault.id);
       setCreatingSharedVault(false);
       setNewSharedVaultName("");
-      resetNavigation(true);
+      resetNavigation();
       await loadVaultContents(vault.id);
       const m = await api.vaults.members(vault.id);
       setVaultMembers(m.items);
-      showToast(`Created "${name}" with its own saved random color scheme`);
+      showToast(`Created "${name}"`);
     } catch (err) {
       if (err instanceof BpackzApiError) showToast(err.message);
     }
@@ -886,9 +703,8 @@ export function App() {
     }
   };
 
-  const handleRenameActiveFolder = async () => {
-    const target = currentSubFolder ?? currentRootFolder;
-    if (!activeVaultId || !target) return;
+  const handleRenameFolder = async (target: Folder) => {
+    if (!activeVaultId) return;
     const nextName =
       typeof window !== "undefined" && typeof window.prompt === "function"
         ? window.prompt("Rename folder:", target.name)
@@ -906,13 +722,12 @@ export function App() {
     }
   };
 
-  const handleTrashActiveFolder = async () => {
-    const target = currentSubFolder ?? currentRootFolder;
-    if (!activeVaultId || !target) return;
+  const handleTrashFolder = async (target: Folder) => {
+    if (!activeVaultId) return;
     try {
       await api.folders.trash(activeVaultId, target.id);
-      if (currentSubFolder) setSubId(null);
-      else setRootId(null);
+      if (target.id === subId) setSubId(null);
+      else if (target.id === rootId) setRootId(null);
       await loadVaultContents(activeVaultId);
       showToast(`Moved folder "${target.name}" to Trash`);
     } catch (err) {
@@ -1415,9 +1230,14 @@ export function App() {
     }
   };
 
+  const handleUploadTo = (folderId: string | null) => {
+    uploadFolderRef.current = folderId;
+    fileInputRef.current?.click();
+  };
+
   const handleUploadSelection = async (files: FileList | null) => {
     if (!activeVaultId) return;
-    const targetFolderId = activeFolderId ?? rootFolders[0]?.id ?? null;
+    const targetFolderId = uploadFolderRef.current ?? activeFolderId ?? rootFolders[0]?.id ?? null;
 
     const pinFileToVisionBoardIfActive = (uploadedFile: FileItem) => {
       if (!viewingVisionBoard) return;
@@ -1515,6 +1335,7 @@ export function App() {
     setPlayingFile(file);
     setIsPaused(false);
     setPlayProgress(0);
+    touchRecentKey(`play:${file.id}`);
     try {
       const { url } = await api.files.downloadUrl(activeVaultId, file.id, {
         disposition: "inline",
@@ -1540,6 +1361,15 @@ export function App() {
       setWaveformBars(WAVEFORM_BARS);
     }
   };
+
+  const handlePlayFileId = (fileId: string) => {
+    const found = allVaultFilesFlat.find((f) => f.id === fileId);
+    if (found) void handleTogglePlay(found);
+    else showToast("File is no longer in this vault");
+  };
+
+  const handleChangeLook = (next: VaultLook) =>
+    setUiMeta((prev) => persistUiMeta({ ...prev, look: next }));
 
   const handleDownloadFile = async (file: FileItem) => {
     if (!activeVaultId) return;
@@ -1855,14 +1685,37 @@ export function App() {
             }
           }
           setVaultGateUnlocked(true);
-          setAnimateSpawn(true);
         }}
       />
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col vault-main-enter">
+    <VaultWorkspace
+      {...{ user, authLoading, toast, look, uiMeta, vaults, activeVault, isSharedMode, vaultMembers }}
+      {...{ subfoldersByRoot, filesByFolder, currentRootFolder, currentSubFolder, currentSubfolders }}
+      {...{ trashedList, viewingTrash, viewingInProgress, viewingVisionBoard, search, whoFilter }}
+      {...{ fileLayout, libraryPill, sharedOpen, profileOpen, plusMenuOpen, inviteEmail, inviteRole }}
+      {...{ playingFile, isPaused, playProgress, inProgressSongs, activeInProgressSongId }}
+      {...{ activeInProgressBucket, inProgressImporting, inProgressStatusText, lastRouteSummary }}
+      {...{ setSearch, setWhoFilter, setFileLayout, setLibraryPill, setSharedOpen, setProfileOpen }}
+      {...{ setPlusMenuOpen, setViewingTrash, setInProgressOpen, setVisionBoardOpen, setCreatingFolder }}
+      {...{ setCreatingSharedVault, setInviteEmail, setInviteRole, setActiveInProgressSongId }}
+      {...{ setActiveInProgressBucket, roots: visibleRoots, visionBoard: activeVisionBoardState }}
+      {...{ onGoVaultHome: goVaultHome, onOpenFolder: handleOpenFolder, onSwitchVault: handleSwitchVault }}
+      {...{ onPlayFileId: handlePlayFileId, onChangeLook: handleChangeLook, onSignOut: handleSignOut }}
+      {...{ onReorderFolder: handleReorderFolder, onUploadTo: handleUploadTo }}
+      {...{ onRenameFolder: handleRenameFolder, onTrashFolder: handleTrashFolder }}
+      {...{ onTogglePlay: handleTogglePlay, onOpenPopover: handleOpenFilePopover }}
+      {...{ onRestoreFromTrash: handleRestoreFromTrash, onInviteMember: handleInviteMember }}
+      {...{ onRemoveMember: handleRemoveMember, onRenameVault: handleRenameSharedVault }}
+      {...{ onUpdateVisionBoard: handleUpdateVisionBoard }}
+      {...{ onImportSessionFiles: handleImportInProgressSessionFiles }}
+      {...{ onCreateEmptySong: handleCreateEmptyInProgressSong }}
+      {...{ onSpawnDemoFlSession: handleSpawnDemoFlSession, onUploadToSongBucket: handleUploadToSongBucket }}
+      {...{ onMoveFileToBucket: handleMoveFileToBucket, onRenameSong: handleRenameInProgressSong }}
+      {...{ onTrashSong: handleTrashInProgressSong }}
+    >
       <input
         ref={fileInputRef}
         type="file"
@@ -1885,468 +1738,6 @@ export function App() {
           if (!loopEnabled) setPlayingFile(null);
         }}
       />
-
-      <VaultHeader
-        user={user}
-        currentUserKey={currentUserKey}
-        isSharedMode={isSharedMode}
-        activeVault={activeVault}
-        vaults={vaults}
-        uiMeta={uiMeta}
-        sharedDropdownOpen={sharedDropdownOpen}
-        newSharedVaultName={newSharedVaultName}
-        canGoBack={canGoBack}
-        viewingTrash={viewingTrash}
-        currentRootFolder={currentRootFolder}
-        currentSubFolder={currentSubFolder}
-        rootFolders={rootFolders}
-        currentSubfolders={currentSubfolders}
-        folderMetaMap={uiMeta.folderMeta}
-        activePalette={activePalette}
-        search={search}
-        onSearchChange={(val) => {
-          setSearch(val);
-          setAnimateSpawn(false);
-        }}
-        onBack={handleBack}
-        onGoVaultHome={() => resetNavigation(true)}
-        onOpenRoot={handleOpenRoot}
-        onOpenSub={handleOpenSub}
-        onToggleSharedDropdown={() => {
-          setSharedDropdownOpen((v) => !v);
-          setPlusMenuOpen(false);
-        }}
-        onSwitchSharedVault={(vId) => void handleSwitchSpecificSharedVault(vId)}
-        onManageSharedVaultMembers={(vId) => {
-          void handleSwitchSpecificSharedVault(vId).then(() => setManagingMembers(true));
-        }}
-        onChangeNewSharedVaultName={setNewSharedVaultName}
-        onCreateSharedVault={() => void handleConfirmCreateSharedVault()}
-        onSelectProfile={() => void handleSelectProfile()}
-        onSignOut={() => void handleSignOut()}
-        onOpenAuthModal={() => setAuthModalOpen(true)}
-        viewingVisionBoard={viewingVisionBoard}
-        viewingInProgress={viewingInProgress}
-        inProgressCount={inProgressSongs.length}
-        trashedCount={trashedList.length}
-        onToggleVisionBoard={() => {
-          setViewingTrash(false);
-          setInProgressOpen(false);
-          setVisionBoardOpen((v) => !v);
-        }}
-        onToggleInProgress={() => {
-          setViewingTrash(false);
-          setVisionBoardOpen(false);
-          setInProgressOpen((v) => !v);
-        }}
-        onToggleTrash={() => {
-          setVisionBoardOpen(false);
-          setInProgressOpen(false);
-          setViewingTrash((v) => !v);
-        }}
-        onOpenPlusMenu={() => setPlusMenuOpen((o) => !o)}
-      />
-
-      {toast && (
-        <div
-          role="status"
-          className={`fixed left-4 right-4 sm:left-auto sm:right-6 ${
-            playingFile ? "bottom-36 sm:bottom-24" : "bottom-20 sm:bottom-6"
-          } z-[60] px-4 py-2.5 rounded-full bg-[var(--ink)] text-[var(--bg)] mono-meta text-[11px] uppercase text-center sm:text-left shadow-xl`}
-        >
-          {toast}
-        </div>
-      )}
-
-      <main
-        className={`flex-1 px-4 sm:px-6 md:px-12 ${canGoBack ? "sm:pl-20" : ""} pt-4 sm:pt-10 ${
-          playingFile
-            ? "pb-[calc(10rem+env(safe-area-inset-bottom))] sm:pb-[calc(7.5rem+env(safe-area-inset-bottom))]"
-            : "pb-[calc(6.25rem+env(safe-area-inset-bottom))] sm:pb-[calc(5.5rem+env(safe-area-inset-bottom))]"
-        } max-w-6xl w-full mx-auto`}
-      >
-        {/* Hero Workspace Title Bar */}
-        <div className="flex items-end justify-between gap-3 pb-4 sm:pb-6 border-b border-[var(--hair)] relative">
-          <div className="flex items-center gap-3 min-w-0">
-            {canGoBack && (
-              <button
-                type="button"
-                onClick={handleBack}
-                title="Back"
-                className="hidden sm:inline-flex icon-btn shrink-0 w-10 h-10"
-              >
-                <StudioIcon name="back" className="w-5 h-5" />
-              </button>
-            )}
-
-            <div className="min-w-0">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <h1 className="display-heading text-3xl sm:text-5xl md:text-7xl text-[var(--ink)] truncate">
-                  {titleText}
-                </h1>
-                {currentRootFolder && !viewingTrash && !visionBoardOpen && !viewingInProgress && (
-                  <div className="inline-flex items-center gap-1 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => void handleRenameActiveFolder()}
-                      title="Rename Folder"
-                      className="px-2 py-1 rounded-full bg-[var(--card)] border border-[var(--hair)] hover:border-[var(--ink)] mono-meta text-[9px] uppercase text-[var(--ink-soft)] hover:text-[var(--ink)] cursor-pointer"
-                    >
-                      Rename
-                    </button>
-                    {(currentSubFolder ?? currentRootFolder)?.kind === null && (
-                      <button
-                        type="button"
-                        onClick={() => void handleTrashActiveFolder()}
-                        title="Trash Custom Folder"
-                        className="px-2 py-1 rounded-full bg-[var(--card)] border border-[var(--hair)] hover:border-red-600 mono-meta text-[9px] uppercase text-red-700 cursor-pointer"
-                      >
-                        Trash
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-wrap items-center gap-2.5 mt-2">
-                {isSharedMode ? (
-                  <button
-                    type="button"
-                    onClick={() => setManagingMembers(true)}
-                    title="Collaborators & Shared Vaults"
-                    className="inline-flex items-center -space-x-1.5 cursor-pointer hover:opacity-90"
-                  >
-                    {(vaultMembers.length > 0
-                      ? vaultMembers.slice(0, 4).map((m) => m.name || m.email.split("@")[0] || "Member")
-                      : ["Swish", "Todo"]
-                    ).map((memberName) => (
-                      <UserAvatarBadge
-                        key={memberName}
-                        byName={memberName}
-                        sizeClass="w-5 h-5 text-[9px] ring-2 ring-[#edeae4]"
-                      />
-                    ))}
-                    {vaultMembers.length > 4 && (
-                      <span className="w-5 h-5 rounded-full bg-[var(--ink)] text-[var(--bg)] mono-meta text-[8px] ring-2 ring-[#edeae4] inline-flex items-center justify-center">
-                        +{vaultMembers.length - 4}
-                      </span>
-                    )}
-                  </button>
-                ) : (
-                  <UserAvatarBadge
-                    byName={user?.name ?? "Swish"}
-                    sizeClass="w-5 h-5 text-[9px]"
-                  />
-                )}
-                <p className="text-sm sm:text-base font-normal text-[var(--ink-soft)]">
-                  {subtitleText}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Workspace Pure Icon Toolbar — De-cluttered on iPhone (actions live in Bottom Thumb Dock) */}
-          <div className="flex items-center gap-2 relative">
-            <button
-              type="button"
-              onClick={() => {
-                setViewingTrash(false);
-                setVisionBoardOpen(false);
-                if (viewingInProgress) {
-                  setInProgressOpen(false);
-                  if (inProgressRootFolder && rootId === inProgressRootFolder.id) {
-                    setRootId(null);
-                  }
-                } else {
-                  setInProgressOpen(true);
-                }
-              }}
-              title="In Progress — Song Ecosystems (Beat · Main · BG · Adlib · Demo · Mixed)"
-              className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border mono-meta text-[10px] uppercase tracking-wider transition-all cursor-pointer ${
-                viewingInProgress
-                  ? "bg-[var(--ink)] text-[var(--bg)] border-[var(--ink)]"
-                  : "bg-[var(--card)] text-[var(--ink)] border-[var(--hair)] hover:border-[var(--ink)]"
-              }`}
-            >
-              <span>In Progress</span>
-              {inProgressSongs.length > 0 && (
-                <span
-                  className={`px-1.5 py-0.2 rounded-full text-[9px] font-bold ${
-                    viewingInProgress
-                      ? "bg-white/20 text-[var(--bg)]"
-                      : "bg-[var(--card-deep)] text-[var(--ink)]"
-                  }`}
-                >
-                  {inProgressSongs.length}
-                </span>
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setViewingTrash(false);
-                setInProgressOpen(false);
-                setVisionBoardOpen((v) => !v);
-              }}
-              title="Collab Vision Board"
-              className={`hidden sm:inline-flex px-3 py-1.5 rounded-full border mono-meta text-[10px] uppercase tracking-wider transition-all cursor-pointer ${
-                viewingVisionBoard
-                  ? "bg-[var(--ink)] text-[var(--bg)] border-[var(--ink)]"
-                  : "bg-[var(--card)] text-[var(--ink)] border-[var(--hair)] hover:border-[var(--ink)]"
-              }`}
-            >
-              Vision Board
-            </button>
-
-            {!viewingFiles && !viewingVisionBoard && !viewingInProgress && !viewingTrash && (
-              <button
-                type="button"
-                onClick={() => {
-                  setAnimateSpawn(false);
-                  window.requestAnimationFrame(() => setAnimateSpawn(true));
-                }}
-                title="Replay 3D Icon Spawn Animation"
-                className="hidden sm:inline-flex icon-btn"
-              >
-                <StudioIcon name="replay" />
-              </button>
-            )}
-
-            {currentRootFolder && !currentSubFolder && !viewingFiles && !viewingVisionBoard && !viewingInProgress && !viewingTrash && (
-              <button
-                type="button"
-                onClick={() => setForceFilesView(true)}
-                title="Open Tracklist"
-                className="icon-btn"
-              >
-                <StudioIcon name="list" />
-              </button>
-            )}
-
-            {isSharedMode && (
-              <button
-                type="button"
-                onClick={() => setManagingMembers(true)}
-                title="Collaborators & Shared Vaults"
-                className="icon-btn"
-              >
-                <StudioIcon name="user-plus" />
-              </button>
-            )}
-
-            {(trashedList.length > 0 || viewingTrash) && (
-              <button
-                type="button"
-                onClick={() => setViewingTrash((v) => !v)}
-                title={`30-Day Trash (${trashedList.length})`}
-                className={`hidden sm:inline-flex icon-btn relative ${viewingTrash ? "icon-btn-active" : ""}`}
-              >
-                <StudioIcon name="trash" />
-                {trashedList.length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[var(--ink)] text-[var(--bg)] mono-meta text-[9px] flex items-center justify-center">
-                    {trashedList.length}
-                  </span>
-                )}
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={() => setPlusMenuOpen((o) => !o)}
-              title="Add / Create..."
-              className="hidden sm:inline-flex icon-btn icon-btn-active"
-            >
-              <StudioIcon name="plus" />
-            </button>
-
-            {plusMenuOpen && (
-              <PlusActionMenu
-                hasRootFolder={Boolean(currentRootFolder)}
-                viewingFiles={viewingFiles}
-                onClose={() => setPlusMenuOpen(false)}
-                onCreateFolder={() => {
-                  setPlusMenuOpen(false);
-                  setCreatingFolder(true);
-                }}
-                onUploadFile={() => fileInputRef.current?.click()}
-                onCreateSharedVault={() => {
-                  setPlusMenuOpen(false);
-                  setCreatingSharedVault(true);
-                }}
-              />
-            )}
-          </div>
-        </div>
-
-        {/* Trash View */}
-        {viewingTrash && (
-          <TrashSection
-            trashedList={trashedList}
-            onRestore={(entry) => void handleRestoreFromTrash(entry)}
-          />
-        )}
-
-        {/* LEVEL 1: Spawning 3D Studio Hardware Root Icons */}
-        {!currentRootFolder && !viewingVisionBoard && !viewingInProgress && !viewingTrash && !authLoading && (
-          <HardwareGridSection
-            folders={visibleRoots}
-            folderMetaMap={uiMeta.folderMeta}
-            activePalette={activePalette}
-            animateSpawn={animateSpawn}
-            createLabel="new icon"
-            isSharedMainPage={isSharedMode}
-            folderHasPlayingTrack={folderHasPlayingTrack}
-            onSelectFolder={handleOpenRoot}
-            onReorderFolder={handleReorderFolder}
-            onCreateClick={() => setCreatingFolder(true)}
-          />
-        )}
-
-        {/* LEVEL 2: Spawning 3D Subfolder Studio Hardware Icons */}
-        {currentRootFolder && !viewingFiles && !viewingVisionBoard && !viewingInProgress && !viewingTrash && (
-          <HardwareGridSection
-            folders={visibleSubs}
-            folderMetaMap={uiMeta.folderMeta}
-            activePalette={activePalette}
-            animateSpawn={animateSpawn}
-            createLabel="new folder"
-            folderHasPlayingTrack={folderHasPlayingTrack}
-            onSelectFolder={handleOpenSub}
-            onReorderFolder={handleReorderFolder}
-            onCreateClick={() => setCreatingFolder(true)}
-          />
-        )}
-
-        {/* IN PROGRESS: Self-Contained Song Ecosystems (FL Studio Split Mixer Auto-Router) */}
-        {viewingInProgress && !viewingTrash && (
-          <InProgressSection
-            songs={inProgressSongs}
-            activeSongId={activeInProgressSongId}
-            activeBucketFilter={activeInProgressBucket}
-            isImporting={inProgressImporting}
-            importStatusText={inProgressStatusText}
-            lastRouteSummary={lastRouteSummary}
-            fileLayout={fileLayout}
-            playingFileId={playingFile?.id ?? null}
-            playProgress={playProgress}
-            parentFolderTheme={parentFolderTheme}
-            otherUserName={otherUserName}
-            vaultMembers={vaultMembers}
-            currentUser={user}
-            onSelectSong={(songId) => {
-              setActiveInProgressSongId(songId);
-            }}
-            onSelectBucketFilter={setActiveInProgressBucket}
-            onImportSessionFiles={(files, explicitSongTitle, detectedContainerName) =>
-              void handleImportInProgressSessionFiles(
-                files,
-                explicitSongTitle,
-                detectedContainerName,
-              )
-            }
-            onCreateEmptySong={(title) => void handleCreateEmptyInProgressSong(title)}
-            onSpawnDemoFlSession={(title) => void handleSpawnDemoFlSession(title)}
-            onUploadToSongBucket={(songFolderId, bucket, files) =>
-              void handleUploadToSongBucket(songFolderId, bucket, files)
-            }
-            onMoveFileToBucket={(file, songFolderId, targetBucket) =>
-              void handleMoveFileToBucket(file, songFolderId, targetBucket)
-            }
-            onRenameSong={(sf) => void handleRenameInProgressSong(sf)}
-            onTrashSong={(sf) => void handleTrashInProgressSong(sf)}
-            onChangeFileLayout={setFileLayout}
-            onTogglePlay={(f) => void handleTogglePlay(f)}
-            onDownload={(f) => void handleDownloadFile(f)}
-            onOpenPopover={(f) => void handleOpenFilePopover(f)}
-          />
-        )}
-
-        {/* COLLAB VISION BOARD: Figma-Style Infinite Scroll Note & Song Board */}
-        {viewingVisionBoard && !viewingTrash && (
-          <VisionBoardCanvas
-            boardState={activeVisionBoardState}
-            vaultFiles={allVaultFilesFlat}
-            currentUserName={user?.name ?? "Swish"}
-            playingFileId={playingFile?.id ?? null}
-            playProgress={playProgress}
-            accentTheme={parentFolderTheme}
-            onUpdateBoard={handleUpdateVisionBoard}
-            onTogglePlayFile={(fileId) => {
-              const found = allVaultFilesFlat.find((f) => f.id === fileId);
-              if (found) {
-                void handleTogglePlay(found);
-              } else {
-                showToast("File is no longer in this vault");
-              }
-            }}
-            onUploadSongToBoard={() => fileInputRef.current?.click()}
-          />
-        )}
-
-        {/* Global Search Results across Vault */}
-        {globalMatchingFiles.length > 0 && !viewingTrash && (
-          <section className="pt-2 pb-8 space-y-2.5">
-            <div className="px-1 flex items-center justify-between">
-              <span className="mono-meta text-[10px] uppercase text-[var(--ink-soft)]">
-                {globalMatchingFiles.length} matching{" "}
-                {globalMatchingFiles.length === 1 ? "file" : "files"} across vault
-              </span>
-            </div>
-            <div className="flex flex-col gap-3">
-              {globalMatchingFiles.map((file, idx) => (
-                <StudioFileCard
-                  key={file.id}
-                  file={file}
-                  idx={idx}
-                  isPlaying={playingFile?.id === file.id}
-                  playProgress={playProgress}
-                  parentFolderTheme={parentFolderTheme}
-                  otherUserName={otherUserName}
-                  vaultMembers={vaultMembers}
-                  currentUser={user}
-                  onTogglePlay={(f) => void handleTogglePlay(f)}
-                  onDownload={(f) => void handleDownloadFile(f)}
-                  onOpenPopover={(f) => void handleOpenFilePopover(f)}
-                  onRetryUpload={() => fileInputRef.current?.click()}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* LEVEL 3: Separated Tactile Studio Track Cards + 1-Tap Subfolder Pills */}
-        {viewingFiles && !viewingTrash && (
-          <StudioFileSection
-            currentRootFolder={currentRootFolder}
-            currentSubFolder={currentSubFolder}
-            currentSubfolders={currentSubfolders}
-            forceFilesView={forceFilesView}
-            filesByFolder={filesByFolder}
-            activeFolderFiles={activeFolderFiles}
-            filteredFolderFiles={filteredFolderFiles}
-            trackFilter={trackFilter}
-            fileLayout={fileLayout}
-            playingFileId={playingFile?.id ?? null}
-            playProgress={playProgress}
-            parentFolderTheme={parentFolderTheme}
-            otherUserName={otherUserName}
-            vaultMembers={vaultMembers}
-            currentUser={user}
-            onSelectAllInRoot={() => {
-              setSubId(null);
-              setForceFilesView(true);
-            }}
-            onSelectSubfolder={handleOpenSub}
-            onOpenCreateSubfolder={() => setCreatingFolder(true)}
-            onChangeTrackFilter={setTrackFilter}
-            onChangeFileLayout={setFileLayout}
-            onUploadClick={() => fileInputRef.current?.click()}
-            onTogglePlay={(f) => void handleTogglePlay(f)}
-            onDownload={(f) => void handleDownloadFile(f)}
-            onOpenPopover={(f) => void handleOpenFilePopover(f)}
-          />
-        )}
-      </main>
 
       {activePopoverFile && (
         <ShareContextSheet
@@ -2440,7 +1831,6 @@ export function App() {
           newFolderDesc={newFolderDesc}
           newFolderIconKey={newFolderIconKey}
           newFolderColorIdx={newFolderColorIdx}
-          activePalette={activePalette}
           onChangeName={setNewFolderName}
           onChangeDesc={setNewFolderDesc}
           onChangeIconKey={setNewFolderIconKey}
@@ -2456,28 +1846,6 @@ export function App() {
           onChangeName={setNewSharedVaultName}
           onConfirm={() => void handleConfirmCreateSharedVault()}
           onClose={() => setCreatingSharedVault(false)}
-        />
-      )}
-
-      {managingMembers && (
-        <CollaboratorsModal
-          vaults={vaults}
-          activeVaultId={activeVaultId}
-          uiMeta={uiMeta}
-          vaultMembers={vaultMembers}
-          inviteEmail={inviteEmail}
-          inviteRole={inviteRole}
-          onSwitchSharedVault={(vId) => void handleSwitchSpecificSharedVault(vId)}
-          onOpenCreateSharedVault={() => {
-            setManagingMembers(false);
-            setCreatingSharedVault(true);
-          }}
-          onChangeInviteEmail={setInviteEmail}
-          onChangeInviteRole={setInviteRole}
-          onInviteMember={() => void handleInviteMember()}
-          onRemoveMember={(uid) => void handleRemoveMember(uid)}
-          onRenameSharedVault={(nextName) => void handleRenameSharedVault(nextName)}
-          onClose={() => setManagingMembers(false)}
         />
       )}
 
@@ -2540,7 +1908,7 @@ export function App() {
           }}
         />
       )}
-    </div>
+    </VaultWorkspace>
   );
 }
 

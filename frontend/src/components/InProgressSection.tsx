@@ -5,8 +5,7 @@ import {
   readDroppedSessionDataTransfer,
   type InProgressBucketKey,
 } from "../utils/inProgressAutoRouter.ts";
-import type { HardwareThemeSlot } from "../vaultTheme.ts";
-import { StudioFileCard, type FileLayoutMode } from "./StudioFileSection.tsx";
+import { TrackRow, type FileLayoutMode } from "./StudioFileSection.tsx";
 import { StudioIcon } from "./StudioPrimitives.tsx";
 
 export interface InProgressSongEcosystem {
@@ -33,9 +32,8 @@ export function InProgressSection({
   lastRouteSummary,
   fileLayout,
   playingFileId,
-  playProgress,
-  parentFolderTheme,
-  otherUserName,
+  isPaused,
+  accentColor,
   vaultMembers,
   currentUser,
   onSelectSong,
@@ -49,7 +47,6 @@ export function InProgressSection({
   onTrashSong,
   onChangeFileLayout,
   onTogglePlay,
-  onDownload,
   onOpenPopover,
 }: {
   songs: InProgressSongEcosystem[];
@@ -60,9 +57,8 @@ export function InProgressSection({
   lastRouteSummary: LastAutoRouteSummary | null;
   fileLayout: FileLayoutMode;
   playingFileId: string | null;
-  playProgress: number;
-  parentFolderTheme: HardwareThemeSlot;
-  otherUserName: string;
+  isPaused: boolean;
+  accentColor: string;
   vaultMembers?: VaultMember[];
   currentUser?: User | null;
   onSelectSong: (songFolderId: string | null) => void;
@@ -88,7 +84,6 @@ export function InProgressSection({
   onTrashSong: (songFolder: Folder) => void;
   onChangeFileLayout: (mode: FileLayoutMode) => void;
   onTogglePlay: (file: FileItem) => void;
-  onDownload: (file: FileItem) => void;
   onOpenPopover: (file: FileItem) => void;
 }) {
   const [songTitleInput, setSongTitleInput] = useState("");
@@ -209,7 +204,7 @@ export function InProgressSection({
         onDrop={(e) => void handleTopDrop(e)}
         className={`rounded-3xl p-4 sm:p-6 border-2 border-dashed transition-all relative overflow-hidden ${
           isDragOverTop
-            ? "bg-white border-[var(--ink)] shadow-xl scale-[1.005]"
+            ? "bg-[var(--card-deep)] border-[var(--ink)] shadow-xl scale-[1.005]"
             : "bg-[var(--card)] border-[var(--ink)]/25 hover:border-[var(--ink)]/50"
         }`}
       >
@@ -218,7 +213,7 @@ export function InProgressSection({
             <div className="inline-flex items-center gap-2">
               <span
                 className="w-2.5 h-2.5 rounded-full"
-                style={{ background: parentFolderTheme.accentPrimary }}
+                style={{ background: accentColor }}
               />
               <span className="mono-meta text-[10px] uppercase tracking-wider font-semibold text-[var(--ink)]">
                 FL Studio Split Mixer Tracks · Auto-Stem Ecosystem
@@ -269,7 +264,7 @@ export function InProgressSection({
               }}
               placeholder="Song name (optional — auto-detected from FL folder, .zip, or stem names)..."
               disabled={isImporting}
-              className="w-full px-3.5 py-2.5 rounded-2xl bg-[#f4f1eb] border border-[var(--hair)] focus:border-[var(--ink)] focus:outline-none text-xs sm:text-sm text-[var(--ink)] placeholder:text-[var(--ink-soft)]"
+              className="w-full px-3.5 py-2.5 rounded-2xl bg-[var(--bg)] border border-[var(--hair)] focus:border-[var(--ink)] focus:outline-none text-xs sm:text-sm text-[var(--ink)] placeholder:text-[var(--ink-soft)]"
             />
           </div>
 
@@ -288,7 +283,7 @@ export function InProgressSection({
               type="button"
               disabled={isImporting}
               onClick={() => filesPickerRef.current?.click()}
-              className="px-3.5 py-2.5 rounded-2xl bg-[#f4f1eb] text-[var(--ink)] border border-[var(--ink)]/25 hover:border-[var(--ink)] mono-meta text-[10px] uppercase font-semibold inline-flex items-center gap-1.5 cursor-pointer transition disabled:opacity-50"
+              className="px-3.5 py-2.5 rounded-2xl bg-[var(--bg)] text-[var(--ink)] border border-[var(--ink)]/25 hover:border-[var(--ink)] mono-meta text-[10px] uppercase font-semibold inline-flex items-center gap-1.5 cursor-pointer transition disabled:opacity-50"
             >
               <StudioIcon name="plus" className="w-3.5 h-3.5" />
               <span>Stems / .ZIP / .FLP</span>
@@ -401,7 +396,7 @@ export function InProgressSection({
                     onClick={() => onSelectSong(song.songFolder.id)}
                     className={`p-3.5 rounded-2xl border transition cursor-pointer flex flex-col justify-between gap-3 ${
                       isSelected
-                        ? "bg-white border-[var(--ink)] shadow-md ring-1 ring-[var(--ink)]"
+                        ? "bg-[var(--card-deep)] border-[var(--ink)] shadow-md ring-1 ring-[var(--ink)]"
                         : "bg-[var(--card)] border-[var(--hair)] hover:border-[var(--ink)]/50"
                     }`}
                   >
@@ -415,7 +410,7 @@ export function InProgressSection({
                                 ? "#0891b2"
                                 : hasDemo
                                   ? "#059669"
-                                  : parentFolderTheme.accentPrimary,
+                                  : accentColor,
                             }}
                           />
                           <h3 className="file-title-font text-base font-semibold text-[var(--ink)] truncate">
@@ -454,7 +449,7 @@ export function InProgressSection({
                             title={`${b.label}: ${count} file(s)`}
                             className={`rounded-lg py-1 px-1 text-center border transition ${
                               count > 0
-                                ? "bg-[#f4f1eb] border-[var(--ink)]/20 text-[var(--ink)]"
+                                ? "bg-[var(--bg)] border-[var(--ink)]/20 text-[var(--ink)]"
                                 : "bg-black/[0.02] border-transparent text-[var(--ink-soft)] opacity-55"
                             }`}
                           >
@@ -504,7 +499,7 @@ export function InProgressSection({
               }}
               className={`rounded-3xl p-4 sm:p-6 bg-[var(--card)] border transition space-y-5 ${
                 isDragOverSong
-                  ? "border-[var(--ink)] ring-2 ring-[var(--ink)] bg-white"
+                  ? "border-[var(--ink)] ring-2 ring-[var(--ink)] bg-[var(--card-deep)]"
                   : "border-[var(--hair)]"
               }`}
             >
@@ -521,14 +516,14 @@ export function InProgressSection({
                     <button
                       type="button"
                       onClick={() => onRenameSong(activeSong.songFolder)}
-                      className="px-2 py-1 rounded-full bg-[#f4f1eb] border border-[var(--hair)] hover:border-[var(--ink)] mono-meta text-[9px] uppercase text-[var(--ink-soft)] hover:text-[var(--ink)] cursor-pointer"
+                      className="px-2 py-1 rounded-full bg-[var(--bg)] border border-[var(--hair)] hover:border-[var(--ink)] mono-meta text-[9px] uppercase text-[var(--ink-soft)] hover:text-[var(--ink)] cursor-pointer"
                     >
                       Rename
                     </button>
                     <button
                       type="button"
                       onClick={() => onTrashSong(activeSong.songFolder)}
-                      className="px-2 py-1 rounded-full bg-[#f4f1eb] border border-[var(--hair)] hover:border-red-600 mono-meta text-[9px] uppercase text-red-700 cursor-pointer"
+                      className="px-2 py-1 rounded-full bg-[var(--bg)] border border-[var(--hair)] hover:border-red-600 mono-meta text-[9px] uppercase text-[var(--error)] cursor-pointer"
                     >
                       Trash Song
                     </button>
@@ -540,7 +535,7 @@ export function InProgressSection({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <div className="inline-flex rounded-xl bg-[#f4f1eb] p-0.5 border border-[var(--hair)]">
+                  <div className="inline-flex rounded-xl bg-[var(--bg)] p-0.5 border border-[var(--hair)]">
                     {(["cards", "grid"] as const).map((mode) => (
                       <button
                         key={mode}
@@ -585,7 +580,7 @@ export function InProgressSection({
                   className={`px-3.5 py-2 rounded-2xl mono-meta text-[10px] uppercase flex items-center gap-1.5 shrink-0 cursor-pointer border transition ${
                     activeBucketFilter === "all"
                       ? "bg-[var(--ink)] text-[var(--bg)] border-[var(--ink)] font-semibold shadow-xs"
-                      : "bg-[#f4f1eb] text-[var(--ink)] border-[var(--hair)] hover:border-[var(--ink)]"
+                      : "bg-[var(--bg)] text-[var(--ink)] border-[var(--hair)] hover:border-[var(--ink)]"
                   }`}
                 >
                   <span>All Subfolders</span>
@@ -603,7 +598,7 @@ export function InProgressSection({
                       className={`px-3.5 py-2 rounded-2xl mono-meta text-[10px] uppercase flex items-center gap-1.5 shrink-0 cursor-pointer border transition ${
                         isActive
                           ? "bg-[var(--ink)] text-[var(--bg)] border-[var(--ink)] font-semibold shadow-xs"
-                          : "bg-[#f4f1eb] text-[var(--ink)] border-[var(--hair)] hover:border-[var(--ink)]"
+                          : "bg-[var(--bg)] text-[var(--ink)] border-[var(--hair)] hover:border-[var(--ink)]"
                       }`}
                     >
                       <span
@@ -626,7 +621,7 @@ export function InProgressSection({
                   return (
                     <div
                       key={bucketSpec.key}
-                      className="rounded-2xl bg-[#f4f1eb]/85 border border-[var(--hair)] p-3.5 sm:p-4 space-y-3"
+                      className="rounded-2xl bg-[var(--bg)]/85 border border-[var(--hair)] p-3.5 sm:p-4 space-y-3"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
@@ -675,20 +670,14 @@ export function InProgressSection({
                         >
                           {bucketFiles.map((file, idx) => (
                             <div key={file.id} className="space-y-1">
-                              <StudioFileCard
+                              <TrackRow
                                 file={file}
                                 idx={idx}
-                                isPlaying={playingFileId === file.id}
-                                playProgress={playProgress}
-                                parentFolderTheme={{
-                                  ...parentFolderTheme,
-                                  accentPrimary: bucketSpec.badgeColor,
-                                }}
-                                otherUserName={otherUserName}
+                                playingFileId={playingFileId}
+                                isPaused={isPaused}
                                 vaultMembers={vaultMembers}
                                 currentUser={currentUser}
                                 onTogglePlay={onTogglePlay}
-                                onDownload={onDownload}
                                 onOpenPopover={onOpenPopover}
                               />
                               {/* Quick Stem Re-Route Bar so Producer/Artist can move a misnamed stem in 1 click */}
