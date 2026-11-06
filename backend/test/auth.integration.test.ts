@@ -9,7 +9,7 @@ import { eq, sql } from 'drizzle-orm';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { ApiError, authRoutes, User } from '@bpackz/shared';
 import { createApp } from '../src/app.ts';
-import { createAuth } from '../src/auth.ts';
+import { createAuth, SIGNUP_OPEN } from '../src/auth.ts';
 import { readConfig } from '../src/config.ts';
 import { createDatabase } from '../src/db/index.ts';
 import { users, vaults } from '../src/db/schema.ts';
@@ -63,15 +63,17 @@ test('HTTP/PostgreSQL signup, cookie sessions, signout, and transactional audit'
     assert.equal((await db.execute(sql`select id from vaults where created_by = ${deletedLegacyId}`)).rowCount, 0);
     assert.equal((await db.execute(sql`select id from audit_log where actor_id = ${legacyId} and vault_id = ${legacyVault.rows[0].id}`)).rowCount, 2);
     // ADR 0003: wrong invite code is refused with the shared ApiError shape, audited without the code or email.
-    const rejectedSignups = () => db.execute(sql`select actor_id, vault_id, meta from audit_log where action = 'auth.signup_rejected'`);
-    const rejectedBefore = (await rejectedSignups()).rowCount ?? 0;
-    const wrongCode = await post('/sign-up/email', { name: 'Auth Test', email, password, inviteCode: `${inviteCode}-wrong` });
-    assert.equal(wrongCode.status, 403);
-    assert.deepEqual(await wrongCode.json(), { error: 'forbidden', message: 'Invite code not recognized' });
-    const rejectedAfter = await rejectedSignups();
-    assert.equal(rejectedAfter.rowCount, rejectedBefore + 1);
-    assert.deepEqual(rejectedAfter.rows.at(-1), { actor_id: null, vault_id: null, meta: null });
-    assert.equal((await db.execute(sql`select id from users where email = ${email}`)).rowCount, 0);
+    if (!SIGNUP_OPEN) { // TOD-113: runs again when sign-up is closed
+      const rejectedSignups = () => db.execute(sql`select actor_id, vault_id, meta from audit_log where action = 'auth.signup_rejected'`);
+      const rejectedBefore = (await rejectedSignups()).rowCount ?? 0;
+      const wrongCode = await post('/sign-up/email', { name: 'Auth Test', email, password, inviteCode: `${inviteCode}-wrong` });
+      assert.equal(wrongCode.status, 403);
+      assert.deepEqual(await wrongCode.json(), { error: 'forbidden', message: 'Invite code not recognized' });
+      const rejectedAfter = await rejectedSignups();
+      assert.equal(rejectedAfter.rowCount, rejectedBefore + 1);
+      assert.deepEqual(rejectedAfter.rows.at(-1), { actor_id: null, vault_id: null, meta: null });
+      assert.equal((await db.execute(sql`select id from users where email = ${email}`)).rowCount, 0);
+    }
     const noCode = await post('/sign-up/email', { name: 'Auth Test', email, password });
     assert.equal(noCode.status, 400);
     assert.equal(ApiError.parse(await noCode.json()).error, 'invalid');

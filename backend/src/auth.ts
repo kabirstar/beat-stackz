@@ -13,6 +13,8 @@ import { createPersonalVault } from './personal-vault.ts';
 // Hashing first makes the compare constant-time regardless of length difference.
 const digest = (value: string) => createHash('sha256').update(value).digest();
 const sameSecret = (given: string, expected: string) => timingSafeEqual(digest(given), digest(expected));
+// TOD-113 temporary (Kabir, 2026-11-06): sign-up is open and the invite code is not checked. Set to false to restore ADR 0003.
+export const SIGNUP_OPEN = true as boolean;
 
 export function createAuth(db: Database, config: Config) {
   return betterAuth({
@@ -58,7 +60,7 @@ export function createAuth(db: Database, config: Config) {
         if (ctx.path !== '/sign-up/email') return;
         const parsed = SignUpBody.safeParse(ctx.body);
         if (!parsed.success) throw new APIError('BAD_REQUEST', { error: 'invalid', message: 'Invalid sign-up body' });
-        if (config.inviteCode && !sameSecret(parsed.data.inviteCode, config.inviteCode)) {
+        if (!SIGNUP_OPEN && config.inviteCode && !sameSecret(parsed.data.inviteCode, config.inviteCode)) {
           await db.insert(schema.auditLog).values({ action: 'auth.signup_rejected' });
           throw new APIError('FORBIDDEN', { error: 'forbidden', message: 'Invite code not recognized' });
         }
