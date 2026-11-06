@@ -1,12 +1,15 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { ReactElement, ReactNode } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { BottomTransportPlayer } from "./components/BottomTransportPlayer.tsx";
+import { ShareContextSheet, ShareLinkRow } from "./components/VaultModals.tsx";
 import { formatBytes, parseStudioFileDisplay } from "./App.tsx";
 import { computeBlobSha256, createSampleWavBlob } from "./utils/format.ts";
 import {
   describeFileMeta,
   generateRandomSharedPalette,
+  loadPersistedUiMeta,
   resolveFileOwnerName,
   resolveFolderUiMeta,
   sortVaultFolders,
@@ -311,5 +314,106 @@ describe("Bottom transport player seek slider (TOD-102)", () => {
       currentTarget: { value: "60" },
     });
     assert.equal(audio.currentTime, 120);
+  });
+});
+
+function findButtons(node: ReactNode): ReactElement<Record<string, unknown>>[] {
+  if (Array.isArray(node)) return node.flatMap(findButtons);
+  if (!node || typeof node !== "object" || !("props" in node)) return [];
+  const el = node as ReactElement<Record<string, unknown>>;
+  return [...(el.type === "button" ? [el] : []), ...findButtons(el.props.children as ReactNode)];
+}
+
+describe("Share sheet Stop sharing control (TOD-103)", () => {
+  const label = "/s/tok_abc";
+  const calls: string[] = [];
+  const renderRow = (confirming: boolean) =>
+    findButtons(
+      ShareLinkRow({
+        shareId: "sh_1",
+        token: "tok_abc",
+        confirming,
+        onOpen: (tok) => calls.push(`open ${tok}`),
+        onConfirming: (id) => calls.push(`confirming ${id}`),
+        onStop: (id) => calls.push(`stop ${id}`),
+      }),
+    );
+  const press = (b: ReactElement<Record<string, unknown>>) => (b.props.onClick as () => void)();
+  const text = (b: ReactElement<Record<string, unknown>>) => String(b.props.children);
+
+  it("labels the control in words, touch-sized, and asks before revoking", () => {
+    const [open, stop] = renderRow(false);
+    assert.equal(text(stop), "Stop sharing");
+    assert.equal(stop.props["aria-label"], `Stop sharing ${label}`);
+    assert.match(String(stop.props.className), /\bmin-h-11\b/); // 44px touch target
+    press(stop);
+    press(open);
+    assert.deepEqual(calls, ["confirming sh_1", "open tok_abc"]); // first tap only opens the confirm step
+  });
+
+  it("confirms in the page: Keep link cancels, Yes stops sharing", () => {
+    calls.length = 0;
+    const [keep, yes] = renderRow(true);
+    assert.equal(text(keep), "Keep link");
+    assert.equal(text(yes), "Yes, stop sharing");
+    press(keep);
+    press(yes);
+    assert.deepEqual(calls, ["confirming null", "stop sh_1"]);
+  });
+
+  it("lists every live link in the share sheet with its own Stop sharing button", () => {
+    const share = (id: string) => ({
+      id,
+      fileId: "file_1",
+      granteeUserId: null,
+      role: "view" as const,
+      expiresAt: null,
+      createdBy: "u_artist",
+      createdAt: "2026-11-05T00:00:00.000Z",
+    });
+    const noop = () => {};
+    const html = renderToStaticMarkup(
+      <ShareContextSheet
+        file={{
+          id: "file_1",
+          vaultId: "v_personal",
+          folderId: null,
+          name: "kick.wav",
+          status: "ready",
+          size: 4_000_000,
+          mime: "audio/wav",
+          sha256: null,
+          durationMs: 1000,
+          hasWaveform: true,
+          createdBy: "u_artist",
+          createdAt: "2026-11-05T00:00:00.000Z",
+          updatedAt: "2026-11-05T00:00:00.000Z",
+        }}
+        otherUserName="Todo"
+        vaults={[
+          {
+            id: "v_shared",
+            kind: "shared",
+            name: "Swish × Todo",
+            myRole: "owner",
+            createdAt: "2026-11-05T00:00:00.000Z",
+          },
+        ]}
+        uiMeta={loadPersistedUiMeta()}
+        shareLinkExpiry="7d"
+        activeFileShares={[share("sh_1"), share("sh_2")]}
+        onClose={noop}
+        onShareToSharedVault={noop}
+        onChangeExpiry={noop}
+        onCreatePublicShareLink={noop}
+        onRevokeShareLink={noop}
+        onRenameFile={noop}
+        onDownload={noop}
+        onSoftDelete={noop}
+      />,
+    );
+    assert.match(html, /aria-label="Stop sharing \/s\/sh_1"/);
+    assert.match(html, /aria-label="Stop sharing \/s\/sh_2"/);
+    assert.doesNotMatch(html, /title="Revoke"/); // the old unlabelled × is gone
   });
 });
