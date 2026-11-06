@@ -6,6 +6,7 @@
 // compares bytes, creates a share link, resolves it anonymously, revokes it, trashes the file.
 import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
+import { waitFor } from "./wait-for.mjs";
 
 const API = process.env.API ?? "http://localhost:4000";
 const WEB = process.env.WEB ?? "http://localhost:5173";
@@ -34,7 +35,9 @@ function wav() {
   return Buffer.concat([h, data]);
 }
 
-// --- web + api up
+// --- web + api up (wait first: right after a deploy the proxy answers 502 until the API has migrated and started)
+await waitFor(WEB);
+await waitFor(`${API}/health`);
 assert.equal((await fetch(WEB)).status, 200); step(`web serves ${WEB}`);
 assert.deepEqual((await api("GET", "/health"))[1], { status: "ok" }); step("api /health");
 
