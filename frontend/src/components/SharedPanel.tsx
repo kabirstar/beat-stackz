@@ -1,5 +1,5 @@
 import type { Vault, VaultMember } from "@bpackz/shared";
-import { CoverTile, StudioIcon, UserAvatarBadge } from "./StudioPrimitives.tsx";
+import { ConfirmDetails, CoverTile, StudioIcon, UserAvatarBadge } from "./StudioPrimitives.tsx";
 
 const ROLE_TEXT: Record<VaultMember["role"], string> = {
   owner: "owner · full access",
@@ -134,14 +134,16 @@ export function SharedPanel({
                 <small>{ROLE_TEXT[m.role]}</small>
               </span>
               {m.role !== "owner" && (
-                <button
-                  type="button"
-                  className="bs-ib"
-                  aria-label={`Remove ${memberName(m)}`}
-                  onClick={() => onRemoveMember(m.userId)}
-                >
-                  <StudioIcon name="close" className="bs-icon" />
-                </button>
+                <ConfirmDetails
+                  summary={<StudioIcon name="close" className="bs-icon" />}
+                  summaryClass="bs-ib"
+                  summaryLabel={`Remove ${memberName(m)}`}
+                  bodyClass="bs-menu bs-menu-end"
+                  question={`Remove ${memberName(m)} from this vault?`}
+                  keepText="Keep"
+                  yesText="Yes, remove"
+                  onYes={() => onRemoveMember(m.userId)}
+                />
               )}
             </div>
           ))}

@@ -1,13 +1,53 @@
 import type { FileItem, User, VaultMember } from "@bpackz/shared";
-import { formatBytes } from "../utils/format.ts";
+import { formatBytes, parseStudioFileDisplay } from "../utils/format.ts";
 import { describeFileMeta, resolveFileOwnerName } from "../vaultTheme.ts";
-import { StudioIcon, UserAvatarBadge } from "./StudioPrimitives.tsx";
+import { CoverTile, folderIconName, StudioIcon } from "./StudioPrimitives.tsx";
 
 function formatClock(sec: number): string {
   const s = Math.max(0, Math.floor(sec));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
+/** The track as bars. Click a bar to seek there; with the keyboard, left and right move 5 %. */
+export function Waveform({
+  bars,
+  playProgress,
+  onSeek,
+}: {
+  bars: number[];
+  playProgress: number;
+  onSeek: (pct: number) => void;
+}) {
+  return (
+    <div
+      className="bs-wv"
+      role="slider"
+      tabIndex={0}
+      aria-label="Seek on waveform"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={playProgress}
+      onKeyDown={(e) => {
+        const step = e.key === "ArrowRight" ? 5 : e.key === "ArrowLeft" ? -5 : 0;
+        if (step) onSeek(Math.max(0, Math.min(100, playProgress + step)));
+      }}
+    >
+      {bars.map((h, i) => {
+        const pct = (i / bars.length) * 100;
+        return (
+          <span
+            key={i}
+            data-on={pct <= playProgress ? "" : undefined}
+            style={{ height: `${h}%` }}
+            onClick={() => onSeek(Math.round(pct))}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+/** The player bar and, when `fullOpen`, the full-screen song view over the whole app. */
 export function BottomTransportPlayer({
   playingFile,
   isPaused = false,
@@ -15,10 +55,13 @@ export function BottomTransportPlayer({
   playProgress,
   durationSec,
   loopEnabled,
+  cover = null,
+  fullOpen = false,
   vaultMembers,
   currentUser,
   onTogglePause,
   onToggleLoop,
+  onToggleFull,
   onSeek,
   onShare,
   onDownload,
@@ -30,123 +73,175 @@ export function BottomTransportPlayer({
   playProgress: number;
   durationSec?: number;
   loopEnabled: boolean;
+  /** Cover of the file's folder; a plain tile when it is not known. */
+  cover?: { color: string; iconKey: string } | null;
+  fullOpen?: boolean;
   vaultMembers?: VaultMember[];
   currentUser?: User | null;
   onTogglePause?: () => void;
   onToggleLoop: () => void;
+  onToggleFull?: () => void;
   onSeek: (pct: number) => void;
   onShare: (file: FileItem) => void;
   onDownload: (file: FileItem) => void;
   onClose: () => void;
 }) {
-  const hasDuration = !!durationSec && Number.isFinite(durationSec);
+  const { cleanTitle } = parseStudioFileDisplay(playingFile.name);
+  const by = `${resolveFileOwnerName(playingFile.createdBy, vaultMembers, currentUser)} · ${describeFileMeta(playingFile)}`;
+  // The <audio> element knows the length once it has loaded; until then use the file's own.
+  const length =
+    durationSec && Number.isFinite(durationSec) ? durationSec : (playingFile.durationMs ?? 0) / 1000;
+  const current = formatClock((playProgress / 100) * length);
+  const total = length ? formatClock(length) : "--:--";
+
+  const coverTile = (
+    <CoverTile icon={cover ? folderIconName(cover.iconKey) : "songs"} color={cover?.color} />
+  );
+  const playButton = (
+    <button
+      type="button"
+      className="bs-pb"
+      onClick={onTogglePause ?? onClose}
+      title={isPaused ? "Play" : "Pause"}
+      aria-label={isPaused ? "Play" : "Pause"}
+    >
+      <StudioIcon name={isPaused ? "play" : "pause"} className="bs-icon" />
+    </button>
+  );
+  const loopButton = (
+    <button
+      type="button"
+      className="bs-ib"
+      onClick={onToggleLoop}
+      title="Loop"
+      aria-label="Loop"
+      aria-pressed={loopEnabled}
+    >
+      <StudioIcon name="loop" className="bs-icon" />
+    </button>
+  );
+  const shareButton = (
+    <button
+      type="button"
+      className="bs-ib bs-opt"
+      onClick={() => onShare(playingFile)}
+      title="Share"
+      aria-label="Share"
+    >
+      <StudioIcon name="share" className="bs-icon" />
+    </button>
+  );
+  const waveform = <Waveform bars={waveformBars} playProgress={playProgress} onSeek={onSeek} />;
+
   return (
-    <div className="bs-player px-3.5 sm:px-8 py-2.5 flex flex-wrap items-center justify-between gap-x-2.5 sm:gap-3 overflow-hidden">
-      <div className="flex items-center gap-3 min-w-0 flex-1 max-w-xs">
-        <UserAvatarBadge
-          byName={resolveFileOwnerName(playingFile.createdBy, vaultMembers, currentUser)}
-          sizeClass="w-8 h-8 text-xs"
-        />
-        <div className="min-w-0">
-          <div className="file-title-font text-xs text-[var(--ink)] truncate">
-            {playingFile.name}
-          </div>
-          <div className="mono-meta text-[10px] uppercase text-[var(--ink-soft)] truncate">
-            {describeFileMeta(playingFile)} · {formatBytes(playingFile.size)}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex flex-col items-center gap-1 flex-1 max-w-md">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onToggleLoop}
-            title="Loop"
-            aria-label="Loop"
-            aria-pressed={loopEnabled}
-            className={`icon-btn w-7 h-7 ${loopEnabled ? "icon-btn-active" : ""}`}
-          >
-            <StudioIcon name="loop" className="w-3.5 h-3.5" />
-          </button>
-
-          <button
-            type="button"
-            onClick={onTogglePause ?? onClose}
-            title={isPaused ? "Play" : "Pause"}
-            aria-label={isPaused ? "Play" : "Pause"}
-            className="icon-btn icon-btn-active w-9 h-9"
-          >
-            <StudioIcon name={isPaused ? "play" : "pause"} />
-          </button>
-        </div>
-
-        <div className="w-full hidden sm:flex items-center gap-1">
-          {waveformBars.map((h, i) => {
-            const active = (i / waveformBars.length) * 100 <= playProgress;
-            return (
-              <div
-                key={i}
-                onClick={() => onSeek(Math.round(((i + 1) / waveformBars.length) * 100))}
-                className="flex-1 rounded-xs cursor-pointer transition"
-                style={{
-                  height: `${Math.max(5, Math.round(h * 0.22))}px`,
-                  background: active ? "var(--ink)" : "color-mix(in srgb, var(--ink) 25%, transparent)",
-                }}
-              />
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="flex items-center justify-end gap-1.5 flex-1 max-w-xs">
+    <>
+      <div className="bs-player">
         <button
           type="button"
-          onClick={() => onShare(playingFile)}
-          title="Share"
-            aria-label="Share"
-          className="icon-btn w-8 h-8"
+          className="bs-pl-info"
+          title="Open full-screen view"
+          aria-label={`${cleanTitle}, open full-screen view`}
+          onClick={onToggleFull}
         >
-          <StudioIcon name="share" className="w-3.5 h-3.5" />
+          {coverTile}
+          <span className="bs-tx">
+            <b>{cleanTitle}</b>
+            <small>{by}</small>
+          </span>
         </button>
-        <button
-          type="button"
-          onClick={() => onDownload(playingFile)}
-          title="Download"
+
+        <div className="bs-pl-ctr">
+          <div className="bs-pl-btns">
+            {playButton}
+            {loopButton}
+          </div>
+          {/* Phone seeks on the slider (TOD-102), desktop on the waveform; CSS shows one of them. */}
+          <div className="bs-seek">
+            <span>{current}</span>
+            <input
+              type="range"
+              aria-label="Seek"
+              min={0}
+              max={100}
+              value={playProgress}
+              onChange={(e) => onSeek(Number(e.currentTarget.value))}
+              className="flex-1 min-w-0 h-11 cursor-pointer"
+            />
+            {waveform}
+            <span>{total}</span>
+          </div>
+        </div>
+
+        <div className="bs-pl-acts">
+          {shareButton}
+          <button
+            type="button"
+            className="bs-ib bs-opt"
+            onClick={() => onDownload(playingFile)}
+            title="Download"
             aria-label="Download"
-          className="icon-btn w-8 h-8"
-        >
-          <StudioIcon name="download" className="w-3.5 h-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={onClose}
-          title="Close player"
+          >
+            <StudioIcon name="download" className="bs-icon" />
+          </button>
+          <button
+            type="button"
+            className="bs-ib"
+            onClick={onClose}
+            title="Close player"
             aria-label="Close player"
-          className="icon-btn w-8 h-8"
-        >
-          ×
-        </button>
+          >
+            <StudioIcon name="close" className="bs-icon" />
+          </button>
+        </div>
       </div>
 
-      {/* Phone seek row (TOD-102): desktop seeks on the waveform above. */}
-      <div className="sm:hidden basis-full flex items-center gap-2 mono-meta text-[10px] text-[var(--ink-soft)]">
-        <span className="w-8 tabular-nums">
-          {hasDuration ? formatClock((playProgress / 100) * durationSec) : "0:00"}
-        </span>
-        <input
-          type="range"
-          aria-label="Seek"
-          min={0}
-          max={100}
-          value={playProgress}
-          onChange={(e) => onSeek(Number(e.currentTarget.value))}
-          className="flex-1 min-w-0 h-11 cursor-pointer accent-[var(--ink)]"
-        />
-        <span className="w-8 text-right tabular-nums">
-          {hasDuration ? formatClock(durationSec) : "--:--"}
-        </span>
-      </div>
-    </div>
+      {fullOpen && (
+        <div
+          className="bs-full"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Now playing"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") onToggleFull?.();
+          }}
+        >
+          <div className="bs-full-in">
+            <div className="bs-full-top">
+              <button
+                type="button"
+                className="bs-ib"
+                autoFocus
+                onClick={onToggleFull}
+                title="Close full-screen view"
+                aria-label="Close full-screen view"
+              >
+                <StudioIcon name="chevron-down" className="bs-icon" />
+              </button>
+              <span className="bs-label">Now playing</span>
+            </div>
+            {coverTile}
+            <div>
+              <h3>{cleanTitle}</h3>
+              <span className="bs-sub">{playingFile.name}</span>
+            </div>
+            <span className="bs-label">
+              {by} · {formatBytes(playingFile.size)}
+            </span>
+            <div>
+              {waveform}
+              <div className="bs-full-times">
+                <span>{current}</span>
+                <span>{total}</span>
+              </div>
+            </div>
+            <div className="bs-full-ctl">
+              {loopButton}
+              {playButton}
+              {shareButton}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

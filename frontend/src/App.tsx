@@ -39,11 +39,13 @@ import {
   createDefaultVisionBoardState,
   loadPersistedUiMeta,
   persistUiMeta,
+  resolveFileCover,
   resolveFolderUiMeta,
   savePersistedUiMeta,
   sortVaultFolders,
   touchRecent,
   WAVEFORM_BARS,
+  waveformToBars,
   type PersistedUiMeta,
   type TrashedFileEntry,
   type VaultLook,
@@ -125,6 +127,7 @@ export function App() {
   const [playProgress, setPlayProgress] = useState(0);
   const [playDuration, setPlayDuration] = useState(0);
   const [loopEnabled, setLoopEnabled] = useState(false);
+  const [songViewFor, setSongViewFor] = useState<string | null>(null);
 
   const [toast, setToast] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -1351,13 +1354,7 @@ export function App() {
     }
     try {
       const wf = await api.files.waveform(activeVaultId, file.id);
-      if (wf.data.length > 0) {
-        const normalized = wf.data
-          .filter((_, idx) => idx % 2 === 1)
-          .slice(0, 28)
-          .map((v) => Math.max(24, Math.min(96, Math.round(Math.abs(v)))));
-        if (normalized.length > 8) setWaveformBars(normalized);
-      }
+      setWaveformBars(waveformToBars(wf.data) ?? WAVEFORM_BARS);
     } catch {
       setWaveformBars(WAVEFORM_BARS);
     }
@@ -1736,7 +1733,9 @@ export function App() {
           }
         }}
         onEnded={() => {
-          if (!loopEnabled) setPlayingFile(null);
+          if (loopEnabled) return;
+          setPlayingFile(null);
+          setSongViewFor(null);
         }}
       />
 
@@ -1875,6 +1874,9 @@ export function App() {
           playProgress={playProgress}
           durationSec={playDuration}
           loopEnabled={loopEnabled}
+          cover={resolveFileCover(playingFile, visibleRoots, subfoldersByRoot, uiMeta.folderMeta)}
+          fullOpen={songViewFor === playingFile.id}
+          onToggleFull={() => setSongViewFor((id) => (id === playingFile.id ? null : playingFile.id))}
           vaultMembers={vaultMembers}
           currentUser={user}
           onTogglePause={() => {
