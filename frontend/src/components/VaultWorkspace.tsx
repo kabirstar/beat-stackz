@@ -173,14 +173,14 @@ const VIEW_HEAD = {
 export function VaultWorkspace(p: VaultWorkspaceProps) {
   const folderMeta = p.uiMeta.folderMeta;
   const query = p.search.trim().toLowerCase();
-  const view = p.viewingTrash
-    ? "trash"
-    : p.viewingInProgress
-      ? "progress"
-      : p.viewingVisionBoard
-        ? "board"
-        : query
-          ? "search"
+  const view = query
+    ? "search"
+    : p.viewingTrash
+      ? "trash"
+      : p.viewingInProgress
+        ? "progress"
+        : p.viewingVisionBoard
+          ? "board"
           : p.currentRootFolder
             ? "folder"
             : "home";

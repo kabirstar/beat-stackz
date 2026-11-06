@@ -81,7 +81,7 @@ body {
 }
 
 @media (max-width: 639px), (pointer: coarse) {
-  .icon-btn {
+  button.icon-btn {
     width: 44px;
     height: 44px;
   }
@@ -434,6 +434,7 @@ body[data-file-font="mono"] {
   border: 0;
   border-radius: 999px;
   padding: 10px 14px 10px 40px;
+  min-height: 44px;
 }
 
 .bs-search input::placeholder {
@@ -679,6 +680,8 @@ button.bs-li:hover,
 
 .bs-crumbs .bs-ctl button {
   display: flex;
+  min-width: 44px;
+  justify-content: center;
   align-items: center;
   gap: 4px;
   font-weight: 500;
@@ -843,7 +846,7 @@ button.bs-li:hover,
 
 .bs-tr {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 12px;
   align-items: center;
   padding: 8px;
@@ -860,10 +863,16 @@ button.bs-li:hover,
 .bs-det,
 .bs-sz,
 .bs-du {
-  display: none;
   color: var(--muted);
   font: 400 12px var(--font-mono);
   font-variant-numeric: tabular-nums;
+}
+
+.bs-num,
+.bs-by,
+.bs-det,
+.bs-sz {
+  display: none;
 }
 
 .bs-tt {
@@ -1153,6 +1162,7 @@ button.bs-li:hover,
 
   .bs-search input {
     font-size: 14px;
+    min-height: 0;
   }
 
   .bs-tools {

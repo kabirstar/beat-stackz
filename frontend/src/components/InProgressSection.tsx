@@ -239,7 +239,7 @@ export function InProgressSection({
                 className="mono-meta text-[9px] uppercase px-2.5 py-1 rounded-full border font-semibold"
                 style={{
                   background: `${b.badgeColor}14`,
-                  color: b.badgeColor,
+                  color: `color-mix(in srgb, ${b.badgeColor} 55%, var(--ink))`,
                   borderColor: `${b.badgeColor}40`,
                 }}
               >
@@ -315,7 +315,7 @@ export function InProgressSection({
                 setSongTitleInput("");
               }}
               title="Simulate dropping an FL Studio split-mixer folder with Beat, Main, BG, Adlib, Demo, and Mixed tracks"
-              className="px-3 py-2.5 rounded-2xl bg-amber-500/15 text-amber-900 border border-amber-600/35 hover:bg-amber-500/25 mono-meta text-[10px] uppercase font-semibold cursor-pointer transition disabled:opacity-50"
+              className="px-3 py-2.5 rounded-2xl bg-amber-500/15 text-[var(--warn)] border border-amber-600/35 hover:bg-amber-500/25 mono-meta text-[10px] uppercase font-semibold cursor-pointer transition disabled:opacity-50"
             >
               ⚡ Test FL Auto-Sort
             </button>
@@ -338,8 +338,8 @@ export function InProgressSection({
         {!isImporting && lastRouteSummary && (
           <div className="mt-3 px-3.5 py-2.5 rounded-2xl bg-emerald-500/12 border border-emerald-600/30 flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <StudioIcon name="check" className="w-4 h-4 text-emerald-800" />
-              <span className="mono-meta text-[10px] uppercase text-emerald-950 font-semibold">
+              <StudioIcon name="check" className="w-4 h-4 text-[var(--ink)]" />
+              <span className="mono-meta text-[10px] uppercase text-[var(--ink)] font-semibold">
                 Auto-routed {lastRouteSummary.totalRouted}{" "}
                 {lastRouteSummary.totalRouted === 1 ? "file" : "files"} into &ldquo;
                 {lastRouteSummary.songName}&rdquo;
@@ -352,7 +352,7 @@ export function InProgressSection({
                 return (
                   <span
                     key={b.key}
-                    className="mono-meta text-[9px] uppercase px-2 py-0.5 rounded-md bg-white/80 border border-emerald-700/25 text-emerald-950 font-semibold"
+                    className="mono-meta text-[9px] uppercase px-2 py-0.5 rounded-md bg-[var(--card-deep)] border border-emerald-700/25 text-[var(--ink)] font-semibold"
                   >
                     {b.shortLabel}: {count}
                   </span>
@@ -455,7 +455,7 @@ export function InProgressSection({
                           >
                             <div
                               className="mono-meta text-[7.5px] uppercase font-bold truncate"
-                              style={count > 0 ? { color: b.badgeColor } : undefined}
+                              style={count > 0 ? { color: `color-mix(in srgb, ${b.badgeColor} 55%, var(--ink))` } : undefined}
                             >
                               {b.shortLabel}
                             </div>

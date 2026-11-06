@@ -477,6 +477,8 @@ export function App() {
   );
 
   const resetNavigation = () => {
+    // The Shared panel is a sheet over the page until it has room to dock.
+    if (typeof window !== "undefined" && window.innerWidth < 1120) setSharedOpen(false);
     setRootId(null);
     setSubId(null);
     setViewingTrash(false);
@@ -497,7 +499,6 @@ export function App() {
   const handleSwitchVault = async (vaultId: string) => {
     setActiveVaultId(vaultId);
     goVaultHome();
-    if (window.innerWidth < 1120) setSharedOpen(false);
     touchRecentKey(`vault:${vaultId}`);
     await loadVaultContents(vaultId);
     const m = await api.vaults.members(vaultId).catch(() => ({ items: [] }));

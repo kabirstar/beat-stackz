@@ -809,6 +809,7 @@ describe("Vault home redesign (TOD-108)", () => {
     assert.match(found, /1 matching file across vault/);
     assert.match(found, /snare\.wav/);
     assert.match(html({ search: "zzz" }), /0 matching files across vault/);
+    assert.match(html({ search: "sna", viewingTrash: true }), /1 matching file across/, "typing a search shows results from any view");
 
     const entry = { file: filesByFolder.f_beats[0], folderName: "beats", deletedAt: 1 };
     const trash = html({ viewingTrash: true, trashedList: [entry] });

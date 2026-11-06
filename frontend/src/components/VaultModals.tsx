@@ -450,7 +450,7 @@ export function CreateFolderModal({
                 aria-label={`Cover colour ${idx + 1}`}
                 aria-pressed={newFolderColorIdx === idx}
                 onClick={() => onChangeColorIdx(idx)}
-                className={`w-7 h-7 rounded-[6px] cursor-pointer ${
+                className={`w-11 h-11 sm:w-7 sm:h-7 rounded-[6px] cursor-pointer ${
                   newFolderColorIdx === idx ? "ring-2 ring-offset-2 ring-[var(--ink)]" : ""
                 }`}
                 style={{ background: color }}
