@@ -1694,7 +1694,7 @@ export function App() {
       await api.shares.revoke(activeVaultId, activePopoverFile.id, shareId);
       const { items } = await api.shares.list(activeVaultId, activePopoverFile.id);
       setActiveFileShares(items);
-      showToast("Revoked share link");
+      showToast("Stopped sharing · that link no longer works");
     } catch (err) {
       if (err instanceof BpackzApiError) showToast(err.message);
     }
@@ -1947,9 +1947,10 @@ export function App() {
 
       {toast && (
         <div
+          role="status"
           className={`fixed left-4 right-4 sm:left-auto sm:right-6 ${
             playingFile ? "bottom-36 sm:bottom-24" : "bottom-20 sm:bottom-6"
-          } z-50 px-4 py-2.5 rounded-full bg-[var(--ink)] text-[var(--bg)] mono-meta text-[11px] uppercase text-center sm:text-left shadow-xl`}
+          } z-[60] px-4 py-2.5 rounded-full bg-[var(--ink)] text-[var(--bg)] mono-meta text-[11px] uppercase text-center sm:text-left shadow-xl`}
         >
           {toast}
         </div>

@@ -78,6 +78,79 @@ export function PlusActionMenu({
   );
 }
 
+const SHARE_ROW_BTN =
+  "min-h-11 px-3 rounded-lg text-[10px] uppercase cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]";
+
+/** One live share link with an in-page "Stop sharing" confirm step (TOD-103). Hook-free. */
+export function ShareLinkRow({
+  shareId,
+  token,
+  confirming,
+  onOpen,
+  onConfirming,
+  onStop,
+}: {
+  shareId: string;
+  /** Raw link token; only known in the browser that created the link. */
+  token?: string;
+  confirming: boolean;
+  onOpen?: (token: string) => void;
+  onConfirming: (shareId: string | null) => void;
+  onStop: (shareId: string) => void;
+}) {
+  const label = `/s/${token ?? shareId}`;
+  return (
+    <li className="px-2.5 py-1.5 rounded-lg bg-[var(--card)] mono-meta text-[10px] space-y-1.5">
+      <div className="truncate">{label}</div>
+      {confirming ? (
+        <div role="group" aria-label={`Stop sharing ${label}?`} className="space-y-1.5">
+          <p className="text-[var(--ink)] normal-case">
+            Stop sharing? This link will stop working for everyone who has it.
+          </p>
+          <div className="flex items-center justify-end gap-1.5">
+            <button
+              type="button"
+              autoFocus
+              onClick={() => onConfirming(null)}
+              className={`${SHARE_ROW_BTN} border border-[var(--hair)] text-[var(--ink)]`}
+            >
+              Keep link
+            </button>
+            <button
+              type="button"
+              onClick={() => onStop(shareId)}
+              className={`${SHARE_ROW_BTN} bg-red-700 text-white`}
+            >
+              Yes, stop sharing
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center justify-end gap-1.5">
+          {token && onOpen && (
+            <button
+              type="button"
+              onClick={() => onOpen(token)}
+              aria-label={`Open public share view ${label}`}
+              className={`${SHARE_ROW_BTN} bg-[var(--ink)] text-[var(--bg)]`}
+            >
+              Open
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => onConfirming(shareId)}
+            aria-label={`Stop sharing ${label}`}
+            className={`${SHARE_ROW_BTN} border border-red-700/40 text-red-700`}
+          >
+            Stop sharing
+          </button>
+        </div>
+      )}
+    </li>
+  );
+}
+
 export function ShareContextSheet({
   file,
   otherUserName,
@@ -112,6 +185,7 @@ export function ShareContextSheet({
   onSoftDelete: (file: FileItem) => void;
 }) {
   const [editingName, setEditingName] = useState(file.name);
+  const [confirmingShareId, setConfirmingShareId] = useState<string | null>(null);
 
   return (
     <StudioModal maxWidthClass="max-w-sm" alignBottomOnMobile onClose={onClose}>
@@ -249,42 +323,24 @@ export function ShareContextSheet({
         </button>
 
         {activeFileShares.length > 0 && (
-          <div className="space-y-1 pt-1">
+          <ul aria-label="Active share links" className="space-y-1 pt-1">
             {activeFileShares.map((s) => {
               const tokEntry = (uiMeta.shareLinkTokens[file.id] ?? []).find(
                 (t) => t.id === s.id,
               );
-              const label = tokEntry ? `/s/${tokEntry.token}` : `/s/${s.id}`;
               return (
-                <div
+                <ShareLinkRow
                   key={s.id}
-                  className="flex items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-lg bg-[var(--card)] mono-meta text-[10px]"
-                >
-                  <span className="truncate">{label}</span>
-                  <div className="flex items-center gap-1 shrink-0">
-                    {tokEntry && onPreviewShareToken && (
-                      <button
-                        type="button"
-                        onClick={() => onPreviewShareToken(tokEntry.token)}
-                        title="Open Public Share View (/s/:token)"
-                        className="px-2 py-0.5 rounded-md bg-[var(--ink)] text-[var(--bg)] text-[9px] uppercase cursor-pointer"
-                      >
-                        Open
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => onRevokeShareLink(s.id)}
-                      title="Revoke"
-                      className="icon-btn w-6 h-6"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
+                  shareId={s.id}
+                  token={tokEntry?.token}
+                  confirming={confirmingShareId === s.id}
+                  onOpen={onPreviewShareToken}
+                  onConfirming={setConfirmingShareId}
+                  onStop={onRevokeShareLink}
+                />
               );
             })}
-          </div>
+          </ul>
         )}
       </div>
 
