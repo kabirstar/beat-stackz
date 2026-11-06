@@ -5,7 +5,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { BottomTransportPlayer } from "./components/BottomTransportPlayer.tsx";
 import { ShareContextSheet, ShareLinkRow } from "./components/VaultModals.tsx";
 import { formatBytes, parseStudioFileDisplay } from "./App.tsx";
-import { computeBlobSha256, createSampleWavBlob } from "./utils/format.ts";
+import { computeBlobSha256, createSampleWavBlob, showUploadedFile } from "./utils/format.ts";
+import { StudioFileCard } from "./components/StudioFileSection.tsx";
+import type { FileItem } from "@bpackz/shared";
 import {
   describeFileMeta,
   generateRandomSharedPalette,
@@ -448,5 +450,74 @@ describe("Share sheet Stop sharing control (TOD-103)", () => {
     assert.match(html, /aria-label="Stop sharing \/s\/sh_1"/);
     assert.match(html, /aria-label="Stop sharing \/s\/sh_2"/);
     assert.doesNotMatch(html, /title="Revoke"/); // the old unlabelled × is gone
+  });
+});
+
+describe("Uploaded file shows at once, marked Processing (TOD-105)", () => {
+  const file = (id: string, over: Partial<FileItem> = {}): FileItem => ({
+    id,
+    vaultId: "v_personal",
+    folderId: "f_beats",
+    name: `${id}.wav`,
+    status: "processing",
+    size: 4_000_000,
+    mime: "audio/wav",
+    sha256: null,
+    durationMs: null,
+    hasWaveform: false,
+    createdBy: "u_artist",
+    createdAt: "2026-11-05T00:00:00.000Z",
+    updatedAt: "2026-11-05T00:00:00.000Z",
+    ...over,
+  });
+
+  it("puts the row the upload returned into its folder's list without a refetch", () => {
+    let list: Record<string, FileItem[]> = { f_beats: [file("old", { status: "ready" })] };
+    const set = (update: (prev: typeof list) => typeof list) => {
+      list = update(list);
+    };
+    const uploaded = file("new");
+
+    assert.equal(showUploadedFile(set, uploaded, "v_personal"), uploaded);
+    assert.deepEqual(list.f_beats.map((f) => f.id), ["old", "new"]);
+    assert.equal(list.f_beats[1], uploaded, "the server's row as is, status processing");
+
+    showUploadedFile(set, file("new", { status: "ready" }), "v_personal");
+    assert.deepEqual(list.f_beats.map((f) => f.id), ["old", "new"], "same id is replaced, not doubled");
+    assert.equal(list.f_beats[1].status, "ready");
+
+    showUploadedFile(set, file("at_root", { folderId: null }), "v_personal");
+    assert.deepEqual(list.root.map((f) => f.id), ["at_root"]);
+
+    const before = list;
+    showUploadedFile(set, file("elsewhere", { vaultId: "v_shared" }), "v_personal");
+    assert.equal(list, before, "a file sent to another vault stays out of this vault's list");
+  });
+
+  it("a processing row says Processing and offers no play, waveform or download; ready does", () => {
+    const noop = () => {};
+    const card = (status: FileItem["status"]) =>
+      renderToStaticMarkup(
+        <StudioFileCard
+          file={file("take_1", { status })}
+          idx={0}
+          isPlaying={false}
+          playProgress={0}
+          parentFolderTheme={SWISH_BLACK_RED_PALETTE[0]}
+          otherUserName="Todo"
+          onTogglePlay={noop}
+          onDownload={noop}
+          onOpenPopover={noop}
+        />,
+      );
+    const processing = card("processing");
+    assert.match(processing, /Processing/);
+    assert.match(processing, /take_1\.wav/);
+    assert.doesNotMatch(processing, /title="Play"|Tap to preview waveform|Download master file/);
+
+    const ready = card("ready");
+    assert.doesNotMatch(ready, /Processing/);
+    assert.match(ready, /title="Play"/);
+    assert.match(ready, /Tap to preview waveform/);
   });
 });
