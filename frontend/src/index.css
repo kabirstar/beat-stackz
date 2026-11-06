@@ -1619,6 +1619,15 @@ button.bs-li:hover,
   box-shadow: 0 0 0 1px var(--hair);
 }
 
+/* a folder's menu hangs from the start of its action row, so it stays on a phone screen */
+.bs-sec-a {
+  position: relative;
+}
+
+.bs-sec-a > .bs-more {
+  position: static;
+}
+
 .bs-menu-end {
   left: auto;
   right: 0;
