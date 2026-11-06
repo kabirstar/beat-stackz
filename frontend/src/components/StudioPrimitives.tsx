@@ -6,6 +6,7 @@ import { resolveFolderCover, type FolderUiMeta } from "../vaultTheme.ts";
 const ICON_PATHS = {
   back: <polyline points="15 18 9 12 15 6" />,
   "chevron-right": <polyline points="9 18 15 12 9 6" />,
+  "chevron-down": <polyline points="6 9 12 15 18 9" />,
   home: <path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z" />,
   search: (
     <>
@@ -212,6 +213,57 @@ export function CoverTile({
     >
       <StudioIcon name={icon} className="" />
     </span>
+  );
+}
+
+const closeDetails = (e: { currentTarget: Element }) =>
+  e.currentTarget.closest("details")?.removeAttribute("open");
+
+/**
+ * A destructive action that asks first, in the page: a native <details> (so it needs no state)
+ * whose body holds the question, a "keep" button and the real action.
+ */
+export function ConfirmDetails({
+  summary,
+  summaryClass,
+  summaryLabel,
+  bodyClass = "",
+  question,
+  keepText,
+  yesText,
+  onYes,
+}: {
+  summary: ReactNode;
+  summaryClass: string;
+  summaryLabel?: string;
+  bodyClass?: string;
+  question: string;
+  keepText: string;
+  yesText: string;
+  onYes: () => void;
+}) {
+  return (
+    <details className="bs-more">
+      <summary className={summaryClass} aria-label={summaryLabel}>
+        {summary}
+      </summary>
+      <div role="group" aria-label={question} className={`bs-confirm ${bodyClass}`}>
+        <span>{question}</span>
+        <button type="button" className="bs-btn" onClick={closeDetails}>
+          {keepText}
+        </button>
+        <button
+          type="button"
+          className="bs-btn bs-btn-danger"
+          onClick={(e) => {
+            closeDetails(e);
+            onYes();
+          }}
+        >
+          {yesText}
+        </button>
+      </div>
+    </details>
   );
 }
 

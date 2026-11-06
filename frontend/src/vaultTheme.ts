@@ -25,6 +25,23 @@ export const WAVEFORM_BARS = [
   58, 40, 72, 89, 66, 51, 37, 62,
 ];
 
+/**
+ * Server waveform (audiowaveform min/max pairs) as `count` bar heights in percent, over the whole
+ * track. Null when there is too little data to draw.
+ */
+export function waveformToBars(data: number[], count = 64): number[] | null {
+  const peaks = data.filter((_, i) => i % 2 === 1).map(Math.abs);
+  if (peaks.length <= 8) return null;
+  const n = Math.min(count, peaks.length);
+  const max = (list: number[], floor: number) => list.reduce((a, b) => Math.max(a, b), floor);
+  const top = max(peaks, 1);
+  return Array.from({ length: n }, (_, i) => {
+    const from = Math.floor((i * peaks.length) / n);
+    const to = Math.floor(((i + 1) * peaks.length) / n);
+    return Math.round(25 + (75 * max(peaks.slice(from, to), 0)) / top);
+  });
+}
+
 export const ICON_TYPES = [
   { key: "beats", label: "Pads" },
   { key: "presets", label: "Faders" },
@@ -349,6 +366,21 @@ export function resolveFolderCover(
 ): { color: string; iconKey: string } {
   const meta = resolveFolderUiMeta(customMetaMap[folder.id] || !parent ? folder : parent, customMetaMap);
   return { color: COVER_COLORS[meta.colorSlot % COVER_COLORS.length], iconKey: meta.iconKey };
+}
+
+/** Cover of the folder a file sits in; null when that folder is not on screen (In Progress, say). */
+export function resolveFileCover(
+  file: FileItem,
+  roots: Folder[],
+  subfoldersByRoot: Record<string, Folder[]>,
+  customMetaMap: Record<string, FolderUiMeta>,
+): { color: string; iconKey: string } | null {
+  for (const root of roots) {
+    if (root.id === file.folderId) return resolveFolderCover(root, customMetaMap);
+    const sub = (subfoldersByRoot[root.id] ?? []).find((sf) => sf.id === file.folderId);
+    if (sub) return resolveFolderCover(sub, customMetaMap, root);
+  }
+  return null;
 }
 
 /** Move `key` to the front of a last-opened list (newest first, capped). */

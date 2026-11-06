@@ -7,7 +7,13 @@ import {
   type FolderUiMeta,
   type TrashedFileEntry,
 } from "../vaultTheme.ts";
-import { CoverTile, folderIconName, StudioIcon, UserAvatarBadge } from "./StudioPrimitives.tsx";
+import {
+  ConfirmDetails,
+  CoverTile,
+  folderIconName,
+  StudioIcon,
+  UserAvatarBadge,
+} from "./StudioPrimitives.tsx";
 
 export type FileLayoutMode = "cards" | "grid";
 
@@ -210,9 +216,14 @@ export function AlbumSection({
                   Rename folder
                 </button>
                 {folder.kind === null && (
-                  <button type="button" className="bs-li" onClick={() => onTrashFolder(folder)}>
-                    <span className="text-[var(--error)]">Move folder to Trash</span>
-                  </button>
+                  <ConfirmDetails
+                    summary={<span className="text-[var(--error)]">Move folder to Trash</span>}
+                    summaryClass="bs-li"
+                    question={`Move ${folder.name} to Trash?`}
+                    keepText="Keep folder"
+                    yesText="Yes, move to Trash"
+                    onYes={() => onTrashFolder(folder)}
+                  />
                 )}
               </div>
             </details>

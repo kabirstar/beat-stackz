@@ -1043,11 +1043,169 @@ button.bs-li:hover,
   grid-column: 1 / -1;
 }
 
-/* player and dock rows */
+/* player: info, play and loop, close; the seek row under them on a phone */
 .bs-player {
   flex: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas: "info btns acts" "seek seek seek";
+  gap: 0 8px;
+  align-items: center;
+  padding: 8px 12px 0;
   background: var(--base);
   border-top: 1px solid var(--hair);
+  accent-color: var(--accent);
+}
+
+.bs-pl-info {
+  grid-area: info;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  border-radius: 6px;
+}
+
+.bs-pl-ctr {
+  display: contents;
+}
+
+.bs-pl-btns {
+  grid-area: btns;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bs-pl-acts {
+  grid-area: acts;
+  display: flex;
+}
+
+.bs-pl-acts .bs-opt,
+.bs-player .bs-wv {
+  display: none;
+}
+
+.bs-player .bs-ib[aria-pressed="true"],
+.bs-full .bs-ib[aria-pressed="true"] {
+  color: var(--text);
+  background: var(--hover);
+}
+
+.bs-seek {
+  grid-area: seek;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 500 11px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.bs-wv {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 28px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.bs-wv span {
+  flex: 1;
+  min-width: 1px;
+  border-radius: 1px;
+  background: var(--muted);
+  opacity: 0.45;
+}
+
+.bs-wv span[data-on] {
+  background: var(--text);
+  opacity: 1;
+}
+
+/* full-screen song view: one centred column over the whole app, the same on phone and desktop */
+.bs-full {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  overflow-y: auto;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  padding: 16px 20px 28px;
+  background: var(--panel);
+  color: var(--text);
+}
+
+.bs-full-in {
+  width: 100%;
+  max-width: 440px;
+  display: grid;
+  gap: 16px;
+}
+
+.bs-full-top,
+.bs-full-times {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bs-full-times {
+  font: 500 11px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.bs-full .bs-cv {
+  width: 100%;
+  max-width: 340px;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  justify-self: center;
+}
+
+.bs-full .bs-cv svg {
+  width: 34%;
+  height: 34%;
+  stroke-width: 1.2;
+}
+
+.bs-full h3 {
+  margin: 0 0 4px;
+  font: 600 20px/1.2 var(--font-mono);
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.bs-full .bs-sub {
+  overflow-wrap: anywhere;
+}
+
+.bs-full .bs-wv {
+  height: 64px;
+}
+
+.bs-full-ctl {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 22px;
+}
+
+.bs-full .bs-pb {
+  width: 60px;
+  height: 60px;
+}
+
+.bs-full .bs-pb svg {
+  width: 26px;
+  height: 26px;
 }
 
 .bs-dock {
@@ -1302,7 +1460,49 @@ button.bs-li:hover,
   }
 
   .bs-player {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 560px) minmax(0, 1fr);
+    grid-template-areas: "info ctr acts";
+    gap: 16px;
+    padding: 6px 10px 4px;
     border-top: 0;
+  }
+
+  .bs-pl-ctr {
+    grid-area: ctr;
+    display: grid;
+    gap: 2px;
+    justify-items: center;
+  }
+
+  .bs-pl-btns,
+  .bs-seek {
+    grid-area: auto;
+  }
+
+  .bs-seek {
+    width: 100%;
+  }
+
+  .bs-pl-btns {
+    flex-direction: row-reverse;
+    gap: 14px;
+  }
+
+  .bs-pl-acts {
+    justify-content: flex-end;
+    gap: 2px;
+  }
+
+  .bs-pl-acts .bs-opt {
+    display: grid;
+  }
+
+  .bs-player .bs-seek input {
+    display: none;
+  }
+
+  .bs-player .bs-wv {
+    display: flex;
   }
 
   .bs-pop {
@@ -1417,6 +1617,30 @@ button.bs-li:hover,
   border-radius: 10px;
   background: var(--hover);
   box-shadow: 0 0 0 1px var(--hair);
+}
+
+.bs-menu-end {
+  left: auto;
+  right: 0;
+}
+
+/* the body of a ConfirmDetails: question, keep, yes */
+.bs-confirm {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  font-size: 13px;
+  white-space: normal;
+}
+
+.bs-confirm .bs-btn {
+  justify-self: stretch;
+  justify-content: center;
+}
+
+.bs-btn-danger {
+  border-color: var(--error);
+  color: var(--error);
 }
 
 .bs-pb:disabled {

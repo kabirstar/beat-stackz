@@ -3,7 +3,8 @@ import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import type { ReactElement, ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { BottomTransportPlayer } from "./components/BottomTransportPlayer.tsx";
+import { BottomTransportPlayer, Waveform } from "./components/BottomTransportPlayer.tsx";
+import { SharedPanel } from "./components/SharedPanel.tsx";
 import {
   CreateFolderModal,
   ShareContextSheet,
@@ -11,8 +12,13 @@ import {
 } from "./components/VaultModals.tsx";
 import { formatBytes, parseStudioFileDisplay } from "./App.tsx";
 import { computeBlobSha256, createSampleWavBlob, showUploadedFile } from "./utils/format.ts";
-import { countFiles, formatDuration, TrackRow } from "./components/StudioFileSection.tsx";
-import { folderIconName } from "./components/StudioPrimitives.tsx";
+import {
+  AlbumSection,
+  countFiles,
+  formatDuration,
+  TrackRow,
+} from "./components/StudioFileSection.tsx";
+import { ConfirmDetails, folderIconName } from "./components/StudioPrimitives.tsx";
 import {
   buildLibraryItems,
   filesUnder,
@@ -32,11 +38,13 @@ import {
   ICON_TYPES,
   loadPersistedUiMeta,
   persistUiMeta,
+  resolveFileCover,
   resolveFileOwnerName,
   resolveFolderCover,
   resolveFolderUiMeta,
   sortVaultFolders,
   touchRecent,
+  waveformToBars,
 } from "./vaultTheme.ts";
 import {
   isVaultPasscodeValid,
@@ -533,7 +541,11 @@ const anyArg = {
   createdBy: "u_artist",
   preventDefault: () => {},
   target: { value: "x" },
-  currentTarget: { value: "50", elements: { namedItem: () => ({ value: "Renamed" }) } },
+  currentTarget: {
+    value: "50",
+    elements: { namedItem: () => ({ value: "Renamed" }) },
+    closest: () => null,
+  },
 };
 
 /** Calls every function prop in the tree (expanding hook-free components) so each control proves it is wired. */
@@ -860,5 +872,202 @@ describe("Vault home redesign (TOD-108)", () => {
     assert.equal(markup.match(/aria-label="Cover colour \d"/g)?.length, 7);
     fireAll(dialog);
     assert.ok(picked.includes("rap_cup") && picked.includes("colour 6") && picked.includes("create"));
+  });
+});
+
+// ───── Player and full-screen song view (TOD-109) ─────
+
+describe("Player and full-screen song view (TOD-109)", () => {
+  const at = "2026-11-06T00:00:00.000Z";
+  const song: FileItem = {
+    id: "file_mix",
+    vaultId: "v_personal",
+    folderId: "f_mix",
+    name: "nightfall_mix_v2.wav",
+    status: "ready",
+    size: 52_400_000,
+    mime: "audio/wav",
+    sha256: null,
+    durationMs: 188_000,
+    hasWaveform: true,
+    createdBy: "u_artist",
+    createdAt: at,
+    updatedAt: at,
+  };
+  const dir = (id: string, over: Partial<Folder> = {}): Folder => ({
+    id,
+    vaultId: "v_personal",
+    parentId: null,
+    name: id,
+    kind: null,
+    createdBy: "u_artist",
+    updatedAt: at,
+    ...over,
+  });
+  const members: VaultMember[] = [
+    { userId: "u_artist", email: "artist@bpackz.test", name: "Swish", role: "owner" },
+    { userId: "u_prod", email: "todo@bpackz.test", name: null, role: "editor" },
+  ];
+  const player = (over: Partial<Parameters<typeof BottomTransportPlayer>[0]> = {}) => {
+    const calls: string[] = [];
+    const tree = BottomTransportPlayer({
+      playingFile: song,
+      waveformBars: [40, 80, 60, 100],
+      playProgress: 50,
+      loopEnabled: false,
+      vaultMembers: members,
+      onTogglePause: () => calls.push("pause"),
+      onToggleLoop: () => calls.push("loop"),
+      onToggleFull: () => calls.push("full"),
+      onSeek: (pct) => calls.push(`seek ${pct}`),
+      onShare: () => calls.push("share"),
+      onDownload: () => calls.push("download"),
+      onClose: () => calls.push("close"),
+      ...over,
+    });
+    return { tree, calls, markup: renderToStaticMarkup(tree) };
+  };
+
+  it("turns server waveform data into bars over the whole track, and says when there is none", () => {
+    assert.equal(waveformToBars([]), null);
+    assert.equal(waveformToBars([0, 5, 0, 5]), null, "too little data to draw");
+
+    // 128 min/max pairs: quiet first half, loud second half.
+    const data = Array.from({ length: 256 }, (_, i) => (i % 2 === 0 ? -1 : i < 128 ? 10 : -120));
+    const bars = waveformToBars(data);
+    assert.ok(bars);
+    assert.equal(bars.length, 64);
+    assert.equal(bars[0], 31, "10 of a 120 peak, on the 25 to 100 scale");
+    assert.equal(bars[63], 100, "the end of the track is drawn, not only its start");
+    assert.equal(waveformToBars(data.slice(0, 40))?.length, 20, "short data gives one bar per point");
+    assert.deepEqual(waveformToBars(Array.from({ length: 40 }, () => 0)), Array.from({ length: 20 }, () => 25));
+  });
+
+  it("gives the player the cover of the file's folder", () => {
+    const songs = dir("f_songs", { name: "songs", kind: "songs" });
+    const mix = dir("f_mix", { name: "mix", parentId: "f_songs" });
+    const subs = { f_songs: [mix] };
+    assert.deepEqual(resolveFileCover(song, [songs], subs, {}), resolveFolderCover(songs, {}));
+    assert.deepEqual(resolveFileCover({ ...song, folderId: "f_songs" }, [songs], subs, {}), resolveFolderCover(songs, {}));
+    assert.equal(resolveFileCover({ ...song, folderId: "f_gone" }, [songs], subs, {}), null);
+  });
+
+  it("the bar shows title, uploader and details, both seek controls and the times", () => {
+    const { markup, tree, calls } = player();
+    assert.match(markup, /aria-label="Nightfall Mix V2, open full-screen view"/);
+    assert.match(markup, /Swish · MIX · 24-BIT/);
+    assert.match(markup, /aria-label="Seek"/);
+    assert.match(markup, /role="slider"[^>]*aria-label="Seek on waveform"[^>]*aria-valuenow="50"/);
+    assert.match(markup, />1:34</, "half of the file's own 3:08 until the audio element reports a length");
+    assert.match(markup, />3:08</);
+    assert.equal(markup.match(/data-on=""/g)?.length, 3, "bars up to the play position are lit");
+    assert.doesNotMatch(markup, /role="dialog"/, "the song view is closed until asked for");
+    for (const label of ["Loop", "Pause", "Share", "Download", "Close player"]) {
+      assert.match(markup, new RegExp(`aria-label="${label}"`));
+    }
+    assert.match(player({ isPaused: true }).markup, /aria-label="Play"/);
+    assert.match(player({ playingFile: { ...song, durationMs: null } }).markup, />--:--</);
+    assert.match(player({ durationSec: 100 }).markup, />0:50</);
+
+    fireAll(tree);
+    for (const name of ["pause", "loop", "full", "share", "download", "close", "seek 50", "seek 25"]) {
+      assert.ok(calls.includes(name), `${name} is wired in the bar`);
+    }
+  });
+
+  it("the waveform seeks on a bar click and with the arrow keys, inside 0 to 100", () => {
+    const seeks: number[] = [];
+    const wave = (playProgress: number) =>
+      Waveform({ bars: [40, 80, 60, 100], playProgress, onSeek: (pct) => seeks.push(pct) }) as ReactElement<{
+        onKeyDown: (e: { key: string }) => void;
+        children: ReactElement<{ onClick: () => void }>[];
+      }>;
+    wave(50).props.children[3].props.onClick();
+    wave(50).props.onKeyDown({ key: "ArrowRight" });
+    wave(50).props.onKeyDown({ key: "ArrowLeft" });
+    wave(98).props.onKeyDown({ key: "ArrowRight" });
+    wave(2).props.onKeyDown({ key: "ArrowLeft" });
+    wave(50).props.onKeyDown({ key: "Tab" });
+    assert.deepEqual(seeks, [75, 55, 45, 100, 0]);
+  });
+
+  it("the full-screen song view is a labelled dialog with cover, names, waveform and controls", () => {
+    const { markup, tree, calls } = player({ fullOpen: true, cover: { color: "#f0b23a", iconKey: "songs" } });
+    const view = markup.slice(markup.indexOf('role="dialog"'));
+    assert.match(view, /aria-modal="true" aria-label="Now playing"/);
+    assert.match(view, /aria-label="Close full-screen view"/);
+    assert.match(view, /--c:#f0b23a/);
+    assert.match(view, /<h3>Nightfall Mix V2<\/h3>/);
+    assert.match(view, /nightfall_mix_v2\.wav/);
+    assert.match(view, /Swish · MIX · 24-BIT · 50\.0 MB/);
+    assert.match(view, /role="slider"/);
+    for (const label of ["Loop", "Pause", "Share"]) assert.match(view, new RegExp(`aria-label="${label}"`));
+
+    const dialog = (tree.props.children as ReactElement<{ onKeyDown: (e: { key: string }) => void }>[])[1];
+    dialog.props.onKeyDown({ key: "a" });
+    assert.deepEqual(calls, []);
+    dialog.props.onKeyDown({ key: "Escape" });
+    assert.deepEqual(calls, ["full"], "Escape closes the song view");
+  });
+
+  it("removing a member and trashing a folder both ask first, in the page", () => {
+    const done: string[] = [];
+    const closed: string[] = [];
+    const click = { currentTarget: { closest: () => ({ removeAttribute: (a: string) => closed.push(a) }) } };
+    const ask = ConfirmDetails({
+      summary: "x",
+      summaryClass: "bs-ib",
+      question: "Remove todo from this vault?",
+      keepText: "Keep",
+      yesText: "Yes, remove",
+      onYes: () => done.push("removed"),
+    });
+    const [keep, yes] = findButtons(ask) as ReactElement<{ onClick: (e: typeof click) => void }>[];
+    keep.props.onClick(click);
+    assert.deepEqual([done, closed], [[], ["open"]], "Keep closes the question and removes nobody");
+    yes.props.onClick(click);
+    assert.deepEqual(done, ["removed"]);
+
+    const panel = renderToStaticMarkup(
+      <SharedPanel
+        activeVault={{ id: "v_crew", name: "Crew", kind: "shared", myRole: "owner", createdAt: at }}
+        vaults={[]}
+        vaultMembers={members}
+        inviteEmail=""
+        inviteRole="editor"
+        onChangeInviteEmail={() => {}}
+        onChangeInviteRole={() => {}}
+        onInviteMember={() => {}}
+        onRemoveMember={() => {}}
+        onRenameVault={() => {}}
+        onSwitchVault={() => {}}
+        onOpenCreateSharedVault={() => {}}
+        onClose={() => {}}
+      />,
+    );
+    assert.match(panel, /<summary class="bs-ib" aria-label="Remove todo">/);
+    assert.match(panel, /role="group" aria-label="Remove todo from this vault\?"/);
+    assert.match(panel, />Keep<\/button>/);
+    assert.match(panel, />Yes, remove<\/button>/);
+
+    const section = renderToStaticMarkup(
+      <AlbumSection
+        folder={dir("f_contracts", { name: "contracts" })}
+        files={[]}
+        folderMetaMap={{}}
+        showFile={() => true}
+        whoLabel="all"
+        grid={false}
+        playingFileId={null}
+        onUploadTo={() => {}}
+        onRenameFolder={() => {}}
+        onTrashFolder={() => {}}
+        onTogglePlay={() => {}}
+        onOpenPopover={() => {}}
+      />,
+    );
+    assert.match(section, /role="group" aria-label="Move contracts to Trash\?"/);
+    assert.match(section, />Keep folder<\/button>/);
+    assert.match(section, />Yes, move to Trash<\/button>/);
   });
 });
