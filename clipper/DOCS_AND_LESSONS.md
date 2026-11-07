@@ -136,17 +136,20 @@ This living document tracks every architectural lesson learned while building an
 - **Reference Case Study**: *diamond\* — "MAN ØN THE MØØN" (Dir. Laughtodabank)* (`01:53`, `23.98 fps`).
 - **Living Spec**: See [`clipper/MUSIC_VIDEO_VFX_PLAYBOOK.md`](file:///Users/kabirduggal/Desktop/ANTIGRAV/clipper/MUSIC_VIDEO_VFX_PLAYBOOK.md) for the complete 3-Tier VFX Execution Architecture (`Tier 1`: `FFmpeg` + `OpenCV` deterministic DSP; `Tier 2`: `SAM 2` + `MatAnyone 2` / `RobustVideoMatting` neural video matting & homography tracking; `Tier 3`: `Wan 2.2` / `Kling` / `Flux Fill` prop insertion & texture morphing) and runnable recipes for `VFX-01` through `VFX-10`.
 
-### 12. Wired 10-Family VFX Engine (`vfx_motm_engine.py`), Thematic Plate Adaptation (Bank Vault & Brinks Truck), and Per-Video Project Notes (`projects/BRINKS_PROJECT_NOTES.md`)
+### 12. Wired 10-Family VFX Engine (`vfx_motm_engine.py`), Temporal Neural Alpha Matting (`RVM-ResNet50` + `U2-Net` + `IS-Net`), and Per-Video Project Notes (`projects/BRINKS_PROJECT_NOTES.md`)
 - **Problem**:
-  1. Raw luminance thresholding for sky replacement (`V < 60`) or foreground rotoscoping (`0.55 * luma`) caused dark sky replacements to bleed into the performer's curly black hair (`V < 40`) and bright doorway portals to bleed into white sweatpants (`V > 135`).
-  2. While *MAN ØN THE MØØN* used lunar craters, Saturn, and NASA emblems to match its song title, **Brinks** (`Brinks.m4a`) requires song-specific heist visuals (**Stainless-Steel Bank Vault overflowing with $100 bills & gold bars**, **Armored Brinks Heist Truck with open rear vault doors & raining cash**, and **Raining $100 Bills Night Sky**).
-- **Root Cause & Fix (`vfx_motm_engine.py`, `clipper_engine.py`, `projects/BRINKS_PROJECT_NOTES.md`)**:
-  1. **Contour-Hugging Performer Hair & Torso Shield (`_detect_performer_shield` & `_extract_subject_alpha`)**:
-     - Anchors horizontal/vertical head & torso center `(fcx, fcy, frad)` from central skin pixels (`YCrCb` excluding warm orange wall sconces) and bright white hoodie pixels (`V > 145, S < 75`), stamping a solid `1.0` protective head+hair ellipse (`0.85*frad x 1.02*frad`) and torso trapezoid so sky/portal replacements never eat into curly black hair or white sweatpants.
-  2. **Thematic Plate Adaptation for `Brinks` (`clipper/assets/motm/`)**:
-     - `brinks_bank_vault_plate.jpg`: Photorealistic stainless-steel circular bank vault door open with towering pallets of $100 bills and gold bullion bars (`motm_lunar_env` on `#09`, `#23` and `motm_doorway_portal` on `#04`).
-     - `brinks_truck_heist_plate.jpg`: Photorealistic matte-silver & navy-blue **BRINKS** armored cash-in-transit truck at night with open rear vault doors, duffle bags of cash, and raining $100 bills (`motm_lunar_env` on `#55`, `#68`, `#79` and `motm_doorway_portal` on `#64`).
-     - `brinks_money_sky_plate.jpg`: Low-angle night sky filled with raining $100 bills and a giant illuminated stainless-steel bank vault wheel (`motm_sky_cosmos` on `#01`, `#25`, `#31`).
-     - `eagle_rgba.png` & `fg_hands_rgba.png`: Real photographic Bald Eagle cutout perched on the performer's shoulder (`motm_eagle_shoulder` on `#28`, `#43`) and oversized optical-blurred foreground hand cutouts (`motm_fg_hands` on `#32`, `#39`).
-  3. **Per-Video Living Documentation (`clipper/projects/BRINKS_PROJECT_NOTES.md`)**:
+  1. Geometric ellipse/trapezoid shields or luminance thresholding for human rotoscoping (`motm_lunar_env`, `motm_roto_clone`, `motm_sky_cosmos`, `motm_doorway_portal`) leave unnatural black oval/rectangular halo boxes around raised hands, curly hair, and clones.
+  2. Placing full-environment swaps (`motm_lunar_env`) on `AI_TRANS` morph clips (`#09`, `#79`) or out-of-focus camera whip cuts (`#55`, `#68`) produces blurry ghosted silhouettes against sharp background plates.
+  3. Blurring foreground prop cutouts (`fg_hands_rgba.png`) on a black canvas after applying an S-curve bleach-bypass creates a bright grey/white halo around fingers unless RGB is graded prior to premultiplied alpha blurring.
+- **Root Cause & Fix (`vfx_motm_engine.py`, `assets/models/`, `projects/BRINKS_PROJECT_NOTES.md`)**:
+  1. **Temporal Neural Alpha Matting (`_neural_human_matte` via `RVM-ResNet50` + `U2-Net Human Seg`)**:
+     - Runs ByteDance **Robust Video Matting (`rvm_resnet50_fp32.onnx`)** with recurrent temporal state tensors (`r1..r4`) alongside **`u2net_human_seg.onnx`** (`0.65 * a_rvm + 0.35 * a_u2`), contrast-tightening the alpha matte (`[0.42 .. 0.82] -> [0.0 .. 1.0]`) and propagating eroded interior foreground RGB (`fgr`) into the 3px boundary band to eliminate all background room spill.
+     - Matches optical depth-of-field on the background plates (`GaussianBlur` sigma=1.2) and applies an 18% background light-wrap onto the outer rim of the performer.
+  2. **1024x1024 `IS-Net` Studio Prop Segmentation (`isnet-general-use.onnx`) & Premultiplied Bokeh**:
+     - Segmented high-resolution studio plates (`eagle_studio_raw` and `hands_studio_raw`) with `isnet-general-use.onnx`, eroding 3–5px inward to strip neutral studio grey rims (`eagle_rgba.png` `654x460x4`, `fg_hands_rgba.png` `768x1376x4`).
+     - `_composite_framing_hands` grades hand RGB before premultiplying by alpha and blurs premultiplied RGB and alpha with identical `(21, 21)` Gaussian kernels for zero-halo optical bokeh.
+     - `motm_roto_clone` keeps flanking clones at full vertical scale (`scale=1.0, dy=0`) behind the 100% opaque primary performer so clones never exhibit top/bottom horizontal crop lines or chest ghosting.
+  3. **Sharp Front-Facing Shot Selection for Environment Swaps (`current_project.json`)**:
+     - Assigned `motm_lunar_env` exclusively to sharp, well-lit medium close-ups (`#08` `DSC_3604.MOV`, `#23` `DSC_3698.MOV`, `#54` `DSC_3580.MOV`, `#66` `DSC_3580.MOV`, `#80` `DSC_3698.MOV`) and `motm_sky_cosmos` exclusively to outdoor night shots (`#05`, `#25` `DSC_3765.MOV` rooftop and `#31` `DSC_3602.MOV` driveway).
+  4. **Per-Video Living Documentation (`clipper/projects/BRINKS_PROJECT_NOTES.md`)**:
      - Records the complete 10-camera inventory, acoustic sync offsets, all 49 timestamped lyric phrases, and the exact 28 VFX scene assignments + 15 AI morph transitions so any future agent has instant context on the video.
