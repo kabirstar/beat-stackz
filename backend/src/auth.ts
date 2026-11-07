@@ -13,8 +13,8 @@ import { createPersonalVault } from './personal-vault.ts';
 // Hashing first makes the compare constant-time regardless of length difference.
 const digest = (value: string) => createHash('sha256').update(value).digest();
 const sameSecret = (given: string, expected: string) => timingSafeEqual(digest(given), digest(expected));
-// TOD-113 temporary (Kabir, 2026-11-06): sign-up is open and the invite code is not checked. Set to false to restore ADR 0003.
-export const SIGNUP_OPEN = true as boolean;
+// TOD-113: sign-up was opened for a day on 2026-11-06 and closed again; true skips the invite code check.
+export const SIGNUP_OPEN = false as boolean;
 
 export function createAuth(db: Database, config: Config) {
   return betterAuth({
