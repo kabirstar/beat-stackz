@@ -1879,8 +1879,10 @@ HTML_TEMPLATE = """
 
       const aiSegs = [];
       project.segments.forEach((s, idx) => {
-        if (s.cut_reason === 'ai_transition' || String(s.clip_filename || '').includes('AI_TRANS') || String(s.clip_filename || '').includes('HF_WEB')) {
-          aiSegs.push({ seg: s, cutNumber: idx + 1 });
+        const isAiMorph = s.cut_reason === 'ai_transition' || String(s.clip_filename || '').includes('AI_TRANS') || String(s.clip_filename || '').includes('HF_WEB');
+        const isMotmVfx = String(s.effect || '').startsWith('motm_');
+        if (isAiMorph || isMotmVfx) {
+          aiSegs.push({ seg: s, cutNumber: idx + 1, isMotmVfx });
         }
       });
 
@@ -1888,16 +1890,30 @@ HTML_TEMPLATE = """
       container.innerHTML = '';
 
       if (aiSegs.length === 0) {
-        container.innerHTML = '<span style="font-size:10.5px;color:var(--muted);font-family:var(--mono);">NO MORPH TRANSITIONS IN TIMELINE — CLICK "◆ ADD MORPH FX" BELOW TO INSERT</span>';
+        container.innerHTML = '<span style="font-size:10.5px;color:var(--muted);font-family:var(--mono);">NO MORPH TRANSITIONS OR MOTM VFX IN TIMELINE — CLICK "◆ ADD MORPH FX" BELOW TO INSERT</span>';
         return;
       }
 
       aiSegs.forEach((item, aiIdx) => {
         const s = item.seg;
         const dur = (s.song_end - s.song_start).toFixed(2);
-        const cleanPair = String(s.clip_filename || '')
-          .replace('✨ AI_TRANS ', '')
-          .replace('✨ HF_WEB ', '');
+        const motmPrettyMap = {
+          motm_nasa_card: 'BRINKS: ARMORED SHIELD',
+          motm_sky_cosmos: 'BRINKS: CASH RAIN SKY',
+          motm_bleach_pop: 'VFX: BLEACH + COLOR POP',
+          motm_diamond_grillz: 'VFX: DIAMOND GRILLZ GLINT',
+          motm_motion_echo: 'VFX: STEP-PRINT ECHO',
+          motm_dutch_flash: 'VFX: DUTCH WHIP + FLASH',
+          motm_lunar_env: 'BRINKS: BANK VAULT & TRUCK',
+          motm_roto_clone: 'VFX: ROTO-CLONE DOUBLE',
+          motm_eagle_shoulder: 'VFX: PERCHED BALD EAGLE',
+          motm_fg_hands: 'VFX: FOREGROUND HANDS',
+          motm_ink_corrupt: 'VFX: BLACK-INK HOODIE',
+          motm_doorway_portal: 'BRINKS: VAULT PORTAL',
+        };
+        const cleanPair = item.isMotmVfx
+          ? (motmPrettyMap[s.effect] || String(s.effect || '').toUpperCase().replace('MOTM_', 'BRINKS: '))
+          : String(s.clip_filename || '').replace('✨ AI_TRANS ', '').replace('✨ HF_WEB ', '');
         const isCurrent = selectedSegId === s.id || (playheadSec >= s.song_start - 0.05 && playheadSec <= s.song_end + 0.05);
 
         const btn = document.createElement('button');
@@ -1915,11 +1931,13 @@ HTML_TEMPLATE = """
           align-items: center;
           gap: 5px;
           background: ${isCurrent ? '#262118' : '#16161c'};
-          border: 1px solid ${isCurrent ? '#f59e0b' : '#2c2c38'};
+          border: 1px solid ${isCurrent ? '#f59e0b' : (item.isMotmVfx ? 'rgba(56,189,248,0.45)' : '#2c2c38')};
           color: #f4f4f5;
         `;
+        const badgeColor = item.isMotmVfx ? '#38bdf8' : 'var(--amber)';
+        const badgePrefix = item.isMotmVfx ? '★ VFX' : '◆ FX';
         btn.innerHTML = `
-          <span style="color:var(--amber);font-weight:800;">◆ FX ${String(aiIdx + 1).padStart(2, '0')}</span>
+          <span style="color:${badgeColor};font-weight:800;">${badgePrefix} ${String(aiIdx + 1).padStart(2, '0')}</span>
           <strong>CUT ${String(item.cutNumber).padStart(2, '0')}</strong>
           <span style="color:#a1a1aa;">${s.song_start.toFixed(1)}s–${s.song_end.toFixed(1)}s (${dur}s)</span>
           <span style="color:#d4d4d8;font-size:9.5px;">${cleanPair}</span>

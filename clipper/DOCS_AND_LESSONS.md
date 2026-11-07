@@ -135,3 +135,18 @@ This living document tracks every architectural lesson learned while building an
 ### 11. Music Video VFX & Compositing Engineering Playbook (`clipper/MUSIC_VIDEO_VFX_PLAYBOOK.md`)
 - **Reference Case Study**: *diamond\* — "MAN ØN THE MØØN" (Dir. Laughtodabank)* (`01:53`, `23.98 fps`).
 - **Living Spec**: See [`clipper/MUSIC_VIDEO_VFX_PLAYBOOK.md`](file:///Users/kabirduggal/Desktop/ANTIGRAV/clipper/MUSIC_VIDEO_VFX_PLAYBOOK.md) for the complete 3-Tier VFX Execution Architecture (`Tier 1`: `FFmpeg` + `OpenCV` deterministic DSP; `Tier 2`: `SAM 2` + `MatAnyone 2` / `RobustVideoMatting` neural video matting & homography tracking; `Tier 3`: `Wan 2.2` / `Kling` / `Flux Fill` prop insertion & texture morphing) and runnable recipes for `VFX-01` through `VFX-10`.
+
+### 12. Wired 10-Family VFX Engine (`vfx_motm_engine.py`), Thematic Plate Adaptation (Bank Vault & Brinks Truck), and Per-Video Project Notes (`projects/BRINKS_PROJECT_NOTES.md`)
+- **Problem**:
+  1. Raw luminance thresholding for sky replacement (`V < 60`) or foreground rotoscoping (`0.55 * luma`) caused dark sky replacements to bleed into the performer's curly black hair (`V < 40`) and bright doorway portals to bleed into white sweatpants (`V > 135`).
+  2. While *MAN ØN THE MØØN* used lunar craters, Saturn, and NASA emblems to match its song title, **Brinks** (`Brinks.m4a`) requires song-specific heist visuals (**Stainless-Steel Bank Vault overflowing with $100 bills & gold bars**, **Armored Brinks Heist Truck with open rear vault doors & raining cash**, and **Raining $100 Bills Night Sky**).
+- **Root Cause & Fix (`vfx_motm_engine.py`, `clipper_engine.py`, `projects/BRINKS_PROJECT_NOTES.md`)**:
+  1. **Contour-Hugging Performer Hair & Torso Shield (`_detect_performer_shield` & `_extract_subject_alpha`)**:
+     - Anchors horizontal/vertical head & torso center `(fcx, fcy, frad)` from central skin pixels (`YCrCb` excluding warm orange wall sconces) and bright white hoodie pixels (`V > 145, S < 75`), stamping a solid `1.0` protective head+hair ellipse (`0.85*frad x 1.02*frad`) and torso trapezoid so sky/portal replacements never eat into curly black hair or white sweatpants.
+  2. **Thematic Plate Adaptation for `Brinks` (`clipper/assets/motm/`)**:
+     - `brinks_bank_vault_plate.jpg`: Photorealistic stainless-steel circular bank vault door open with towering pallets of $100 bills and gold bullion bars (`motm_lunar_env` on `#09`, `#23` and `motm_doorway_portal` on `#04`).
+     - `brinks_truck_heist_plate.jpg`: Photorealistic matte-silver & navy-blue **BRINKS** armored cash-in-transit truck at night with open rear vault doors, duffle bags of cash, and raining $100 bills (`motm_lunar_env` on `#55`, `#68`, `#79` and `motm_doorway_portal` on `#64`).
+     - `brinks_money_sky_plate.jpg`: Low-angle night sky filled with raining $100 bills and a giant illuminated stainless-steel bank vault wheel (`motm_sky_cosmos` on `#01`, `#25`, `#31`).
+     - `eagle_rgba.png` & `fg_hands_rgba.png`: Real photographic Bald Eagle cutout perched on the performer's shoulder (`motm_eagle_shoulder` on `#28`, `#43`) and oversized optical-blurred foreground hand cutouts (`motm_fg_hands` on `#32`, `#39`).
+  3. **Per-Video Living Documentation (`clipper/projects/BRINKS_PROJECT_NOTES.md`)**:
+     - Records the complete 10-camera inventory, acoustic sync offsets, all 49 timestamped lyric phrases, and the exact 28 VFX scene assignments + 15 AI morph transitions so any future agent has instant context on the video.

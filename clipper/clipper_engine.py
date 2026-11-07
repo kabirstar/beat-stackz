@@ -1728,6 +1728,20 @@ def _render_single_segment_worker(
     exact_frames = max(1, f_end - f_start)
     seg_out = os.path.join(tmpdir, f"seg_{idx:04d}.mp4")
 
+    if (seg.effect or "").startswith("motm_"):
+        from vfx_motm_engine import render_motm_vfx_segment
+        ok_motm = render_motm_vfx_segment(
+            ffmpeg_bin=ffmpeg_bin,
+            seg=seg,
+            seg_out=seg_out,
+            target_w=target_w,
+            target_h=target_h,
+            fps=fps,
+            exact_frames=exact_frames,
+        )
+        if ok_motm:
+            return idx, seg_out
+
     base_scale = (
         f"scale={target_w}:{target_h}:force_original_aspect_ratio=increase,"
         f"crop={target_w}:{target_h}"
